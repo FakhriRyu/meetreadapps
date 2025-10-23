@@ -21,6 +21,20 @@ model Book {
   availableCopies Int
   coverImageUrl   String?
   description     String?
+  lendable        Boolean  @default(true)
+  source          String   @default("library")
+  ownerId         Int?
+  owner           User?    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  name         String
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  books        Book[]
 }
