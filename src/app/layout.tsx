@@ -13,8 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MeetRead Admin",
-  description: "Panel admin untuk mengelola koleksi dan peminjaman buku.",
+  title: "MeetRead",
+  description:
+    "Platform peminjaman buku dengan panel admin dan pengalaman pengguna yang modern.",
 };
 
 export default function RootLayout({
