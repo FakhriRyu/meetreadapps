@@ -24,15 +24,13 @@ export function CollectionList({ collections, onEdit, onDelete, deletingId }: Co
   return (
     <div className="grid gap-4">
       {collections.map((book) => (
-        <article
+        <Link
           key={book.id}
-          className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-5 shadow-lg shadow-black/10"
+          href={`/books/${book.id}`}
+          className="relative block overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-5 shadow-lg shadow-black/10 transition hover:border-emerald-300/60 hover:bg-white/10"
         >
           <div className="flex gap-4">
-            <Link
-              href={`/books/${book.id}`}
-              className="relative h-24 w-16 flex-shrink-0 overflow-hidden rounded-2xl border border-white/10 bg-white/10 transition hover:border-emerald-300/60 hover:shadow-lg hover:shadow-emerald-400/20"
-            >
+            <div className="relative h-24 w-16 flex-shrink-0 overflow-hidden rounded-2xl border border-white/10 bg-white/10">
               {book.coverImageUrl ? (
                 <Image
                   src={book.coverImageUrl}
@@ -46,16 +44,11 @@ export function CollectionList({ collections, onEdit, onDelete, deletingId }: Co
                   No Cover
                 </div>
               )}
-            </Link>
+            </div>
             <div className="flex flex-1 flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between">
-                  <Link
-                    href={`/books/${book.id}`}
-                    className="text-base font-semibold text-white underline-offset-4 transition hover:text-emerald-200 hover:underline"
-                  >
-                    {book.title}
-                  </Link>
+                  <p className="text-base font-semibold text-white">{book.title}</p>
                   <span
                     className={`rounded-full px-3 py-1 text-xs font-semibold ${
                       book.lendable ? "bg-emerald-400/20 text-emerald-100" : "bg-white/10 text-white/60"
@@ -76,26 +69,23 @@ export function CollectionList({ collections, onEdit, onDelete, deletingId }: Co
                 </span>
               </div>
             </div>
-          </div>
-          <div className="mt-4 flex flex-wrap justify-between gap-2 text-xs">
-            <Link
-              href={`/books/${book.id}`}
-              className="inline-flex items-center gap-2 rounded-full border border-emerald-300/40 px-4 py-2 font-semibold text-emerald-200 transition hover:border-emerald-200 hover:bg-emerald-400/10"
-            >
-              Detail
-              <span aria-hidden>→</span>
-            </Link>
-            <div className="flex gap-2">
+            <div className="flex flex-col justify-center gap-2 text-xs">
               <button
                 type="button"
-                onClick={() => onEdit(book)}
+                onClick={(event) => {
+                  event.preventDefault();
+                  onEdit(book);
+                }}
                 className="rounded-full border border-white/20 px-4 py-2 font-semibold text-white transition hover:border-white/40 hover:bg-white/10"
               >
                 Edit
               </button>
               <button
                 type="button"
-                onClick={() => onDelete(book)}
+                onClick={(event) => {
+                  event.preventDefault();
+                  onDelete(book);
+                }}
                 disabled={deletingId === book.id}
                 className="rounded-full border border-rose-300/60 px-4 py-2 font-semibold text-rose-200 transition hover:border-rose-200 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-60"
               >
@@ -103,7 +93,7 @@ export function CollectionList({ collections, onEdit, onDelete, deletingId }: Co
               </button>
             </div>
           </div>
-        </article>
+        </Link>
       ))}
     </div>
   );
