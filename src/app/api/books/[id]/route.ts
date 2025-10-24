@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { BookFormSchema } from "@/lib/validators/book";
 import type { BookFormData } from "@/lib/validators/book";
-import { Prisma } from "@prisma/client";
+import { BookStatus, Prisma } from "@prisma/client";
 
 async function unwrapParams(
   params: { id: string } | Promise<{ id: string }>,
@@ -15,7 +15,7 @@ async function unwrapParams(
   return params as { id: string };
 }
 
-const toPrismaData = (payload: BookFormData) => ({
+const toPrismaData = (payload: BookFormData, currentStatus?: BookStatus) => ({
   title: payload.title,
   author: payload.author,
   category: payload.category ?? null,
@@ -25,6 +25,12 @@ const toPrismaData = (payload: BookFormData) => ({
   availableCopies: payload.availableCopies,
   coverImageUrl: payload.coverImageUrl ?? null,
   description: payload.description ?? null,
+  status:
+    currentStatus && [BookStatus.BORROWED, BookStatus.PENDING].includes(currentStatus)
+      ? currentStatus
+      : payload.availableCopies > 0
+        ? BookStatus.AVAILABLE
+        : BookStatus.RESERVED,
 });
 
 const parseId = (id: string) => {
@@ -46,9 +52,18 @@ export async function PUT(
     const json = await request.json();
     const data = BookFormSchema.parse(json);
 
+    const existing = await prisma.book.findUnique({
+      where: { id: bookId },
+      select: { status: true },
+    });
+
+    if (!existing) {
+      return NextResponse.json({ error: "Data buku tidak ditemukan" }, { status: 404 });
+    }
+
     const updated = await prisma.book.update({
       where: { id: bookId },
-      data: toPrismaData(data),
+      data: toPrismaData(data, existing.status),
     });
 
     return NextResponse.json({ data: updated });

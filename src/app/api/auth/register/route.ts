@@ -8,12 +8,19 @@ const RegisterSchema = z.object({
   name: z.string().trim().min(2, "Nama minimal 2 karakter"),
   email: z.string().trim().email("Email tidak valid"),
   password: z.string().min(8, "Kata sandi minimal 8 karakter"),
+  phoneNumber: z
+    .string()
+    .trim()
+    .regex(/^62\d{8,15}$/, "Nomor telepon harus diawali 62 dan minimal 10 digit"),
 });
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const data = RegisterSchema.parse(body);
+    const data = RegisterSchema.parse({
+      ...body,
+      phoneNumber: typeof body.phoneNumber === "string" ? body.phoneNumber.replace(/\s+/g, "") : body.phoneNumber,
+    });
 
     const existing = await prisma.user.findUnique({
       where: { email: data.email.toLowerCase() },
@@ -34,6 +41,7 @@ export async function POST(request: Request) {
         name: data.name,
         email: data.email.toLowerCase(),
         passwordHash,
+        phoneNumber: data.phoneNumber,
       },
     });
 

@@ -23,6 +23,7 @@ const DEFAULT_CATEGORY = "Semua";
 export function HomeView({ books, sessionUser }: HomeViewProps) {
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>(DEFAULT_CATEGORY);
+  const [activeAuthor, setActiveAuthor] = useState<string | null>(null);
 
   const categories = useMemo(() => {
     const unique = new Set<string>();
@@ -39,7 +40,7 @@ export function HomeView({ books, sessionUser }: HomeViewProps) {
 
   const resolvedCategory = categories.includes(activeCategory) ? activeCategory : DEFAULT_CATEGORY;
 
-  const filteredBooks = useMemo(() => {
+  const baseFilteredBooks = useMemo(() => {
     const normalizedQuery = search.trim().toLowerCase();
 
     return books.filter((book) => {
@@ -62,6 +63,26 @@ export function HomeView({ books, sessionUser }: HomeViewProps) {
     });
   }, [books, resolvedCategory, search]);
 
+  const authors = useMemo(() => {
+    const unique = new Set<string>();
+    baseFilteredBooks.forEach((book) => {
+      if (book.author.trim().length > 0) {
+        unique.add(book.author.trim());
+      }
+    });
+    return Array.from(unique).slice(0, 12);
+  }, [baseFilteredBooks]);
+
+  const resolvedAuthor = activeAuthor && authors.includes(activeAuthor) ? activeAuthor : null;
+
+  const filteredBooks = useMemo(() => {
+    if (!resolvedAuthor) {
+      return baseFilteredBooks;
+    }
+    const normalizedAuthor = resolvedAuthor.toLowerCase();
+    return baseFilteredBooks.filter((book) => book.author.trim().toLowerCase() === normalizedAuthor);
+  }, [baseFilteredBooks, resolvedAuthor]);
+
   const stats = useMemo(() => {
     const total = books.length;
     const available = books.reduce((sum, book) => sum + book.availableCopies, 0);
@@ -80,16 +101,6 @@ export function HomeView({ books, sessionUser }: HomeViewProps) {
       return scoreB - scoreA;
     });
     return scored.slice(0, 5);
-  }, [filteredBooks]);
-
-  const authors = useMemo(() => {
-    const unique = new Set<string>();
-    filteredBooks.forEach((book) => {
-      if (book.author.trim().length > 0) {
-        unique.add(book.author.trim());
-      }
-    });
-    return Array.from(unique).slice(0, 12);
   }, [filteredBooks]);
 
   return (
@@ -233,22 +244,46 @@ export function HomeView({ books, sessionUser }: HomeViewProps) {
                 {authors.length} Terpilih
               </span>
             </div>
-            <div className="-mx-2 flex gap-3 overflow-x-auto pb-2">
-              {authors.length === 0 ? (
-                <div className="mx-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/70">
-                  Penulis belum tersedia untuk pilihan ini.
-                </div>
-              ) : (
-                authors.map((author) => (
-                  <div
-                    key={`author-${author}`}
-                    className="mx-2 flex h-16 min-w-[6rem] items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-4 text-center text-xs font-semibold text-white/80 shadow-md shadow-black/10"
+          <div className="-mx-2 flex gap-3 overflow-x-auto pb-2">
+            {authors.length === 0 ? (
+              <div className="mx-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/70">
+                Penulis belum tersedia untuk pilihan ini.
+              </div>
+            ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setActiveAuthor(null)}
+                    aria-pressed={resolvedAuthor === null}
+                    className={`mx-2 flex h-16 min-w-[6rem] items-center justify-center rounded-2xl border px-4 text-center text-xs font-semibold transition ${
+                      resolvedAuthor === null
+                        ? "border-emerald-400/60 bg-emerald-400/15 text-emerald-100 shadow-md shadow-emerald-400/20"
+                        : "border-white/10 bg-white/5 text-white/70 hover:border-white/20 hover:text-white"
+                    }`}
                   >
-                    {author}
-                  </div>
-                ))
+                    Semua Penulis
+                  </button>
+                  {authors.map((author) => {
+                    const isActive = resolvedAuthor === author;
+                    return (
+                      <button
+                        type="button"
+                        key={`author-${author}`}
+                        onClick={() => setActiveAuthor(isActive ? null : author)}
+                        aria-pressed={isActive}
+                        className={`mx-2 flex h-16 min-w-[6rem] items-center justify-center rounded-2xl border px-4 text-center text-xs font-semibold transition ${
+                          isActive
+                            ? "border-emerald-400/60 bg-emerald-400/15 text-emerald-100 shadow-md shadow-emerald-400/20"
+                            : "border-white/10 bg-white/5 text-white/80 hover:border-white/20 hover:text-white"
+                        }`}
+                      >
+                        {author}
+                      </button>
+                    );
+                  })}
+                </>
               )}
-            </div>
+          </div>
           </div>
 
           <div className="space-y-4">

@@ -20,6 +20,34 @@ export default async function BookDetailPage(props: BookDetailPageProps) {
   const [book, sessionUser] = await Promise.all([
     prisma.book.findUnique({
       where: { id: bookId },
+      include: {
+        owner: {
+          select: {
+            id: true,
+            name: true,
+            phoneNumber: true,
+          },
+        },
+        borrower: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        requests: {
+          where: {
+            status: { in: ["PENDING", "APPROVED"] },
+          },
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          select: {
+            status: true,
+            requester: {
+              select: { name: true },
+            },
+          },
+        },
+      },
     }),
     getSessionUser(),
   ]);
@@ -42,6 +70,13 @@ export default async function BookDetailPage(props: BookDetailPageProps) {
         publishedYear: book.publishedYear ?? null,
         createdAt: book.createdAt.toISOString(),
         lendable: book.lendable,
+        status: book.status,
+        ownerName: book.owner?.name ?? "",
+        ownerPhone: book.owner?.phoneNumber ?? "",
+        borrowerName: book.borrower?.name ?? "",
+        dueDate: book.dueDate ? book.dueDate.toISOString() : null,
+        lastRequesterName: book.requests?.[0]?.requester.name ?? "",
+        lastRequestStatus: book.requests?.[0]?.status ?? undefined,
       }}
       sessionUser={sessionUser}
     />

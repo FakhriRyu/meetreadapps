@@ -27,20 +27,80 @@ type PinjamViewProps = {
   pageInfo: PageInfo;
 };
 
+const STATUS_META: Record<
+  Book["status"],
+  { label: string; badgeClass: string; helpText?: string }
+> = {
+  AVAILABLE: {
+    label: "Tersedia",
+    badgeClass: "bg-emerald-400/15 text-emerald-100 border border-emerald-300/40",
+  },
+  PENDING: {
+    label: "Menunggu Konfirmasi",
+    badgeClass: "bg-amber-300/20 text-amber-100 border border-amber-200/40",
+    helpText: "Permintaan sedang diproses oleh pemilik.",
+  },
+  RESERVED: {
+    label: "Dipesan",
+    badgeClass: "bg-sky-300/20 text-sky-100 border border-sky-200/40",
+    helpText: "Buku sudah dipesan oleh pengguna lain.",
+  },
+  BORROWED: {
+    label: "Sedang Dipinjam",
+    badgeClass: "bg-rose-400/25 text-rose-100 border border-rose-300/50",
+    helpText: "Menunggu pengembalian dari peminjam.",
+  },
+  UNAVAILABLE: {
+    label: "Tidak Dipinjamkan",
+    badgeClass: "bg-white/10 text-white/60 border border-white/10",
+    helpText: "Pemilik sedang menonaktifkan peminjaman.",
+  },
+};
+
 export function PinjamView({ books, sessionUser, pageInfo }: PinjamViewProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const [search, setSearch] = useState(pageInfo.query);
+  const [requestingId, setRequestingId] = useState<number | null>(null);
+  const [feedback, setFeedback] = useState<string | null>(null);
   const isAuthenticated = Boolean(sessionUser);
 
-  const handleBorrowClick = (bookId: number) => {
+  const handleBorrowClick = async (book: Book) => {
     if (!isAuthenticated) {
-      window.location.assign(`/login?from=pinjam&book=${bookId}`);
+      window.location.assign(`/login?from=pinjam&book=${book.id}`);
       return;
     }
 
-    alert(`Fitur peminjaman sedang dikembangkan. Buku ID: ${bookId}`);
+    if (book.status !== "AVAILABLE") {
+      setFeedback("Buku sedang tidak tersedia untuk dipinjam.");
+      return;
+    }
+
+    try {
+      setRequestingId(book.id);
+      setFeedback(null);
+      const response = await fetch("/api/borrow/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookId: book.id }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error ?? "Gagal mengajukan peminjaman.");
+      }
+
+      if (result.data?.whatsappUrl) {
+        window.open(result.data.whatsappUrl, "_blank", "noopener");
+      }
+
+      setFeedback("Permintaan peminjaman dikirim. Silakan lanjutkan percakapan lewat WhatsApp.");
+      router.refresh();
+    } catch (error) {
+      setFeedback(error instanceof Error ? error.message : "Gagal mengajukan peminjaman.");
+    } finally {
+      setRequestingId(null);
+    }
   };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -94,7 +154,7 @@ export function PinjamView({ books, sessionUser, pageInfo }: PinjamViewProps) {
         <input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
-          placeholder="Cari apa?"
+          placeholder="Cari judul, kategori, atau penulis…"
           className="w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 pr-28 text-sm text-white placeholder-white/60 focus:border-white/30 focus:outline-none"
         />
         <div className="absolute inset-y-0 right-0 flex items-center gap-2 pr-4">
@@ -120,6 +180,11 @@ export function PinjamView({ books, sessionUser, pageInfo }: PinjamViewProps) {
           </button>
         </div>
       </form>
+      {feedback && (
+        <div className="mt-4 rounded-3xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white/80">
+          {feedback}
+        </div>
+      )}
 
       <section className="relative mt-8 space-y-4">
         <header className="flex items-center justify-between">
@@ -127,7 +192,7 @@ export function PinjamView({ books, sessionUser, pageInfo }: PinjamViewProps) {
             Semua Buku
           </h3>
           <span className="text-xs text-white/50">
-            Halaman {pageInfo.currentPage} dari {pageInfo.totalPages}
+            Halaman {pageInfo.currentPage} dari {pageInfo.totalPages} • Total {pageInfo.totalCount} buku
           </span>
         </header>
 
@@ -163,11 +228,9 @@ export function PinjamView({ books, sessionUser, pageInfo }: PinjamViewProps) {
                     <div className="flex flex-wrap items-center gap-2">
                       <h4 className="text-base font-semibold text-white group-hover:text-emerald-200">{book.title}</h4>
                       <span
-                        className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                          book.availableCopies > 0 ? "bg-emerald-400/20 text-emerald-100" : "bg-white/10 text-white/60"
-                        }`}
+                        className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_META[book.status].badgeClass}`}
                       >
-                        {book.availableCopies > 0 ? "Tersedia" : "Habis"}
+                        {STATUS_META[book.status].label}
                       </span>
                     </div>
                     <p className="text-xs text-white/60">
@@ -175,6 +238,21 @@ export function PinjamView({ books, sessionUser, pageInfo }: PinjamViewProps) {
                     </p>
                     {book.description && (
                       <p className="line-clamp-2 text-xs text-white/60">{book.description}</p>
+                    )}
+                    {book.status === "BORROWED" && book.dueDate && (
+                      <p className="text-xs text-white/60">
+                        Estimasi kembali:{" "}
+                        <strong className="text-white/80">
+                          {new Date(book.dueDate).toLocaleDateString("id-ID", {
+                            day: "numeric",
+                            month: "long",
+                            year: "numeric",
+                          })}
+                        </strong>
+                      </p>
+                    )}
+                    {STATUS_META[book.status].helpText && (
+                      <p className="text-xs text-white/50">{STATUS_META[book.status].helpText}</p>
                     )}
                   </div>
                   <div className="flex items-center justify-between text-xs text-white/60">
@@ -188,11 +266,12 @@ export function PinjamView({ books, sessionUser, pageInfo }: PinjamViewProps) {
                       type="button"
                       onClick={(event) => {
                         event.preventDefault();
-                        handleBorrowClick(book.id);
+                        handleBorrowClick(book);
                       }}
-                      className="rounded-full border border-emerald-300/60 px-4 py-2 font-semibold text-emerald-200 transition hover:border-emerald-200 hover:bg-emerald-400/20"
+                      disabled={book.status !== "AVAILABLE" || requestingId === book.id}
+                      className="rounded-full border border-emerald-300/60 px-4 py-2 font-semibold text-emerald-200 transition hover:border-emerald-200 hover:bg-emerald-400/20 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      Ajukan Pinjam
+                      {requestingId === book.id ? "Mengirim..." : "Ajukan Pinjam"}
                     </button>
                   </div>
                 </div>

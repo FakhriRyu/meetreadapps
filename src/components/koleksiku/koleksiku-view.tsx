@@ -104,6 +104,7 @@ export function KoleksikuView({ collections }: KoleksikuViewProps) {
         lendable: editingItem.lendable,
         totalCopies: editingItem.totalCopies,
         availableCopies: editingItem.availableCopies,
+        status: editingItem.status,
       }
     : undefined;
 

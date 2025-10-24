@@ -13,6 +13,36 @@ type CollectionListProps = {
 };
 
 export function CollectionList({ collections, onEdit, onDelete, deletingId }: CollectionListProps) {
+  const getStatusMeta = (book: Book) => {
+    const meta: Record<
+      Book["status"],
+      { label: string; badgeClass: string; description?: string }
+    > = {
+      AVAILABLE: {
+        label: "Tersedia",
+        badgeClass: "bg-emerald-400/20 text-emerald-100 border border-emerald-300/40",
+      },
+      PENDING: {
+        label: "Menunggu Konfirmasi",
+        badgeClass: "bg-amber-300/20 text-amber-100 border border-amber-200/40",
+      },
+      RESERVED: {
+        label: "Dipesan",
+        badgeClass: "bg-sky-300/20 text-sky-100 border border-sky-200/40",
+      },
+      BORROWED: {
+        label: "Sedang Dipinjam",
+        badgeClass: "bg-rose-400/20 text-rose-100 border border-rose-300/40",
+      },
+      UNAVAILABLE: {
+        label: "Tidak Dipinjamkan",
+        badgeClass: "bg-white/10 text-white/60 border border-white/10",
+      },
+    };
+
+    return meta[book.status];
+  };
+
   if (collections.length === 0) {
     return (
       <div className="rounded-3xl border border-white/10 bg-white/5 p-6 text-center text-sm text-white/70">
@@ -50,11 +80,9 @@ export function CollectionList({ collections, onEdit, onDelete, deletingId }: Co
                 <div className="flex items-center justify-between">
                   <p className="text-base font-semibold text-white">{book.title}</p>
                   <span
-                    className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                      book.lendable ? "bg-emerald-400/20 text-emerald-100" : "bg-white/10 text-white/60"
-                    }`}
+                    className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusMeta(book).badgeClass}`}
                   >
-                    {book.lendable ? "Siap Dipinjamkan" : "Tidak Dipinjamkan"}
+                    {getStatusMeta(book).label}
                   </span>
                 </div>
                 <p className="text-xs text-white/60">oleh {book.author}</p>
@@ -68,6 +96,18 @@ export function CollectionList({ collections, onEdit, onDelete, deletingId }: Co
                   Tersedia <strong className="text-white">{book.availableCopies}</strong> / {book.totalCopies}
                 </span>
               </div>
+              {book.status === "BORROWED" && book.dueDate && (
+                <p className="mt-2 text-xs text-white/60">
+                  Estimasi kembali:{" "}
+                  <strong className="text-white/80">
+                    {new Date(book.dueDate).toLocaleDateString("id-ID", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </strong>
+                </p>
+              )}
             </div>
             <div className="flex flex-col justify-center gap-2 text-xs">
               <button

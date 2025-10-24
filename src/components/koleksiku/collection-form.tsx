@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+
+type BookStatus = "AVAILABLE" | "PENDING" | "RESERVED" | "BORROWED" | "UNAVAILABLE";
 
 type CollectionFormProps = {
   onSubmit: (payload: CollectionPayload) => Promise<void>;
@@ -19,6 +21,7 @@ export type CollectionPayload = {
   lendable: boolean;
   totalCopies: number;
   availableCopies: number;
+  status?: BookStatus;
 };
 
 const emptyState: CollectionPayload = {
@@ -30,6 +33,7 @@ const emptyState: CollectionPayload = {
   lendable: true,
   totalCopies: 1,
   availableCopies: 1,
+  status: undefined,
 };
 
 const normalizeText = (value: string | null | undefined) => {
@@ -41,8 +45,21 @@ const normalizeText = (value: string | null | undefined) => {
 export function CollectionForm({ onSubmit, onClose, isSubmitting, initialData, submitLabel }: CollectionFormProps) {
   const [formState, setFormState] = useState<CollectionPayload>(initialData ?? emptyState);
   const [error, setError] = useState<string | null>(null);
+  const isEditing = Boolean(initialData);
 
-  const handleChange = (field: keyof CollectionPayload) => (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const statusOptions = useMemo(
+    () => [
+      { value: "AVAILABLE", label: "Tersedia" },
+      { value: "PENDING", label: "Menunggu Konfirmasi" },
+      { value: "RESERVED", label: "Dipesan" },
+      { value: "BORROWED", label: "Sedang Dipinjam" },
+      { value: "UNAVAILABLE", label: "Tidak Dipinjamkan" },
+    ],
+    [],
+  );
+
+  const handleChange =
+    (field: keyof CollectionPayload) => (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const rawValue = event.target.value;
     if (event.target.type === "number") {
       const numericValue = rawValue === "" ? 0 : Number(rawValue);
@@ -72,6 +89,7 @@ export function CollectionForm({ onSubmit, onClose, isSubmitting, initialData, s
         category: normalizeText(formState.category),
         description: normalizeText(formState.description),
         coverImageUrl: normalizeText(formState.coverImageUrl),
+        status: formState.status,
       });
       setFormState(emptyState);
       onClose();
@@ -170,6 +188,23 @@ export function CollectionForm({ onSubmit, onClose, isSubmitting, initialData, s
         <div className="rounded-2xl border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
           {error}
         </div>
+      )}
+
+      {isEditing && (
+        <label className="block text-sm text-white/80">
+          Status Peminjaman
+          <select
+            value={formState.status ?? "AVAILABLE"}
+            onChange={handleChange("status")}
+            className="mt-2 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white focus:border-white/20 focus:outline-none"
+          >
+            {statusOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
       )}
 
       <div className="flex justify-end gap-3">

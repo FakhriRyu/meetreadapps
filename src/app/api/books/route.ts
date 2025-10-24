@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { BookFormSchema } from "@/lib/validators/book";
 import type { BookFormData } from "@/lib/validators/book";
-import { Prisma } from "@prisma/client";
+import { BookStatus, Prisma } from "@prisma/client";
 
 const toPrismaData = (payload: BookFormData) => ({
   title: payload.title,
@@ -18,6 +18,7 @@ const toPrismaData = (payload: BookFormData) => ({
       : payload.totalCopies,
   coverImageUrl: payload.coverImageUrl ?? null,
   description: payload.description ?? null,
+  status: (payload.availableCopies ?? payload.totalCopies) > 0 ? BookStatus.AVAILABLE : BookStatus.RESERVED,
 });
 
 export async function GET() {

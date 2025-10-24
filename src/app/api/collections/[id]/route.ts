@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
+import { BookStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,7 @@ const CollectionSchema = z.object({
   lendable: z.boolean(),
   totalCopies: z.number().int().min(1),
   availableCopies: z.number().int().min(0),
+  status: z.nativeEnum(BookStatus).optional(),
 });
 
 const isPrismaNotFoundError = (error: unknown): error is { code: string } => {
@@ -56,6 +58,25 @@ export async function PUT(
       );
     }
 
+    const current = await prisma.book.findFirst({
+      where: { id, ownerId: sessionUser.id },
+      select: { status: true },
+    });
+
+    if (!current) {
+      return NextResponse.json({ error: "Koleksi tidak ditemukan." }, { status: 404 });
+    }
+
+    const nextStatus =
+      data.status ??
+      (data.lendable === false
+        ? BookStatus.UNAVAILABLE
+        : current.status === BookStatus.BORROWED || current.status === BookStatus.PENDING
+          ? current.status
+          : data.availableCopies > 0
+            ? BookStatus.AVAILABLE
+            : BookStatus.RESERVED);
+
     const updated = await prisma.book.update({
       where: {
         id,
@@ -71,6 +92,7 @@ export async function PUT(
         totalCopies: data.totalCopies,
         availableCopies: data.availableCopies,
         source: "user",
+        status: nextStatus,
       },
     });
 

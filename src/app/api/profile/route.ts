@@ -13,10 +13,9 @@ const UpdateProfileSchema = z
     phoneNumber: z
       .string()
       .trim()
-      .min(6, "Nomor telepon minimal 6 digit")
-      .max(20, "Nomor telepon maksimal 20 digit")
-      .regex(/^[0-9+ ]+$/, "Nomor telepon hanya boleh berisi angka, spasi, atau tanda +")
-      .optional(),
+      .regex(/^62\d{8,15}$/, "Nomor telepon harus diawali 62 dan minimal 10 digit")
+      .optional()
+      .or(z.literal("")),
     profileImage: z
       .string()
       .trim()
@@ -37,7 +36,14 @@ export async function PUT(request: Request) {
 
   try {
     const body = await request.json();
-    const data = UpdateProfileSchema.parse(body);
+    const sanitized = {
+      ...body,
+      phoneNumber:
+        typeof body.phoneNumber === "string"
+          ? body.phoneNumber.replace(/\s+/g, "")
+          : body.phoneNumber,
+    };
+    const data = UpdateProfileSchema.parse(sanitized);
 
     const updateData: {
       name?: string;

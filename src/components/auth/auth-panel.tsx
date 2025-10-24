@@ -12,6 +12,7 @@ type AuthPanelProps = {
 type FormState = {
   name: string;
   email: string;
+  phoneNumber: string;
   password: string;
   confirmPassword: string;
 };
@@ -19,6 +20,7 @@ type FormState = {
 const initialState: FormState = {
   name: "",
   email: "",
+  phoneNumber: "",
   password: "",
   confirmPassword: "",
 };
@@ -108,6 +110,7 @@ export function AuthPanel({ defaultMode }: AuthPanelProps) {
           body: JSON.stringify({
             name: formState.name.trim(),
             email: formState.email.trim(),
+            phoneNumber: formState.phoneNumber.trim(),
             password: formState.password,
           }),
         });
@@ -179,6 +182,22 @@ export function AuthPanel({ defaultMode }: AuthPanelProps) {
               value={formState.name}
               onChange={handleInputChange("name")}
               placeholder="Tuliskan nama lengkapmu"
+              className="mt-2 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white placeholder-white/60 focus:border-white/20 focus:outline-none"
+              required
+            />
+          </label>
+        )}
+        {mode === "register" && (
+          <label className="block text-sm text-white/80">
+            Nomor WhatsApp
+            <input
+              type="tel"
+              value={formState.phoneNumber}
+              onChange={handleInputChange("phoneNumber")}
+              placeholder="Contoh: 628123456789"
+              pattern="^62[0-9]{8,15}$"
+              title="Nomor telepon harus diawali 62 dan minimal 10 digit"
+              inputMode="numeric"
               className="mt-2 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white placeholder-white/60 focus:border-white/20 focus:outline-none"
               required
             />

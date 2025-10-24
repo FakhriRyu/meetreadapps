@@ -25,6 +25,11 @@ model Book {
   source          String   @default("library")
   ownerId         Int?
   owner           User?    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  status          BookStatus @default(AVAILABLE)
+  borrowerId      Int?
+  borrower        User?      @relation("Borrower", fields: [borrowerId], references: [id])
+  dueDate         DateTime?
+  requests        BorrowRequest[]
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
@@ -40,9 +45,40 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   books        Book[]
+  borrowed     Book[]          @relation("Borrower")
+  borrowRequests BorrowRequest[]
 }
 
 enum UserRole {
   USER
   ADMIN
+}
+
+enum BookStatus {
+  AVAILABLE
+  PENDING
+  RESERVED
+  BORROWED
+  UNAVAILABLE
+}
+
+model BorrowRequest {
+  id          Int                  @id @default(autoincrement())
+  bookId      Int
+  requesterId Int
+  status      BorrowRequestStatus  @default(PENDING)
+  message     String?
+  whatsappUrl String?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  book      Book @relation(fields: [bookId], references: [id])
+  requester User @relation(fields: [requesterId], references: [id])
+}
+
+enum BorrowRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
 }

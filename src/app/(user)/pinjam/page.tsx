@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { PinjamView } from "@/components/user/pinjam-view";
+import { Prisma } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -21,22 +22,18 @@ export default async function PinjamPage(props: PinjamPageProps) {
 
   const query = (searchParams.query ?? "").trim().toLowerCase();
 
-  const whereClause = {
-    OR: [{ ownerId: null }, { lendable: true }],
+  const whereClause: Prisma.BookWhereInput = {
+    status: { not: "UNAVAILABLE" },
     ...(query.length > 0
       ? {
-          AND: [
-            {
-              OR: [
-                { title: { contains: query, mode: "insensitive" } },
-                { author: { contains: query, mode: "insensitive" } },
-                { category: { contains: query, mode: "insensitive" } },
-              ],
-            },
+          OR: [
+            { title: { contains: query, mode: "insensitive" } },
+            { author: { contains: query, mode: "insensitive" } },
+            { category: { contains: query, mode: "insensitive" } },
           ],
         }
-      : {}),
-  } as const;
+      : undefined),
+  };
 
   const pageSize = 10;
   const [totalCount, books] = await Promise.all([

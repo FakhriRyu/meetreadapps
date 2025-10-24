@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 type DetailBook = {
@@ -16,6 +16,13 @@ type DetailBook = {
   publishedYear: number | null;
   createdAt: string;
   lendable: boolean;
+  status: "AVAILABLE" | "PENDING" | "RESERVED" | "BORROWED" | "UNAVAILABLE";
+  ownerName: string;
+  ownerPhone: string;
+  borrowerName: string;
+  dueDate: string | null;
+  lastRequesterName: string;
+  lastRequestStatus?: "PENDING" | "APPROVED";
 };
 
 type SessionUser = {
@@ -34,6 +41,8 @@ type BookDetailViewProps = {
 export function BookDetailView({ book, sessionUser }: BookDetailViewProps) {
   const router = useRouter();
   const isAuthenticated = Boolean(sessionUser);
+  const [isSubmitting, setSubmitting] = useState(false);
+  const [feedback, setFeedback] = useState<string | null>(null);
   const copiesSummary = useMemo(() => {
     const borrowed = book.totalCopies - book.availableCopies;
     return {
@@ -45,20 +54,114 @@ export function BookDetailView({ book, sessionUser }: BookDetailViewProps) {
     };
   }, [book.availableCopies, book.totalCopies]);
 
-  const handleBorrow = () => {
+  const borrowerInfo = useMemo(() => {
+    if (book.borrowerName) {
+      return {
+        label: `Sedang dipinjam oleh ${book.borrowerName}`,
+        due: book.dueDate
+          ? new Date(book.dueDate).toLocaleDateString("id-ID", {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })
+          : null,
+      };
+    }
+
+    if (book.lastRequesterName && book.lastRequestStatus === "PENDING") {
+      return {
+        label: `Menunggu konfirmasi dari ${book.lastRequesterName}`,
+        due: null,
+      };
+    }
+
+    if (book.lastRequesterName && book.lastRequestStatus === "APPROVED") {
+      return {
+        label: `Permintaan atas nama ${book.lastRequesterName} telah disetujui`,
+        due: book.dueDate
+          ? new Date(book.dueDate).toLocaleDateString("id-ID", {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })
+          : null,
+      };
+    }
+
+    return null;
+  }, [book.borrowerName, book.dueDate, book.lastRequesterName, book.lastRequestStatus]);
+
+  const handleBorrow = async () => {
     if (!isAuthenticated) {
       router.push(`/login?from=pinjam&book=${book.id}`);
       return;
     }
 
-    if (!book.lendable || book.availableCopies <= 0) {
-      window.alert("Buku ini belum tersedia untuk dipinjam saat ini.");
+    if (!book.lendable || book.status !== "AVAILABLE") {
+      if (borrowerInfo) {
+        setFeedback(borrowerInfo.due ? `${borrowerInfo.label} hingga ${borrowerInfo.due}.` : borrowerInfo.label);
+      } else if (book.lastRequesterName) {
+        setFeedback(`Permintaan peminjaman sedang diproses untuk ${book.lastRequesterName}.`);
+      } else {
+        setFeedback("Buku ini belum tersedia untuk dipinjam saat ini.");
+      }
       return;
     }
 
-    window.alert(
-      "Fitur peminjaman akan segera hadir. Silakan hubungi petugas perpustakaan untuk meminjam buku ini.",
-    );
+    try {
+      setSubmitting(true);
+      setFeedback(null);
+      const response = await fetch("/api/borrow/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookId: book.id }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error ?? "Gagal mengajukan peminjaman.");
+      }
+
+      if (result.data?.whatsappUrl) {
+        window.open(result.data.whatsappUrl, "_blank", "noopener");
+      }
+
+      setFeedback("Permintaan peminjaman dikirim. Silakan lanjutkan percakapan lewat WhatsApp.");
+      router.refresh();
+    } catch (error) {
+      setFeedback(error instanceof Error ? error.message : "Gagal mengajukan peminjaman.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const statusMeta: Record<
+    DetailBook["status"],
+    { label: string; badgeClass: string; helpText?: string }
+  > = {
+    AVAILABLE: {
+      label: "Tersedia",
+      badgeClass: "bg-emerald-400/15 text-emerald-100 border border-emerald-300/40",
+    },
+    PENDING: {
+      label: "Menunggu Konfirmasi",
+      badgeClass: "bg-amber-300/20 text-amber-100 border border-amber-200/40",
+      helpText: "Permintaan sedang diproses oleh pemilik.",
+    },
+    RESERVED: {
+      label: "Dipesan",
+      badgeClass: "bg-sky-300/20 text-sky-100 border border-sky-200/40",
+      helpText: "Buku sudah dipesan oleh pengguna lain.",
+    },
+    BORROWED: {
+      label: "Sedang Dipinjam",
+      badgeClass: "bg-rose-400/25 text-rose-100 border border-rose-300/50",
+      helpText: "Menunggu pengembalian dari peminjam.",
+    },
+    UNAVAILABLE: {
+      label: "Tidak Dipinjamkan",
+      badgeClass: "bg-white/10 text-white/60 border border-white/10",
+      helpText: "Pemilik sedang menonaktifkan peminjaman.",
+    },
   };
 
   return (
@@ -115,7 +218,13 @@ export function BookDetailView({ book, sessionUser }: BookDetailViewProps) {
                   value={`${book.availableCopies} buku`}
                   variant={book.availableCopies > 0 ? "success" : "danger"}
                 />
+                <DetailBadge label="Status" value={statusMeta[book.status].label} />
               </div>
+              {statusMeta[book.status].helpText && (
+                <p className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-xs text-white/60">
+                  {statusMeta[book.status].helpText}
+                </p>
+              )}
             </div>
           </div>
 
@@ -144,25 +253,23 @@ export function BookDetailView({ book, sessionUser }: BookDetailViewProps) {
               </h2>
               <ul className="mt-3 space-y-2 text-sm text-white/70">
                 <li>
-                  <span className="text-white/50">Ditambahkan:</span>{" "}
-                  {new Date(book.createdAt).toLocaleDateString("id-ID", {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  })}
-                </li>
-                <li>
                   <span className="text-white/50">Status peminjaman:</span>{" "}
-                  {book.lendable ? (book.availableCopies > 0 ? "Bisa dipinjam" : "Menunggu pengembalian") : "Tidak dapat dipinjam"}
+                  {statusMeta[book.status].label}
                 </li>
-                {sessionUser ? (
+                {book.ownerName && (
                   <li>
-                    <span className="text-white/50">Login sebagai:</span>{" "}
-                    {sessionUser.name}
+                    <span className="text-white/50">Pemilik:</span> {book.ownerName}
                   </li>
-                ) : (
-                  <li className="text-emerald-200/80">
-                    Masuk untuk mengajukan peminjaman buku.
+                )}
+                {!borrowerInfo && book.status === "BORROWED" && (
+                  <li>
+                    <span className="text-white/50">Peminjam:</span>{" "}
+                    <span className="text-white/70">Belum dicatat.</span>
+                  </li>
+                )}
+                {borrowerInfo && (
+                  <li>
+                    <span className="text-white/50">Peminjam:</span> {borrowerInfo.due ? `${borrowerInfo.label} (hingga ${borrowerInfo.due})` : borrowerInfo.label}
                   </li>
                 )}
               </ul>
@@ -180,12 +287,23 @@ export function BookDetailView({ book, sessionUser }: BookDetailViewProps) {
         <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 h-40 bg-gradient-to-t from-slate-950 via-slate-950/95 to-transparent" />
 
         <div className="fixed inset-x-0 bottom-0 z-30 mx-auto max-w-3xl px-6 pb-8">
+          {feedback && (
+            <div className="mb-4 rounded-3xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white/80">
+              {feedback}
+            </div>
+          )}
           <button
             type="button"
             onClick={handleBorrow}
-            className="w-full rounded-full bg-gradient-to-r from-emerald-400 to-sky-400 px-6 py-4 text-sm font-semibold uppercase tracking-widest text-emerald-950 shadow-lg shadow-emerald-400/30 transition hover:from-emerald-300 hover:to-sky-300"
+            disabled={
+              isSubmitting ||
+              !book.lendable ||
+              book.status !== "AVAILABLE" ||
+              !book.ownerPhone
+            }
+            className="w-full rounded-full bg-gradient-to-r from-emerald-400 to-sky-400 px-6 py-4 text-sm font-semibold uppercase tracking-widest text-emerald-950 shadow-lg shadow-emerald-400/30 transition hover:from-emerald-300 hover:to-sky-300 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Ajukan Pinjam
+            {isSubmitting ? "Mengirim..." : book.ownerPhone ? "Ajukan Pinjam" : "Pemilik belum menambahkan WhatsApp"}
           </button>
         </div>
       </main>

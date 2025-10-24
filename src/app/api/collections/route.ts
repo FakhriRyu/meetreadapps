@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
+import { BookStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,7 @@ const CollectionSchema = z.object({
   lendable: z.boolean().default(true),
   totalCopies: z.number().int().min(1),
   availableCopies: z.number().int().min(0),
+  status: z.nativeEnum(BookStatus).optional(),
 });
 
 export async function POST(request: Request) {
@@ -36,6 +38,13 @@ export async function POST(request: Request) {
     }
 
     const normalizedCover = data.coverImageUrl?.trim();
+    const status =
+      data.status ??
+      (data.lendable === false
+        ? BookStatus.UNAVAILABLE
+        : data.availableCopies > 0
+          ? BookStatus.AVAILABLE
+          : BookStatus.RESERVED);
 
     const created = await prisma.book.create({
       data: {
@@ -49,6 +58,7 @@ export async function POST(request: Request) {
         availableCopies: data.availableCopies,
         ownerId: sessionUser.id,
         source: "user",
+        status,
       },
     });
 
