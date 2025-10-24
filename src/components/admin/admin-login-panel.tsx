@@ -51,7 +51,7 @@ export function AdminLoginPanel() {
           Gunakan kredensial admin untuk mengelola katalog buku dan data pengguna.
         </p>
         <div className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-xs text-white/70">
-          Default: <span className="font-semibold text-white">admin@meetread.com / admin</span>
+          {/* Default: <span className="font-semibold text-white">admin@meetread.com / admin</span> */}
         </div>
       </div>
 

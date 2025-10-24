@@ -18,6 +18,8 @@ export async function getSessionUser() {
       id: true,
       name: true,
       email: true,
+      phoneNumber: true,
+      profileImage: true,
       role: true,
       createdAt: true,
     },
@@ -31,6 +33,8 @@ export async function getSessionUser() {
     id: user.id,
     name: user.name,
     email: user.email,
+    phoneNumber: user.phoneNumber,
+    profileImage: user.profileImage,
     role: user.role,
     joinedAt: user.createdAt,
   };

@@ -46,12 +46,16 @@ async function main() {
       name: "Administrator",
       passwordHash: adminPasswordHash,
       role: "ADMIN",
+      phoneNumber: "+62 812 0000 1111",
+      profileImage: "https://i.pravatar.cc/300?u=meetread-admin",
     },
     create: {
       name: "Administrator",
       email: adminEmail,
       passwordHash: adminPasswordHash,
       role: "ADMIN",
+      phoneNumber: "+62 812 0000 1111",
+      profileImage: "https://i.pravatar.cc/300?u=meetread-admin",
     },
   });
 

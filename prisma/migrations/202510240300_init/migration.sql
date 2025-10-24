@@ -24,6 +24,8 @@ CREATE TABLE "User" (
     "name" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "passwordHash" TEXT NOT NULL,
+    "phoneNumber" TEXT,
+    "profileImage" TEXT,
     "role" TEXT NOT NULL DEFAULT 'USER',
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL
@@ -34,3 +36,4 @@ CREATE UNIQUE INDEX "Book_isbn_key" ON "Book"("isbn");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+
