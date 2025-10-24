@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo } from "react";
 import type { Book } from "@prisma/client";
 
@@ -64,6 +65,13 @@ export function PinjamView({ books, sessionUser }: PinjamViewProps) {
                 <div>
                   <p className="text-sm font-semibold text-white">{book.title}</p>
                   <p className="text-xs text-white/60">oleh {book.author}</p>
+                  <Link
+                    href={`/books/${book.id}`}
+                    className="mt-2 inline-flex items-center gap-2 text-xs font-semibold text-emerald-300 underline-offset-2 transition hover:text-emerald-200 hover:underline"
+                  >
+                    Lihat Detail
+                    <span aria-hidden>→</span>
+                  </Link>
                 </div>
                 <button
                   type="button"

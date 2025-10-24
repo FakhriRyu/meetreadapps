@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { Book } from "@prisma/client";
 
@@ -100,9 +101,10 @@ export function HomeView({ books, sessionUser }: HomeViewProps) {
                 </div>
               ) : (
                 filteredBooks.map((book) => (
-                  <article
+                  <Link
                     key={book.id}
-                    className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-5 shadow-lg shadow-black/10"
+                    href={`/books/${book.id}`}
+                    className="group relative block overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-5 shadow-lg shadow-black/10 transition hover:border-white/20 hover:bg-white/10"
                   >
                     <div className="flex gap-4">
                       <div className="relative h-24 w-16 flex-shrink-0 overflow-hidden rounded-2xl border border-white/10 bg-white/10">
@@ -142,7 +144,7 @@ export function HomeView({ books, sessionUser }: HomeViewProps) {
                         </div>
                       </div>
                     </div>
-                  </article>
+                  </Link>
                 ))
               )}
             </div>
