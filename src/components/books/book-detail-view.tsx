@@ -57,7 +57,7 @@ export function BookDetailView({ book, sessionUser }: BookDetailViewProps) {
   const borrowerInfo = useMemo(() => {
     if (book.borrowerName) {
       return {
-        label: `Sedang dipinjam oleh ${book.borrowerName}`,
+        name: book.borrowerName,
         due: book.dueDate
           ? new Date(book.dueDate).toLocaleDateString("id-ID", {
               day: "numeric",
@@ -68,28 +68,15 @@ export function BookDetailView({ book, sessionUser }: BookDetailViewProps) {
       };
     }
 
-    if (book.lastRequesterName && book.lastRequestStatus === "PENDING") {
+    if (book.lastRequesterName) {
       return {
-        label: `Menunggu konfirmasi dari ${book.lastRequesterName}`,
+        name: book.lastRequesterName,
         due: null,
       };
     }
 
-    if (book.lastRequesterName && book.lastRequestStatus === "APPROVED") {
-      return {
-        label: `Permintaan atas nama ${book.lastRequesterName} telah disetujui`,
-        due: book.dueDate
-          ? new Date(book.dueDate).toLocaleDateString("id-ID", {
-              day: "numeric",
-              month: "long",
-              year: "numeric",
-            })
-          : null,
-      };
-    }
-
     return null;
-  }, [book.borrowerName, book.dueDate, book.lastRequesterName, book.lastRequestStatus]);
+  }, [book.borrowerName, book.dueDate, book.lastRequesterName]);
 
   const handleBorrow = async () => {
     if (!isAuthenticated) {
@@ -99,7 +86,11 @@ export function BookDetailView({ book, sessionUser }: BookDetailViewProps) {
 
     if (!book.lendable || book.status !== "AVAILABLE") {
       if (borrowerInfo) {
-        setFeedback(borrowerInfo.due ? `${borrowerInfo.label} hingga ${borrowerInfo.due}.` : borrowerInfo.label);
+        setFeedback(
+          borrowerInfo.due
+            ? `Buku ini sedang diproses oleh ${borrowerInfo.name} hingga ${borrowerInfo.due}.`
+            : `Buku ini sedang diproses oleh ${borrowerInfo.name}.`,
+        );
       } else if (book.lastRequesterName) {
         setFeedback(`Permintaan peminjaman sedang diproses untuk ${book.lastRequesterName}.`);
       } else {
@@ -252,10 +243,6 @@ export function BookDetailView({ book, sessionUser }: BookDetailViewProps) {
                 Informasi
               </h2>
               <ul className="mt-3 space-y-2 text-sm text-white/70">
-                <li>
-                  <span className="text-white/50">Status peminjaman:</span>{" "}
-                  {statusMeta[book.status].label}
-                </li>
                 {book.ownerName && (
                   <li>
                     <span className="text-white/50">Pemilik:</span> {book.ownerName}
@@ -269,7 +256,8 @@ export function BookDetailView({ book, sessionUser }: BookDetailViewProps) {
                 )}
                 {borrowerInfo && (
                   <li>
-                    <span className="text-white/50">Peminjam:</span> {borrowerInfo.due ? `${borrowerInfo.label} (hingga ${borrowerInfo.due})` : borrowerInfo.label}
+                    <span className="text-white/50">Peminjam:</span>{" "}
+                    {borrowerInfo.due ? `${borrowerInfo.name} (hingga ${borrowerInfo.due})` : borrowerInfo.name}
                   </li>
                 )}
               </ul>
