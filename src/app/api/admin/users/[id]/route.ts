@@ -1,0 +1,79 @@
+import { NextResponse } from "next/server";
+import { z } from "zod";
+
+import { prisma } from "@/lib/prisma";
+import { getSessionUser } from "@/lib/session";
+import { Prisma } from "@prisma/client";
+
+const UpdateUserSchema = z
+  .object({
+    name: z.string().trim().min(2, "Nama minimal 2 karakter").optional(),
+    email: z.string().trim().email("Email tidak valid").optional(),
+    role: z.enum(["USER", "ADMIN"]).optional(),
+  })
+  .refine((value) => Object.keys(value).length > 0, {
+    message: "Tidak ada perubahan yang diberikan.",
+  });
+
+type RouteParams = {
+  params: { id: string };
+};
+
+export async function PATCH(request: Request, { params }: RouteParams) {
+  const sessionUser = await getSessionUser();
+
+  if (!sessionUser || sessionUser.role !== "ADMIN") {
+    return NextResponse.json({ error: "Anda tidak memiliki akses." }, { status: 401 });
+  }
+
+  const userId = Number(params.id);
+  if (Number.isNaN(userId)) {
+    return NextResponse.json({ error: "ID pengguna tidak valid." }, { status: 400 });
+  }
+
+  try {
+    const json = await request.json();
+    const data = UpdateUserSchema.parse(json);
+
+    const updated = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(data.name ? { name: data.name } : {}),
+        ...(data.email ? { email: data.email.toLowerCase() } : {}),
+        ...(data.role ? { role: data.role } : {}),
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    return NextResponse.json({ data: updated });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: error.errors[0]?.message ?? "Data tidak valid." },
+        { status: 400 },
+      );
+    }
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P2002") {
+        return NextResponse.json(
+          { error: "Email sudah digunakan oleh pengguna lain." },
+          { status: 409 },
+        );
+      }
+    }
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
+      return NextResponse.json({ error: "Pengguna tidak ditemukan." }, { status: 404 });
+    }
+
+    return NextResponse.json({ error: "Gagal memperbarui data pengguna." }, { status: 500 });
+  }
+}

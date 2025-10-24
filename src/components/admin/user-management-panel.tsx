@@ -1,0 +1,313 @@
+"use client";
+
+import { useMemo, useState } from "react";
+
+export type ManagedUser = {
+  id: number;
+  name: string;
+  email: string;
+  role: "USER" | "ADMIN";
+  createdAt: string;
+  updatedAt: string;
+};
+
+type FormState = {
+  name: string;
+  email: string;
+  role: "USER" | "ADMIN";
+};
+
+type StatusState =
+  | { type: "success"; message: string }
+  | { type: "error"; message: string }
+  | null;
+
+type UserManagementPanelProps = {
+  initialUsers: ManagedUser[];
+};
+
+export function UserManagementPanel({ initialUsers }: UserManagementPanelProps) {
+  const [users, setUsers] = useState<ManagedUser[]>(initialUsers);
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState<StatusState>(null);
+  const [isModalOpen, setModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<ManagedUser | null>(null);
+  const [formState, setFormState] = useState<FormState>({
+    name: "",
+    email: "",
+    role: "USER",
+  });
+  const [isSubmitting, setSubmitting] = useState(false);
+
+  const overview = useMemo(() => {
+    const total = users.length;
+    const admin = users.filter((user) => user.role === "ADMIN").length;
+    const members = total - admin;
+    return { total, admin, members };
+  }, [users]);
+
+  const filteredUsers = useMemo(() => {
+    if (!search.trim()) {
+      return users;
+    }
+
+    const query = search.toLowerCase();
+    return users.filter((user) => {
+      return (
+        user.name.toLowerCase().includes(query) ||
+        user.email.toLowerCase().includes(query) ||
+        user.role.toLowerCase().includes(query)
+      );
+    });
+  }, [users, search]);
+
+  const openEditModal = (user: ManagedUser) => {
+    setEditingUser(user);
+    setFormState({
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    });
+    setStatus(null);
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setSubmitting(false);
+    setEditingUser(null);
+  };
+
+  const handleSubmit = async () => {
+    if (!editingUser) {
+      return;
+    }
+
+    const payload: Partial<FormState> = {};
+    if (formState.name.trim() !== editingUser.name) {
+      payload.name = formState.name.trim();
+    }
+    if (formState.email.trim() !== editingUser.email) {
+      payload.email = formState.email.trim();
+    }
+    if (formState.role !== editingUser.role) {
+      payload.role = formState.role;
+    }
+
+    if (Object.keys(payload).length === 0) {
+      setStatus({
+        type: "error",
+        message: "Tidak ada perubahan yang perlu disimpan.",
+      });
+      return;
+    }
+
+    setSubmitting(true);
+    setStatus(null);
+
+    try {
+      const response = await fetch(`/api/admin/users/${editingUser.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error ?? "Gagal memperbarui pengguna.");
+      }
+
+      const updated: ManagedUser = {
+        ...result.data,
+        createdAt: result.data.createdAt,
+        updatedAt: result.data.updatedAt,
+      };
+
+      setUsers((current) =>
+        current.map((user) => (user.id === updated.id ? updated : user)),
+      );
+
+      setStatus({
+        type: "success",
+        message: "Data pengguna berhasil diperbarui.",
+      });
+      setModalOpen(false);
+      setEditingUser(null);
+    } catch (error) {
+      setStatus({
+        type: "error",
+        message: error instanceof Error ? error.message : "Gagal memperbarui pengguna.",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const formatDate = (value: string) => {
+    const date = new Date(value);
+    return date.toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
+  return (
+    <div className="flex h-full flex-col gap-6">
+      <div className="grid gap-4 sm:grid-cols-3">
+        <div className="rounded-3xl border border-white/10 bg-white/10 p-5">
+          <p className="text-xs uppercase tracking-widest text-white/60">Total Pengguna</p>
+          <p className="mt-2 text-2xl font-semibold text-white">{overview.total}</p>
+          <p className="text-xs text-white/50">Termasuk pengguna dan admin.</p>
+        </div>
+        <div className="rounded-3xl border border-emerald-400/30 bg-emerald-400/10 p-5">
+          <p className="text-xs uppercase tracking-widest text-emerald-100/80">Admin Aktif</p>
+          <p className="mt-2 text-2xl font-semibold text-emerald-100">{overview.admin}</p>
+          <p className="text-xs text-emerald-100/70">Pengguna dengan akses penuh.</p>
+        </div>
+        <div className="rounded-3xl border border-sky-400/30 bg-sky-400/10 p-5">
+          <p className="text-xs uppercase tracking-widest text-sky-100/80">Member</p>
+          <p className="mt-2 text-2xl font-semibold text-sky-100">{overview.members}</p>
+          <p className="text-xs text-sky-100/70">Akun terdaftar reguler.</p>
+        </div>
+      </div>
+
+      <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-white">Daftar Pengguna</h2>
+            <p className="text-sm text-white/60">
+              Cari pengguna berdasarkan nama, email, atau peran.
+            </p>
+          </div>
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Cari pengguna…"
+            className="w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-2 text-sm text-white placeholder-white/50 focus:border-white/30 focus:outline-none sm:max-w-xs"
+          />
+        </div>
+
+        {status && (
+          <div
+            className={`mt-4 rounded-2xl border px-4 py-3 text-sm ${
+              status.type === "success"
+                ? "border-emerald-400/40 bg-emerald-400/10 text-emerald-100"
+                : "border-rose-400/40 bg-rose-400/10 text-rose-100"
+            }`}
+          >
+            {status.message}
+          </div>
+        )}
+
+        <div className="mt-4 space-y-3">
+          {filteredUsers.length === 0 ? (
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-5 text-center text-sm text-white/70">
+              Pengguna tidak ditemukan.
+            </div>
+          ) : (
+            filteredUsers.map((user) => (
+              <div
+                key={user.id}
+                className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-slate-900/60 p-5 text-sm text-white sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div>
+                  <p className="text-base font-semibold text-white">
+                    {user.name}
+                    <span className={`ml-2 rounded-full px-2 py-0.5 text-xs ${user.role === "ADMIN" ? "bg-emerald-400/20 text-emerald-100" : "bg-white/10 text-white/70"}`}>
+                      {user.role}
+                    </span>
+                  </p>
+                  <p className="text-xs text-white/60">{user.email}</p>
+                  <p className="mt-2 text-xs text-white/50">
+                    Bergabung {formatDate(user.createdAt)} &middot; Diperbarui {formatDate(user.updatedAt)}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => openEditModal(user)}
+                  className="inline-flex items-center justify-center rounded-full border border-white/20 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-white transition hover:border-emerald-300/60 hover:text-emerald-100"
+                >
+                  Edit Pengguna
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {isModalOpen && editingUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4 backdrop-blur">
+          <div className="w-full max-w-lg rounded-3xl border border-white/10 bg-slate-900/95 p-6 text-white shadow-2xl shadow-black/40">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">Edit Data Pengguna</h3>
+              <button
+                type="button"
+                onClick={closeModal}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 text-white/80 transition hover:bg-white/10"
+              >
+                ✕
+              </button>
+            </div>
+            <p className="mt-2 text-sm text-white/60">
+              Perbarui informasi akun atau tingkatkan peran pengguna.
+            </p>
+
+            <div className="mt-5 space-y-4">
+              <label className="block text-sm text-white/80">
+                Nama Lengkap
+                <input
+                  value={formState.name}
+                  onChange={(event) => setFormState((prev) => ({ ...prev, name: event.target.value }))}
+                  placeholder="Masukkan nama lengkap"
+                  className="mt-2 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white placeholder-white/60 focus:border-white/20 focus:outline-none"
+                />
+              </label>
+              <label className="block text-sm text-white/80">
+                Email
+                <input
+                  type="email"
+                  value={formState.email}
+                  onChange={(event) => setFormState((prev) => ({ ...prev, email: event.target.value }))}
+                  placeholder="contoh@email.com"
+                  className="mt-2 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white placeholder-white/60 focus:border-white/20 focus:outline-none"
+                />
+              </label>
+              <label className="block text-sm text-white/80">
+                Peran
+                <select
+                  value={formState.role}
+                  onChange={(event) =>
+                    setFormState((prev) => ({ ...prev, role: event.target.value as "USER" | "ADMIN" }))
+                  }
+                  className="mt-2 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white focus:border-white/20 focus:outline-none"
+                >
+                  <option value="USER">USER</option>
+                  <option value="ADMIN">ADMIN</option>
+                </select>
+              </label>
+            </div>
+
+            <div className="mt-6 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={closeModal}
+                className="rounded-full border border-white/20 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-white transition hover:border-white/40"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="rounded-full bg-gradient-to-r from-emerald-400 to-sky-400 px-5 py-2 text-xs font-semibold uppercase tracking-widest text-emerald-950 shadow-lg shadow-emerald-400/30 transition hover:from-emerald-300 hover:to-sky-300 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isSubmitting ? "Menyimpan..." : "Simpan Perubahan"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

@@ -2,21 +2,17 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
-import {
-  SESSION_COOKIE_NAME,
-  createSessionCookie,
-  verifyPassword,
-} from "@/lib/auth";
+import { SESSION_COOKIE_NAME, createSessionCookie, verifyPassword } from "@/lib/auth";
 
-const LoginSchema = z.object({
+const LoginAdminSchema = z.object({
   email: z.string().trim().email("Email tidak valid"),
-  password: z.string().min(8, "Kata sandi minimal 8 karakter"),
+  password: z.string().min(4, "Kata sandi minimal 4 karakter"),
 });
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const data = LoginSchema.parse(body);
+    const data = LoginAdminSchema.parse(body);
 
     const user = await prisma.user.findUnique({
       where: { email: data.email.toLowerCase() },
@@ -29,10 +25,10 @@ export async function POST(request: Request) {
       },
     });
 
-    if (!user) {
+    if (!user || user.role !== "ADMIN") {
       return NextResponse.json(
-        { error: "Email atau kata sandi salah." },
-        { status: 401 },
+        { error: "Akun admin tidak ditemukan atau tidak memiliki akses." },
+        { status: 403 },
       );
     }
 
@@ -79,6 +75,6 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json({ error: "Gagal masuk. Coba lagi nanti." }, { status: 500 });
+    return NextResponse.json({ error: "Gagal masuk sebagai admin. Coba lagi nanti." }, { status: 500 });
   }
 }

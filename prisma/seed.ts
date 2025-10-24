@@ -2,6 +2,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { PrismaClient } from "@prisma/client";
 
+import { hashPassword } from "../src/lib/auth";
+
 const normalizeSqliteUrl = (url: string | undefined) => {
   if (!url) return undefined;
   const prefix = "file:./";
@@ -35,6 +37,24 @@ ensureSqliteFile(process.env.DATABASE_URL);
 const prisma = new PrismaClient();
 
 async function main() {
+  const adminEmail = "admin@meetread.com";
+  const adminPasswordHash = await hashPassword("admin");
+
+  await prisma.user.upsert({
+    where: { email: adminEmail },
+    update: {
+      name: "Administrator",
+      passwordHash: adminPasswordHash,
+      role: "ADMIN",
+    },
+    create: {
+      name: "Administrator",
+      email: adminEmail,
+      passwordHash: adminPasswordHash,
+      role: "ADMIN",
+    },
+  });
+
   const books = [
     {
       title: "The Pragmatic Programmer",

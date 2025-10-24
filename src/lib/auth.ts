@@ -13,6 +13,7 @@ type SessionPayload = {
   userId: number;
   name: string;
   email: string;
+  role: "USER" | "ADMIN";
   iat: number;
   exp: number;
 };
@@ -21,6 +22,7 @@ export type SessionUser = {
   id: number;
   name: string;
   email: string;
+  role: "USER" | "ADMIN";
 };
 
 const getAuthSecret = () => process.env.AUTH_SECRET ?? "dev-super-secret-change-me";
@@ -80,6 +82,7 @@ const decodePayload = (token: string): SessionPayload | null => {
       typeof payload.userId !== "number" ||
       typeof payload.name !== "string" ||
       typeof payload.email !== "string" ||
+      (payload.role !== "USER" && payload.role !== "ADMIN") ||
       typeof payload.exp !== "number"
     ) {
       return null;
@@ -102,6 +105,7 @@ export const createSessionCookie = (user: SessionUser) => {
     userId: user.id,
     name: user.name,
     email: user.email,
+    role: user.role,
     iat: now,
     exp: now + SESSION_DURATION_SECONDS,
   };
@@ -127,6 +131,7 @@ export const parseSessionCookie = (token: string | undefined | null): SessionUse
     id: payload.userId,
     name: payload.name,
     email: payload.email,
+    role: payload.role,
   };
 };
 

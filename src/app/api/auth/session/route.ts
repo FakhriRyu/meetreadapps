@@ -20,6 +20,7 @@ export async function GET() {
       id: true,
       name: true,
       email: true,
+      role: true,
       createdAt: true,
     },
   });
@@ -33,6 +34,7 @@ export async function GET() {
       id: user.id,
       name: user.name,
       email: user.email,
+      role: user.role,
       joinedAt: user.createdAt,
     },
   });
