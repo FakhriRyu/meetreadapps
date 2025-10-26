@@ -69,6 +69,8 @@ model BorrowRequest {
   status      BorrowRequestStatus  @default(PENDING)
   message     String?
   whatsappUrl String?
+  ownerMessage   String?
+  ownerDecisionAt DateTime?
   createdAt   DateTime             @default(now())
   updatedAt   DateTime             @updatedAt
 
@@ -81,4 +83,5 @@ enum BorrowRequestStatus {
   APPROVED
   REJECTED
   CANCELLED
+  RETURNED
 }

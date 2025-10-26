@@ -13,10 +13,40 @@ export default async function KoleksikuPage() {
     redirect("/login?from=koleksiku");
   }
 
-  const collections = await prisma.book.findMany({
-    where: { ownerId: sessionUser.id },
-    orderBy: { createdAt: "desc" },
-  });
+  const [collections, requests] = await Promise.all([
+    prisma.book.findMany({
+      where: { ownerId: sessionUser.id },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.borrowRequest.findMany({
+      where: {
+        book: { ownerId: sessionUser.id },
+        status: { in: ["PENDING", "APPROVED"] },
+      },
+      orderBy: { createdAt: "desc" },
+      include: {
+        book: {
+          select: {
+            id: true,
+            title: true,
+            status: true,
+            dueDate: true,
+            availableCopies: true,
+            totalCopies: true,
+            lendable: true,
+          },
+        },
+        requester: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phoneNumber: true,
+          },
+        },
+      },
+    }),
+  ]);
 
-  return <KoleksikuView collections={collections} />;
+  return <KoleksikuView collections={collections} requests={requests} />;
 }

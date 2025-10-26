@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 
 type SessionUser = {
@@ -289,6 +290,19 @@ export function ProfilView({ sessionUser }: ProfilViewProps) {
                 </div>
               </div>
             </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Link
+              href="/permintaan"
+              className="flex items-center justify-between rounded-3xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white transition hover:border-emerald-300/60 hover:bg-white/10"
+            >
+              <div>
+                <p className="text-xs uppercase tracking-widest text-white/60">Permintaan Saya</p>
+                <p className="text-sm font-semibold text-white">Pantau status peminjaman</p>
+              </div>
+              <span className="text-lg text-white/60">→</span>
+            </Link>
           </div>
 
           <div className="grid gap-6 lg:grid-cols-2">
