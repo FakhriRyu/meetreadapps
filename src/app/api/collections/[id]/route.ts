@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
@@ -30,7 +30,7 @@ const isPrismaNotFoundError = (error: unknown): error is { code: string } => {
 };
 
 export async function PUT(
-  request: Request,
+  request: NextRequest,
   context: { params: Promise<{ id: string }> },
 ) {
   const sessionUser = await getSessionUser();
@@ -99,7 +99,7 @@ export async function PUT(
     return NextResponse.json({ data: updated });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors[0]?.message ?? "Data tidak valid" }, { status: 400 });
+      return NextResponse.json({ error: error.issues[0]?.message ?? "Data tidak valid" }, { status: 400 });
     }
 
     if (isPrismaNotFoundError(error)) {
@@ -111,7 +111,7 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: Request,
+  _request: NextRequest,
   context: { params: Promise<{ id: string }> },
 ) {
   const sessionUser = await getSessionUser();

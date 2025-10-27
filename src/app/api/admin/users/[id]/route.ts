@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
@@ -15,18 +15,19 @@ const UpdateUserSchema = z
     message: "Tidak ada perubahan yang diberikan.",
   });
 
-type RouteParams = {
-  params: { id: string };
+type RouteContext = {
+  params: Promise<{ id: string }>;
 };
 
-export async function PATCH(request: Request, { params }: RouteParams) {
+export async function PATCH(request: NextRequest, context: RouteContext) {
   const sessionUser = await getSessionUser();
 
   if (!sessionUser || sessionUser.role !== "ADMIN") {
     return NextResponse.json({ error: "Anda tidak memiliki akses." }, { status: 401 });
   }
 
-  const userId = Number(params.id);
+  const { id } = await context.params;
+  const userId = Number(id);
   if (Number.isNaN(userId)) {
     return NextResponse.json({ error: "ID pengguna tidak valid." }, { status: 400 });
   }
@@ -56,7 +57,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: error.errors[0]?.message ?? "Data tidak valid." },
+        { error: error.issues[0]?.message ?? "Data tidak valid." },
         { status: 400 },
       );
     }

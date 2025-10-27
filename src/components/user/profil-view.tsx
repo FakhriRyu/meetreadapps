@@ -18,6 +18,21 @@ type ProfilViewProps = {
   sessionUser: SessionUser | null;
 };
 
+type RequestSummaryEntry = {
+  id: number;
+  status: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED" | "RETURNED";
+  ownerMessage: string | null;
+  ownerDecisionAt: string | null;
+  createdAt: string;
+  book: {
+    id: number;
+    title: string;
+    coverImageUrl: string | null;
+    ownerName: string;
+    dueDate: string | null;
+  };
+};
+
 type StatusState =
   | { type: "success"; message: string }
   | { type: "error"; message: string }
@@ -58,6 +73,8 @@ export function ProfilView({ sessionUser }: ProfilViewProps) {
   });
   const [passwordStatus, setPasswordStatus] = useState<StatusState>(null);
   const [savingPassword, setSavingPassword] = useState(false);
+  const [requestSummary, setRequestSummary] = useState<RequestSummaryEntry[]>([]);
+  const [isRequestLoading, setRequestLoading] = useState(false);
 
   useEffect(() => {
     setProfileData({
@@ -74,6 +91,41 @@ export function ProfilView({ sessionUser }: ProfilViewProps) {
       profileImage: sessionUser?.profileImage ?? "",
     });
   }, [sessionUser?.id, sessionUser?.name, sessionUser?.email, sessionUser?.phoneNumber, sessionUser?.profileImage, sessionUser?.joinedAt]);
+
+  useEffect(() => {
+    if (!sessionUser) {
+      setRequestSummary([]);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    const fetchSummary = async () => {
+      try {
+        setRequestLoading(true);
+        const response = await fetch("/api/borrow/requests/me?limit=5", {
+          credentials: "include",
+          signal: controller.signal,
+        });
+        if (!response.ok) {
+          throw new Error("Gagal memuat permintaan.");
+        }
+        const data = (await response.json()) as { data?: RequestSummaryEntry[] };
+        const entries = data.data ?? [];
+        setRequestSummary(entries);
+
+      } catch (error) {
+        if (!(error instanceof DOMException && error.name === "AbortError")) {
+          // ignore fetch failure but keep UI fallback
+        }
+      } finally {
+        setRequestLoading(false);
+      }
+    };
+
+    fetchSummary();
+    return () => controller.abort();
+  }, [sessionUser?.id]);
 
   const isAuthenticated = Boolean(sessionUser);
 
@@ -305,6 +357,61 @@ export function ProfilView({ sessionUser }: ProfilViewProps) {
             </Link>
           </div>
 
+          <section className="rounded-3xl border border-white/10 bg-white/5 p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-xs uppercase tracking-widest text-white/60">Permintaan Terbaru</p>
+                <h2 className="text-lg font-semibold text-white">Status Pemantauan</h2>
+              </div>
+              <Link
+                href="/permintaan"
+                className="rounded-full border border-white/15 px-4 py-1 text-xs font-semibold text-white/70 transition hover:border-white/30 hover:bg-white/10"
+              >
+                Lihat semua →
+              </Link>
+            </div>
+            {isRequestLoading ? (
+              <div className="mt-4 grid gap-3">
+                {[0, 1, 2].map((item) => (
+                  <div
+                    key={`summary-skeleton-${item}`}
+                    className="animate-pulse rounded-2xl border border-white/5 bg-white/5 p-4"
+                  >
+                    <div className="h-4 w-1/3 rounded-full bg-white/10" />
+                    <div className="mt-3 h-3 w-2/3 rounded-full bg-white/10" />
+                    <div className="mt-2 h-3 w-1/2 rounded-full bg-white/5" />
+                  </div>
+                ))}
+              </div>
+            ) : requestSummary.length === 0 ? (
+              <p className="mt-4 text-sm text-white/70">
+                Belum ada permintaan. Ajukan peminjaman untuk melihat statusnya di sini.
+              </p>
+            ) : (
+              <div className="mt-4 space-y-3">
+                {requestSummary.slice(0, 3).map((request) => {
+                  const meta = getStatusMeta(request.status);
+                  return (
+                    <div
+                      key={`summary-${request.id}`}
+                      className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/80 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <div>
+                        <p className="text-base font-semibold text-white">{request.book.title}</p>
+                        <p className="text-xs text-white/60">
+                          {meta.label} • {formatDateLabel(request)}
+                        </p>
+                      </div>
+                      <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${meta.badgeClass}`}>
+                        {meta.label}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+
           <div className="grid gap-6 lg:grid-cols-2">
             <section className="rounded-3xl border border-white/10 bg-slate-900/95 p-6 shadow-xl shadow-black/30">
               <header className="space-y-1">
@@ -450,6 +557,52 @@ export function ProfilView({ sessionUser }: ProfilViewProps) {
     </div>
   );
 }
+
+const REQUEST_STATUS_META: Record<
+  RequestSummaryEntry["status"],
+  { label: string; badgeClass: string; defaultMessage: string }
+> = {
+  PENDING: {
+    label: "Menunggu Konfirmasi",
+    badgeClass: "bg-amber-300/20 text-amber-100 border border-amber-200/40",
+    defaultMessage: "Permintaanmu masih diproses oleh pemilik.",
+  },
+  APPROVED: {
+    label: "Disetujui",
+    badgeClass: "bg-emerald-400/20 text-emerald-100 border border-emerald-200/40",
+    defaultMessage: "Pemilik menyetujui permintaanmu. Segera hubungi untuk penjemputan.",
+  },
+  REJECTED: {
+    label: "Ditolak",
+    badgeClass: "bg-rose-400/20 text-rose-100 border border-rose-200/40",
+    defaultMessage: "Permintaanmu tidak dapat diproses.",
+  },
+  CANCELLED: {
+    label: "Dibatalkan",
+    badgeClass: "bg-white/10 text-white/70 border border-white/20",
+    defaultMessage: "Permintaan dibatalkan oleh sistem atau pemilik.",
+  },
+  RETURNED: {
+    label: "Selesai",
+    badgeClass: "bg-sky-400/20 text-sky-100 border border-sky-200/40",
+    defaultMessage: "Peminjaman sudah selesai. Terima kasih!",
+  },
+};
+
+const getStatusMeta = (status: RequestSummaryEntry["status"]) => REQUEST_STATUS_META[status];
+
+const formatDateLabel = (request: RequestSummaryEntry) => {
+  const reference = request.ownerDecisionAt ?? request.createdAt;
+  const date = new Date(reference);
+  if (Number.isNaN(date.getTime())) {
+    return "-";
+  }
+  return date.toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+};
 
 function StatusMessage({ status }: { status: StatusState }) {
   if (!status) return null;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactElement } from "react";
 import type { Book } from "@prisma/client";
 
 import { BookAdminPanel } from "@/components/books/book-admin-panel";
@@ -19,7 +19,7 @@ const sections: Array<{
   id: SectionKey;
   label: string;
   description: string;
-  icon: JSX.Element;
+  icon: ReactElement;
 }> = [
   {
     id: "books",

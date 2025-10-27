@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useMemo } from "react";
 
-import type { BorrowRequestStatus } from "@prisma/client";
+import type { BookStatus, BorrowRequestStatus } from "@prisma/client";
 
 type HistoryRequest = {
   id: number;
@@ -19,7 +19,7 @@ type HistoryRequest = {
     id: number;
     title: string;
     coverImageUrl: string | null;
-    status: BorrowRequestStatus;
+    status: BookStatus;
     dueDate: string | null;
     ownerName: string;
   };

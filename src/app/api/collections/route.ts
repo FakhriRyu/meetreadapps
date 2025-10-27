@@ -65,7 +65,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ data: created }, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors[0]?.message ?? "Data tidak valid" }, { status: 400 });
+      return NextResponse.json({ error: error.issues[0]?.message ?? "Data tidak valid" }, { status: 400 });
     }
 
     return NextResponse.json({ error: "Gagal menambahkan koleksi." }, { status: 500 });

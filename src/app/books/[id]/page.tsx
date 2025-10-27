@@ -56,6 +56,12 @@ export default async function BookDetailPage(props: BookDetailPageProps) {
     notFound();
   }
 
+  const lastRequest = book.requests?.[0] ?? null;
+  const lastRequestStatus =
+    lastRequest && (lastRequest.status === "PENDING" || lastRequest.status === "APPROVED")
+      ? lastRequest.status
+      : undefined;
+
   return (
     <BookDetailView
       book={{
@@ -76,7 +82,7 @@ export default async function BookDetailPage(props: BookDetailPageProps) {
         borrowerName: book.borrower?.name ?? "",
         dueDate: book.dueDate ? book.dueDate.toISOString() : null,
         lastRequesterName: book.requests?.[0]?.requester.name ?? "",
-        lastRequestStatus: book.requests?.[0]?.status ?? undefined,
+        lastRequestStatus,
       }}
       sessionUser={sessionUser}
     />

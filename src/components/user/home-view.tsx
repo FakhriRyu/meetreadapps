@@ -124,14 +124,14 @@ export function HomeView({ books, sessionUser }: HomeViewProps) {
             </button>
 
             <div className="flex items-center gap-3">
-              <button
-                type="button"
+              <Link
+                href="/notifikasi"
                 className="relative flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/10 text-white/70 transition hover:border-white/20 hover:bg-white/15"
                 aria-label="Notifikasi"
               >
                 <BellIcon />
                 <span className="absolute right-2 top-2 block h-1.5 w-1.5 rounded-full bg-rose-400" />
-              </button>
+              </Link>
               <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/10 text-sm font-semibold">
                 {(sessionUser?.name ?? "MeetRead")
                   .split(" ")

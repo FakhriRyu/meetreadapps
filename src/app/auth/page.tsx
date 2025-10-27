@@ -1,6 +1,15 @@
+import { Suspense } from "react";
+
 import { AuthPanel } from "@/components/auth/auth-panel";
 
-export default function AuthPage() {
+type AuthPageProps = {
+  searchParams: Promise<{ mode?: string }>;
+};
+
+export default async function AuthPage({ searchParams }: AuthPageProps) {
+  const params = await searchParams;
+  const defaultMode = params.mode === "register" ? "register" : "login";
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-slate-950 text-white">
       <div className="pointer-events-none absolute inset-0">
@@ -9,7 +18,9 @@ export default function AuthPage() {
         <div className="absolute -bottom-24 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-rose-500/10 blur-3xl" />
       </div>
       <main className="relative mx-auto flex min-h-screen w-full max-w-6xl items-center justify-center px-6 py-16">
-        <AuthPanel />
+        <Suspense fallback={null}>
+          <AuthPanel defaultMode={defaultMode} />
+        </Suspense>
       </main>
     </div>
   );

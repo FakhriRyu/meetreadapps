@@ -1,19 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 import { BookFormSchema } from "@/lib/validators/book";
 import type { BookFormData } from "@/lib/validators/book";
 import { BookStatus, Prisma } from "@prisma/client";
-
-async function unwrapParams(
-  params: { id: string } | Promise<{ id: string }>,
-): Promise<{ id: string }> {
-  if (typeof (params as Promise<{ id: string }> | { id: string }).then === "function") {
-    return params as Promise<{ id: string }>;
-  }
-
-  return params as { id: string };
-}
 
 const toPrismaData = (payload: BookFormData, currentStatus?: BookStatus) => ({
   title: payload.title,
@@ -26,7 +16,7 @@ const toPrismaData = (payload: BookFormData, currentStatus?: BookStatus) => ({
   coverImageUrl: payload.coverImageUrl ?? null,
   description: payload.description ?? null,
   status:
-    currentStatus && [BookStatus.BORROWED, BookStatus.PENDING].includes(currentStatus)
+    currentStatus === BookStatus.BORROWED || currentStatus === BookStatus.PENDING
       ? currentStatus
       : payload.availableCopies > 0
         ? BookStatus.AVAILABLE
@@ -42,13 +32,14 @@ const parseId = (id: string) => {
   return parsed;
 };
 
-export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } | Promise<{ id: string }> },
-) {
+type RouteContext = {
+  params: Promise<{ id: string }>;
+};
+
+export async function PUT(request: NextRequest, context: RouteContext) {
   try {
-    const resolvedParams = await unwrapParams(params);
-    const bookId = parseId(resolvedParams.id);
+    const { id } = await context.params;
+    const bookId = parseId(id);
     const json = await request.json();
     const data = BookFormSchema.parse(json);
 
@@ -93,13 +84,10 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
-  _request: Request,
-  { params }: { params: { id: string } | Promise<{ id: string }> },
-) {
+export async function DELETE(_request: NextRequest, context: RouteContext) {
   try {
-    const resolvedParams = await unwrapParams(params);
-    const bookId = parseId(resolvedParams.id);
+    const { id } = await context.params;
+    const bookId = parseId(id);
 
     await prisma.book.delete({ where: { id: bookId } });
 

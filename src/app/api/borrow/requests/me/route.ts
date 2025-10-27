@@ -1,20 +1,25 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const sessionUser = await getSessionUser();
 
   if (!sessionUser) {
     return NextResponse.json({ error: "Anda harus masuk terlebih dahulu." }, { status: 401 });
   }
 
+  const limitParam = request.nextUrl.searchParams.get("limit");
+  const limit = limitParam ? Number(limitParam) : undefined;
+  const take = Number.isFinite(limit) && limit && limit > 0 ? limit : undefined;
+
   const requests = await prisma.borrowRequest.findMany({
     where: { requesterId: sessionUser.id },
     orderBy: { createdAt: "desc" },
+    take,
     include: {
       book: {
         select: {

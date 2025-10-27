@@ -1,20 +1,18 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
-import { BookStatus, BorrowRequestStatus } from "@prisma/client";
+import { createBorrowNotification } from "@/lib/notifications";
+import { BookStatus, BorrowRequestStatus, NotificationType } from "@prisma/client";
 
 const ApproveSchema = z.object({
-  dueDate: z.coerce.date({
-    required_error: "Tanggal pengembalian wajib diisi.",
-    invalid_type_error: "Tanggal pengembalian tidak valid.",
-  }),
+  dueDate: z.coerce.date(),
   message: z.string().trim().max(500).optional(),
 });
 
-const parseParamsId = (params: { id: string }) => {
-  const parsed = Number(params.id);
+const parseRequestId = (rawId: string) => {
+  const parsed = Number(rawId);
   if (!Number.isFinite(parsed) || parsed <= 0) {
     throw new Error("ID permintaan tidak valid.");
   }
@@ -22,10 +20,10 @@ const parseParamsId = (params: { id: string }) => {
 };
 
 type RouteContext = {
-  params: { id: string } | Promise<{ id: string }>;
+  params: Promise<{ id: string }>;
 };
 
-export async function POST(request: Request, context: RouteContext) {
+export async function POST(request: NextRequest, context: RouteContext) {
   const sessionUser = await getSessionUser();
 
   if (!sessionUser) {
@@ -34,8 +32,8 @@ export async function POST(request: Request, context: RouteContext) {
 
   let requestId: number;
   try {
-    const resolvedParams = await context.params;
-    requestId = parseParamsId(resolvedParams);
+    const { id } = await context.params;
+    requestId = parseRequestId(id);
   } catch {
     return NextResponse.json({ error: "ID permintaan tidak valid." }, { status: 400 });
   }
@@ -119,6 +117,12 @@ export async function POST(request: Request, context: RouteContext) {
       });
     });
 
+    await createBorrowNotification({
+      requestId: borrowRequest.id,
+      type: NotificationType.APPROVED,
+      message: data.message ?? null,
+    });
+
     return NextResponse.json({
       data: {
         id: borrowRequest.id,
@@ -129,7 +133,7 @@ export async function POST(request: Request, context: RouteContext) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: error.errors[0]?.message ?? "Data tidak valid." },
+        { error: error.issues[0]?.message ?? "Data tidak valid." },
         { status: 400 },
       );
     }

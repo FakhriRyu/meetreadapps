@@ -27,9 +27,9 @@ export default async function PinjamPage(props: PinjamPageProps) {
     ...(query.length > 0
       ? {
           OR: [
-            { title: { contains: query, mode: "insensitive" } },
-            { author: { contains: query, mode: "insensitive" } },
-            { category: { contains: query, mode: "insensitive" } },
+            { title: { contains: query } },
+            { author: { contains: query } },
+            { category: { contains: query } },
           ],
         }
       : undefined),

@@ -7,7 +7,8 @@ import { SESSION_COOKIE_NAME, parseSessionCookie } from "@/lib/auth";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const token = cookies().get(SESSION_COOKIE_NAME)?.value;
+  const cookieStore = await cookies();
+  const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
   const session = parseSessionCookie(token ?? null);
 
   if (!session) {

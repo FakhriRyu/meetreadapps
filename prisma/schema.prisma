@@ -73,6 +73,7 @@ model BorrowRequest {
   ownerDecisionAt DateTime?
   createdAt   DateTime             @default(now())
   updatedAt   DateTime             @updatedAt
+  notifications BorrowNotification[]
 
   book      Book @relation(fields: [bookId], references: [id])
   requester User @relation(fields: [requesterId], references: [id])
@@ -83,5 +84,23 @@ enum BorrowRequestStatus {
   APPROVED
   REJECTED
   CANCELLED
+  RETURNED
+}
+
+model BorrowNotification {
+  id        Int               @id @default(autoincrement())
+  requestId Int
+  type      NotificationType
+  message   String?
+  createdAt DateTime          @default(now())
+
+  request BorrowRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+}
+
+enum NotificationType {
+  APPROVED
+  REJECTED
+  CANCELLED
+  EXTENDED
   RETURNED
 }

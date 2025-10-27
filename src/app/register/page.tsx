@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+
 import { AuthPanel } from "@/components/auth/auth-panel";
 
 export default function RegisterPage() {
@@ -9,7 +11,9 @@ export default function RegisterPage() {
         <div className="absolute -bottom-24 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-rose-500/10 blur-3xl" />
       </div>
       <main className="relative mx-auto flex min-h-screen w-full max-w-6xl items-center justify-center px-6 py-16">
-        <AuthPanel defaultMode="register" />
+        <Suspense fallback={null}>
+          <AuthPanel defaultMode="register" />
+        </Suspense>
       </main>
     </div>
   );

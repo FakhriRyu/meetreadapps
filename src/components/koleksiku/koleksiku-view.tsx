@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import type { Book, BorrowRequest, BorrowRequestStatus } from "@prisma/client";
+import { BorrowRequestStatus } from "@prisma/client";
+import type { Book, BorrowRequest } from "@prisma/client";
 
 import { CollectionForm, type CollectionPayload } from "./collection-form";
 import { CollectionList } from "./collection-list";
@@ -29,7 +30,10 @@ type ActionState =
   | { type: "approve"; request: RequestWithRelations }
   | { type: "reject"; request: RequestWithRelations }
   | { type: "complete"; request: RequestWithRelations }
+  | { type: "extend"; request: RequestWithRelations }
   | null;
+
+type ActionType = NonNullable<ActionState>["type"];
 
 const REQUEST_STATUS_META: Record<
   Extract<BorrowRequestStatus, "PENDING" | "APPROVED">,
@@ -160,12 +164,12 @@ export function KoleksikuView({ collections, requests }: KoleksikuViewProps) {
     setModalOpen(true);
   };
 
-  const openActionModal = (type: ActionState["type"], request: RequestWithRelations) => {
+  const openActionModal = (type: ActionType, request: RequestWithRelations) => {
     setActionState({ type, request });
     setActionMessage("");
     setActionError(null);
     setRequestFeedback(null);
-    if (type === "approve") {
+    if (type === "approve" || type === "extend") {
       const suggestedDate = request.book.dueDate
         ? formatDateInput(new Date(request.book.dueDate))
         : formatDateInput(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
@@ -203,7 +207,7 @@ export function KoleksikuView({ collections, requests }: KoleksikuViewProps) {
 
     const { request: targetRequest, type } = actionState;
     const payload: Record<string, unknown> = {};
-    if (type === "approve") {
+    if (type === "approve" || type === "extend") {
       if (!actionDueDate) {
         setActionError("Tanggal pengembalian wajib diisi.");
         return;
@@ -230,7 +234,7 @@ export function KoleksikuView({ collections, requests }: KoleksikuViewProps) {
       }
 
       if (type === "approve") {
-        const dueDateIso = new Date(actionDueDate).toISOString();
+        const dueDateValue = new Date(actionDueDate);
         setLoanRequests((prev) =>
           prev
             .filter((req) => req.book.id !== targetRequest.book.id || req.id === targetRequest.id)
@@ -239,7 +243,7 @@ export function KoleksikuView({ collections, requests }: KoleksikuViewProps) {
                 ? {
                     ...req,
                     status: "APPROVED",
-                    book: { ...req.book, status: "BORROWED", dueDate: dueDateIso },
+                    book: { ...req.book, status: "BORROWED", dueDate: dueDateValue },
                   }
                 : req,
             ),
@@ -251,7 +255,7 @@ export function KoleksikuView({ collections, requests }: KoleksikuViewProps) {
                   ...book,
                   status: "BORROWED",
                   borrowerId: targetRequest.requesterId,
-                  dueDate: new Date(dueDateIso),
+                  dueDate: dueDateValue,
                   availableCopies: Math.max(0, book.availableCopies - 1),
                 }
               : book,
@@ -293,6 +297,19 @@ export function KoleksikuView({ collections, requests }: KoleksikuViewProps) {
           }),
         );
         setRequestFeedback(`Permintaan untuk "${targetRequest.book.title}" ditolak.`);
+      } else if (type === "extend") {
+        const dueDateValue = new Date(actionDueDate);
+        setLoanRequests((prev) =>
+          prev.map((req) =>
+            req.id === targetRequest.id ? { ...req, book: { ...req.book, dueDate: dueDateValue } } : req,
+          ),
+        );
+        setItems((prev) =>
+          prev.map((book) =>
+            book.id === targetRequest.book.id ? { ...book, dueDate: dueDateValue } : book,
+          ),
+        );
+        setRequestFeedback(`Jatuh tempo "${targetRequest.book.title}" diperpanjang.`);
       } else {
         setLoanRequests((prev) => prev.filter((req) => req.id !== targetRequest.id));
         setItems((prev) =>
@@ -429,13 +446,22 @@ export function KoleksikuView({ collections, requests }: KoleksikuViewProps) {
                         </button>
                       </>
                     ) : (
-                      <button
-                        type="button"
-                        onClick={() => openActionModal("complete", request)}
-                        className="flex-1 rounded-full border border-white/20 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-white transition hover:border-emerald-200 hover:text-emerald-100 sm:flex-none sm:px-5"
-                      >
-                        Tandai Dikembalikan
-                      </button>
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => openActionModal("extend", request)}
+                          className="flex-1 rounded-full border border-emerald-300/60 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-emerald-100 transition hover:border-emerald-200 hover:bg-emerald-400/20 sm:flex-none sm:px-5"
+                        >
+                          Perpanjang Tempo
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openActionModal("complete", request)}
+                          className="flex-1 rounded-full border border-white/20 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-white transition hover:border-emerald-200 hover:text-emerald-100 sm:flex-none sm:px-5"
+                        >
+                          Tandai Dikembalikan
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
@@ -493,7 +519,9 @@ export function KoleksikuView({ collections, requests }: KoleksikuViewProps) {
                   ? "Setujui Permintaan"
                   : actionState.type === "reject"
                     ? "Tolak Permintaan"
-                    : "Tandai Pengembalian"}
+                    : actionState.type === "extend"
+                      ? "Perpanjang Jatuh Tempo"
+                      : "Tandai Pengembalian"}
               </h3>
               <button
                 type="button"
@@ -507,7 +535,7 @@ export function KoleksikuView({ collections, requests }: KoleksikuViewProps) {
               Buku: <span className="font-semibold text-white">{actionState.request.book.title}</span>
             </p>
             <form className="mt-5 space-y-4" onSubmit={handleActionSubmit}>
-              {actionState.type === "approve" && (
+              {(actionState.type === "approve" || actionState.type === "extend") && (
                 <label className="block text-sm text-white/80">
                   Tanggal Pengembalian
                   <input
@@ -530,7 +558,11 @@ export function KoleksikuView({ collections, requests }: KoleksikuViewProps) {
                   placeholder={
                     actionState.type === "approve"
                       ? "Beritahu peminjam instruksi tambahan."
-                      : "Berikan alasan penolakan atau catatan pengembalian."
+                      : actionState.type === "reject"
+                        ? "Berikan alasan penolakan."
+                        : actionState.type === "extend"
+                          ? "Sampaikan alasan perpanjangan atau info tambahan."
+                          : "Berikan catatan pengembalian."
                   }
                 />
               </label>

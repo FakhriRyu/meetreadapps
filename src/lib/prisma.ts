@@ -5,7 +5,8 @@ import path from "node:path";
 const normalizeSqliteUrl = (url: string | undefined) => {
   if (!url) return undefined;
   const prefix = "file:./";
-  if (!url.startsWith(prefix)) return url;
+  if (!url.startsWith("file:")) return url;
+  if (!url.startsWith(prefix)) return url.replace(/\\/g, "/");
 
   const relativePath = url.slice(prefix.length);
   const absolutePath = path.resolve(process.cwd(), relativePath);

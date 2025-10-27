@@ -4,14 +4,15 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { createBorrowNotification } from "@/lib/notifications";
-import { BookStatus, BorrowRequestStatus, NotificationType } from "@prisma/client";
+import { BorrowRequestStatus, NotificationType } from "@prisma/client";
 
-const RejectSchema = z.object({
+const ExtendSchema = z.object({
+  dueDate: z.coerce.date(),
   message: z.string().trim().max(500).optional(),
 });
 
-const parseRequestId = (rawId: string) => {
-  const parsed = Number(rawId);
+const parseId = (value: string) => {
+  const parsed = Number(value);
   if (!Number.isFinite(parsed) || parsed <= 0) {
     throw new Error("ID permintaan tidak valid.");
   }
@@ -32,14 +33,21 @@ export async function POST(request: NextRequest, context: RouteContext) {
   let requestId: number;
   try {
     const { id } = await context.params;
-    requestId = parseRequestId(id);
+    requestId = parseId(id);
   } catch {
     return NextResponse.json({ error: "ID permintaan tidak valid." }, { status: 400 });
   }
 
   try {
     const body = await request.json();
-    const data = RejectSchema.parse(body ?? {});
+    const data = ExtendSchema.parse(body);
+    const now = new Date();
+    if (data.dueDate <= now) {
+      return NextResponse.json(
+        { error: "Tanggal pengembalian baru harus setelah hari ini." },
+        { status: 400 },
+      );
+    }
 
     const borrowRequest = await prisma.borrowRequest.findUnique({
       where: { id: requestId },
@@ -48,75 +56,54 @@ export async function POST(request: NextRequest, context: RouteContext) {
           select: {
             id: true,
             ownerId: true,
-            lendable: true,
-            availableCopies: true,
-            totalCopies: true,
+            dueDate: true,
           },
         },
       },
     });
 
     if (!borrowRequest) {
-      return NextResponse.json({ error: "Permintaan peminjaman tidak ditemukan." }, { status: 404 });
+      return NextResponse.json({ error: "Permintaan tidak ditemukan." }, { status: 404 });
     }
 
     if (borrowRequest.book.ownerId !== sessionUser.id) {
       return NextResponse.json({ error: "Anda tidak memiliki akses ke permintaan ini." }, { status: 403 });
     }
 
-    if (borrowRequest.status !== BorrowRequestStatus.PENDING) {
+    if (borrowRequest.status !== BorrowRequestStatus.APPROVED) {
       return NextResponse.json(
-        { error: "Permintaan ini sudah diproses sebelumnya." },
+        { error: "Tanggal hanya dapat diperpanjang ketika buku sedang dipinjam." },
         { status: 400 },
       );
     }
 
-    const now = new Date();
-
     await prisma.$transaction(async (tx) => {
+      await tx.book.update({
+        where: { id: borrowRequest.book.id },
+        data: {
+          dueDate: data.dueDate,
+        },
+      });
+
       await tx.borrowRequest.update({
         where: { id: borrowRequest.id },
         data: {
-          status: BorrowRequestStatus.REJECTED,
+          ownerMessage: data.message ?? borrowRequest.ownerMessage,
           ownerDecisionAt: now,
-          ownerMessage: data.message ?? null,
         },
       });
-
-      const remainingPending = await tx.borrowRequest.count({
-        where: {
-          bookId: borrowRequest.book.id,
-          status: BorrowRequestStatus.PENDING,
-        },
-      });
-
-      if (remainingPending === 0) {
-        await tx.book.update({
-          where: { id: borrowRequest.book.id },
-          data: {
-            status:
-              borrowRequest.book.lendable === false
-                ? BookStatus.UNAVAILABLE
-                : borrowRequest.book.availableCopies > 0
-                  ? BookStatus.AVAILABLE
-                  : BookStatus.RESERVED,
-            borrowerId: null,
-            dueDate: null,
-          },
-        });
-      }
     });
 
     await createBorrowNotification({
       requestId: borrowRequest.id,
-      type: NotificationType.REJECTED,
+      type: NotificationType.EXTENDED,
       message: data.message ?? null,
     });
 
     return NextResponse.json({
       data: {
         id: borrowRequest.id,
-        status: BorrowRequestStatus.REJECTED,
+        dueDate: data.dueDate.toISOString(),
       },
     });
   } catch (error) {
@@ -127,6 +114,6 @@ export async function POST(request: NextRequest, context: RouteContext) {
       );
     }
 
-    return NextResponse.json({ error: "Gagal menolak permintaan." }, { status: 500 });
+    return NextResponse.json({ error: "Gagal memperpanjang peminjaman." }, { status: 500 });
   }
 }
