@@ -4,6 +4,8 @@ import Image from "next/image";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { formatDate, formatNumber } from "@/lib/intl-format";
+
 type DetailBook = {
   id: number;
   title: string;
@@ -58,13 +60,7 @@ export function BookDetailView({ book, sessionUser }: BookDetailViewProps) {
     if (book.borrowerName) {
       return {
         name: book.borrowerName,
-        due: book.dueDate
-          ? new Date(book.dueDate).toLocaleDateString("id-ID", {
-              day: "numeric",
-              month: "long",
-              year: "numeric",
-            })
-          : null,
+        due: book.dueDate ? formatDate(book.dueDate) : null,
       };
     }
 
@@ -200,13 +196,10 @@ export function BookDetailView({ book, sessionUser }: BookDetailViewProps) {
                 {book.publishedYear ? (
                   <DetailBadge label="Terbit" value={book.publishedYear.toString()} />
                 ) : null}
-                <DetailBadge
-                  label="Total Eksemplar"
-                  value={`${book.totalCopies}`}
-                />
+                <DetailBadge label="Total Eksemplar" value={formatNumber(book.totalCopies)} />
                 <DetailBadge
                   label="Tersedia"
-                  value={`${book.availableCopies} buku`}
+                  value={`${formatNumber(book.availableCopies)} buku`}
                   variant={book.availableCopies > 0 ? "success" : "danger"}
                 />
                 <DetailBadge label="Status" value={statusMeta[book.status].label} />
@@ -225,10 +218,10 @@ export function BookDetailView({ book, sessionUser }: BookDetailViewProps) {
                 Ketersediaan
               </h2>
               <p className="mt-3 text-2xl font-semibold text-white">
-                {book.availableCopies} / {book.totalCopies}
+                {formatNumber(book.availableCopies)} / {formatNumber(book.totalCopies)}
               </p>
               <p className="mt-1 text-xs text-white/60">
-                {copiesSummary.borrowed} buku sedang dipinjam
+                {formatNumber(copiesSummary.borrowed)} buku sedang dipinjam
               </p>
               <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-white/10">
                 <div

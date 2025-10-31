@@ -5,6 +5,8 @@ import Link from "next/link";
 
 import type { Book } from "@prisma/client";
 
+import { formatDate, formatNumber } from "@/lib/intl-format";
+
 type CollectionListProps = {
   collections: Book[];
   onEdit: (book: Book) => void;
@@ -93,19 +95,15 @@ export function CollectionList({ collections, onEdit, onDelete, deletingId }: Co
               <div className="mt-3 flex items-center justify-between text-xs text-white/70">
                 <span className="rounded-full bg-white/10 px-3 py-1">{book.category ?? "Umum"}</span>
                 <span>
-                  Tersedia <strong className="text-white">{book.availableCopies}</strong> / {book.totalCopies}
+                  Tersedia{" "}
+                  <strong className="text-white">{formatNumber(book.availableCopies)}</strong> /{" "}
+                  {formatNumber(book.totalCopies)}
                 </span>
               </div>
               {book.status === "BORROWED" && book.dueDate && (
                 <p className="mt-2 text-xs text-white/60">
                   Estimasi kembali:{" "}
-                  <strong className="text-white/80">
-                    {new Date(book.dueDate).toLocaleDateString("id-ID", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    })}
-                  </strong>
+                  <strong className="text-white/80">{formatDate(book.dueDate)}</strong>
                 </p>
               )}
             </div>

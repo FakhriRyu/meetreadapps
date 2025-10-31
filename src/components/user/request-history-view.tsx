@@ -6,6 +6,8 @@ import { useMemo } from "react";
 
 import type { BookStatus, BorrowRequestStatus } from "@prisma/client";
 
+import { formatDate, formatTime } from "@/lib/intl-format";
+
 type HistoryRequest = {
   id: number;
   status: BorrowRequestStatus;
@@ -63,27 +65,6 @@ const STATUS_META: Record<
     description: "Buku sudah dikembalikan.",
     accent: "from-sky-500 via-cyan-400 to-sky-300",
   },
-};
-
-const formatDate = (value: string | null) => {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
-  return date.toLocaleDateString("id-ID", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-};
-
-const formatTime = (value: string | null) => {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
-  return date.toLocaleTimeString("id-ID", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 };
 
 export function RequestHistoryView({ requests }: RequestHistoryViewProps) {

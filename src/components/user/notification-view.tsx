@@ -4,6 +4,8 @@ import Link from "next/link";
 
 import type { BorrowRequestStatus, NotificationType } from "@prisma/client";
 
+import { formatDate } from "@/lib/intl-format";
+
 type NotificationEntry = {
   id: number;
   status: BorrowRequestStatus;
@@ -49,17 +51,6 @@ const STATUS_META: Record<
     accent: "from-indigo-500/20 via-indigo-400/10 to-sky-300/10 border-indigo-400/50",
     defaultMessage: "Pemilik memperpanjang durasi peminjaman. Perhatikan tanggal baru.",
   },
-};
-
-const formatDate = (value: string | null) => {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
-  return date.toLocaleDateString("id-ID", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
 };
 
 export function NotificationView({ notifications }: NotificationViewProps) {

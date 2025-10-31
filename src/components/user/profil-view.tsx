@@ -4,6 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 
+import { formatDate } from "@/lib/intl-format";
+
 type SessionUser = {
   id: number;
   name: string;
@@ -142,11 +144,7 @@ export function ProfilView({ sessionUser }: ProfilViewProps) {
     if (!profileData.joinedAt) {
       return "-";
     }
-    return new Date(profileData.joinedAt).toLocaleDateString("id-ID", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
+    return formatDate(profileData.joinedAt);
   }, [profileData.joinedAt]);
 
   const handleLogout = async () => {
@@ -593,15 +591,7 @@ const getStatusMeta = (status: RequestSummaryEntry["status"]) => REQUEST_STATUS_
 
 const formatDateLabel = (request: RequestSummaryEntry) => {
   const reference = request.ownerDecisionAt ?? request.createdAt;
-  const date = new Date(reference);
-  if (Number.isNaN(date.getTime())) {
-    return "-";
-  }
-  return date.toLocaleDateString("id-ID", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
+  return formatDate(reference, { month: "short" });
 };
 
 function StatusMessage({ status }: { status: StatusState }) {

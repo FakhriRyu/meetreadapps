@@ -5,6 +5,8 @@ import { useEffect, useMemo, useState } from "react";
 import { BorrowRequestStatus } from "@prisma/client";
 import type { Book, BorrowRequest } from "@prisma/client";
 
+import { formatDate } from "@/lib/intl-format";
+
 import { CollectionForm, type CollectionPayload } from "./collection-form";
 import { CollectionList } from "./collection-list";
 
@@ -35,6 +37,8 @@ type ActionState =
 
 type ActionType = NonNullable<ActionState>["type"];
 
+type PendingAction = { requestId: number; type: ActionType };
+
 const REQUEST_STATUS_META: Record<
   Extract<BorrowRequestStatus, "PENDING" | "APPROVED">,
   { label: string; badgeClass: string; helpText: string }
@@ -51,18 +55,139 @@ const REQUEST_STATUS_META: Record<
   },
 };
 
-const formatDate = (value: string | Date | null | undefined) => {
-  if (!value) return "-";
-  const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
-  return date.toLocaleDateString("id-ID", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+const formatDateInput = (value: Date) => value.toISOString().split("T")[0];
+
+type OptimisticStateParams = {
+  type: ActionType;
+  targetRequest: RequestWithRelations;
+  dueDateValue: Date | null;
+  loanRequests: RequestWithRelations[];
+  items: Book[];
 };
 
-const formatDateInput = (value: Date) => value.toISOString().split("T")[0];
+type OptimisticStateResult = {
+  loanRequests: RequestWithRelations[];
+  items: Book[];
+  feedback: string;
+};
+
+function deriveOptimisticState({
+  type,
+  targetRequest,
+  dueDateValue,
+  loanRequests,
+  items,
+}: OptimisticStateParams): OptimisticStateResult {
+  if (type === "approve") {
+    const dueDate = dueDateValue ?? new Date();
+    const updatedLoanRequests = loanRequests
+      .filter((req) => req.book.id !== targetRequest.book.id || req.id === targetRequest.id)
+      .map((req) =>
+        req.id === targetRequest.id
+          ? {
+              ...req,
+              status: "APPROVED",
+              book: { ...req.book, status: "BORROWED", dueDate },
+            }
+          : req,
+      );
+    const updatedItems = items.map((book) =>
+      book.id === targetRequest.book.id
+        ? {
+            ...book,
+            status: "BORROWED",
+            borrowerId: targetRequest.requesterId,
+            dueDate,
+            availableCopies: Math.max(0, book.availableCopies - 1),
+          }
+        : book,
+    );
+    return {
+      loanRequests: updatedLoanRequests,
+      items: updatedItems,
+      feedback: `Permintaan untuk "${targetRequest.book.title}" disetujui.`,
+    };
+  }
+
+  if (type === "reject") {
+    const hasOtherPending = loanRequests.some(
+      (req) =>
+        req.id !== targetRequest.id &&
+        req.book.id === targetRequest.book.id &&
+        req.status === BorrowRequestStatus.PENDING,
+    );
+    const updatedLoanRequests = loanRequests.filter((req) => req.id !== targetRequest.id);
+    const updatedItems = items.map((book) => {
+      if (book.id !== targetRequest.book.id) {
+        return book;
+      }
+      if (hasOtherPending) {
+        return {
+          ...book,
+          status: "PENDING",
+          borrowerId: null,
+          dueDate: null,
+        };
+      }
+      const fallbackStatus = book.lendable
+        ? book.availableCopies > 0
+          ? "AVAILABLE"
+          : "RESERVED"
+        : "UNAVAILABLE";
+      return {
+        ...book,
+        status: fallbackStatus,
+        borrowerId: null,
+        dueDate: null,
+      };
+    });
+    return {
+      loanRequests: updatedLoanRequests,
+      items: updatedItems,
+      feedback: `Permintaan untuk "${targetRequest.book.title}" ditolak.`,
+    };
+  }
+
+  if (type === "extend") {
+    const dueDate = dueDateValue ?? new Date();
+    const updatedLoanRequests = loanRequests.map((req) =>
+      req.id === targetRequest.id ? { ...req, book: { ...req.book, dueDate } } : req,
+    );
+    const updatedItems = items.map((book) =>
+      book.id === targetRequest.book.id ? { ...book, dueDate } : book,
+    );
+    return {
+      loanRequests: updatedLoanRequests,
+      items: updatedItems,
+      feedback: `Jatuh tempo "${targetRequest.book.title}" diperpanjang.`,
+    };
+  }
+
+  const updatedLoanRequests = loanRequests.filter((req) => req.id !== targetRequest.id);
+  const updatedItems = items.map((book) => {
+    if (book.id !== targetRequest.book.id) {
+      return book;
+    }
+    const restored = Math.min(book.totalCopies, book.availableCopies + 1);
+    const nextStatus = book.lendable
+      ? restored > 0
+        ? "AVAILABLE"
+        : "RESERVED"
+      : "UNAVAILABLE";
+    return {
+      ...book,
+      status: nextStatus,
+      borrowerId: null,
+      dueDate: null,
+      availableCopies: restored,
+    };
+  });
+  return {
+    loanRequests: updatedLoanRequests,
+    items: updatedItems,
+    feedback: `Peminjaman "${targetRequest.book.title}" telah selesai.`,
+  };
+}
 
 export function KoleksikuView({ collections, requests }: KoleksikuViewProps) {
   const [items, setItems] = useState<Book[]>(collections);
@@ -78,6 +203,7 @@ export function KoleksikuView({ collections, requests }: KoleksikuViewProps) {
   const [actionMessage, setActionMessage] = useState("");
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
 
   useEffect(() => {
     setItems(collections);
@@ -206,10 +332,17 @@ export function KoleksikuView({ collections, requests }: KoleksikuViewProps) {
     if (!actionState) return;
 
     const { request: targetRequest, type } = actionState;
+    let dueDateValue: Date | null = null;
+
     const payload: Record<string, unknown> = {};
     if (type === "approve" || type === "extend") {
       if (!actionDueDate) {
         setActionError("Tanggal pengembalian wajib diisi.");
+        return;
+      }
+      dueDateValue = new Date(actionDueDate);
+      if (Number.isNaN(dueDateValue.getTime())) {
+        setActionError("Tanggal pengembalian tidak valid.");
         return;
       }
       payload.dueDate = actionDueDate;
@@ -222,6 +355,22 @@ export function KoleksikuView({ collections, requests }: KoleksikuViewProps) {
     setActionLoading(true);
     setActionError(null);
 
+    const previousLoanRequests = loanRequests;
+    const previousItems = items;
+    const previousFeedback = requestFeedback;
+
+    const optimisticResult = deriveOptimisticState({
+      type,
+      targetRequest,
+      dueDateValue,
+      loanRequests: previousLoanRequests,
+      items: previousItems,
+    });
+
+    setLoanRequests(optimisticResult.loanRequests);
+    setItems(optimisticResult.items);
+    setPendingAction({ requestId: targetRequest.id, type });
+
     try {
       const response = await fetch(endpoint, {
         method: "POST",
@@ -233,111 +382,16 @@ export function KoleksikuView({ collections, requests }: KoleksikuViewProps) {
         throw new Error(result.error ?? "Gagal memproses permintaan.");
       }
 
-      if (type === "approve") {
-        const dueDateValue = new Date(actionDueDate);
-        setLoanRequests((prev) =>
-          prev
-            .filter((req) => req.book.id !== targetRequest.book.id || req.id === targetRequest.id)
-            .map((req) =>
-              req.id === targetRequest.id
-                ? {
-                    ...req,
-                    status: "APPROVED",
-                    book: { ...req.book, status: "BORROWED", dueDate: dueDateValue },
-                  }
-                : req,
-            ),
-        );
-        setItems((prev) =>
-          prev.map((book) =>
-            book.id === targetRequest.book.id
-              ? {
-                  ...book,
-                  status: "BORROWED",
-                  borrowerId: targetRequest.requesterId,
-                  dueDate: dueDateValue,
-                  availableCopies: Math.max(0, book.availableCopies - 1),
-                }
-              : book,
-          ),
-        );
-        setRequestFeedback(`Permintaan untuk "${targetRequest.book.title}" disetujui.`);
-      } else if (type === "reject") {
-        const hasOtherPending = loanRequests.some(
-          (req) =>
-            req.id !== targetRequest.id &&
-            req.book.id === targetRequest.book.id &&
-            req.status === BorrowRequestStatus.PENDING,
-        );
-        setLoanRequests((prev) => prev.filter((req) => req.id !== targetRequest.id));
-        setItems((prev) =>
-          prev.map((book) => {
-            if (book.id !== targetRequest.book.id) {
-              return book;
-            }
-            if (hasOtherPending) {
-              return {
-                ...book,
-                status: "PENDING",
-                borrowerId: null,
-                dueDate: null,
-              };
-            }
-            const fallbackStatus = book.lendable
-              ? book.availableCopies > 0
-                ? "AVAILABLE"
-                : "RESERVED"
-              : "UNAVAILABLE";
-            return {
-              ...book,
-              status: fallbackStatus,
-              borrowerId: null,
-              dueDate: null,
-            };
-          }),
-        );
-        setRequestFeedback(`Permintaan untuk "${targetRequest.book.title}" ditolak.`);
-      } else if (type === "extend") {
-        const dueDateValue = new Date(actionDueDate);
-        setLoanRequests((prev) =>
-          prev.map((req) =>
-            req.id === targetRequest.id ? { ...req, book: { ...req.book, dueDate: dueDateValue } } : req,
-          ),
-        );
-        setItems((prev) =>
-          prev.map((book) =>
-            book.id === targetRequest.book.id ? { ...book, dueDate: dueDateValue } : book,
-          ),
-        );
-        setRequestFeedback(`Jatuh tempo "${targetRequest.book.title}" diperpanjang.`);
-      } else {
-        setLoanRequests((prev) => prev.filter((req) => req.id !== targetRequest.id));
-        setItems((prev) =>
-          prev.map((book) => {
-            if (book.id !== targetRequest.book.id) {
-              return book;
-            }
-            const restored = Math.min(book.totalCopies, book.availableCopies + 1);
-            const nextStatus = book.lendable
-              ? restored > 0
-                ? "AVAILABLE"
-                : "RESERVED"
-              : "UNAVAILABLE";
-            return {
-              ...book,
-              status: nextStatus,
-              borrowerId: null,
-              dueDate: null,
-              availableCopies: restored,
-            };
-          }),
-        );
-        setRequestFeedback(`Peminjaman "${targetRequest.book.title}" telah selesai.`);
-      }
-
+      setRequestFeedback(optimisticResult.feedback);
+      setPendingAction(null);
       closeActionModal();
     } catch (error) {
+      setLoanRequests(previousLoanRequests);
+      setItems(previousItems);
+      setPendingAction(null);
+      setRequestFeedback(previousFeedback);
       setActionError(error instanceof Error ? error.message : "Terjadi kesalahan.");
+    } finally {
       setActionLoading(false);
     }
   };
@@ -384,6 +438,8 @@ export function KoleksikuView({ collections, requests }: KoleksikuViewProps) {
             {loanRequests.map((request) => {
               const statusKey = request.status === "APPROVED" ? "APPROVED" : "PENDING";
               const meta = REQUEST_STATUS_META[statusKey];
+              const isProcessing = pendingAction?.requestId === request.id;
+              const processingType = pendingAction?.type;
               return (
                 <div
                   key={request.id}
@@ -433,16 +489,18 @@ export function KoleksikuView({ collections, requests }: KoleksikuViewProps) {
                         <button
                           type="button"
                           onClick={() => openActionModal("approve", request)}
-                          className="flex-1 rounded-full bg-emerald-400 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-emerald-950 shadow-lg shadow-emerald-400/30 transition hover:bg-emerald-300 sm:flex-none sm:px-5"
+                          disabled={isProcessing}
+                          className="flex-1 rounded-full bg-emerald-400 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-emerald-950 shadow-lg shadow-emerald-400/30 transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:px-5"
                         >
-                          Setujui
+                          {isProcessing && processingType === "approve" ? "Memproses..." : "Setujui"}
                         </button>
                         <button
                           type="button"
                           onClick={() => openActionModal("reject", request)}
-                          className="flex-1 rounded-full border border-rose-300/60 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-rose-200 transition hover:border-rose-200 hover:bg-rose-500/20 sm:flex-none sm:px-5"
+                          disabled={isProcessing}
+                          className="flex-1 rounded-full border border-rose-300/60 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-rose-200 transition hover:border-rose-200 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:px-5"
                         >
-                          Tolak
+                          {isProcessing && processingType === "reject" ? "Memproses..." : "Tolak"}
                         </button>
                       </>
                     ) : (
@@ -450,16 +508,18 @@ export function KoleksikuView({ collections, requests }: KoleksikuViewProps) {
                         <button
                           type="button"
                           onClick={() => openActionModal("extend", request)}
-                          className="flex-1 rounded-full border border-emerald-300/60 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-emerald-100 transition hover:border-emerald-200 hover:bg-emerald-400/20 sm:flex-none sm:px-5"
+                          disabled={isProcessing}
+                          className="flex-1 rounded-full border border-emerald-300/60 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-emerald-100 transition hover:border-emerald-200 hover:bg-emerald-400/20 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:px-5"
                         >
-                          Perpanjang Tempo
+                          {isProcessing && processingType === "extend" ? "Memproses..." : "Perpanjang Tempo"}
                         </button>
                         <button
                           type="button"
                           onClick={() => openActionModal("complete", request)}
-                          className="flex-1 rounded-full border border-white/20 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-white transition hover:border-emerald-200 hover:text-emerald-100 sm:flex-none sm:px-5"
+                          disabled={isProcessing}
+                          className="flex-1 rounded-full border border-white/20 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-white transition hover:border-emerald-200 hover:text-emerald-100 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:px-5"
                         >
-                          Tandai Dikembalikan
+                          {isProcessing && processingType === "complete" ? "Memproses..." : "Tandai Dikembalikan"}
                         </button>
                       </>
                     )}

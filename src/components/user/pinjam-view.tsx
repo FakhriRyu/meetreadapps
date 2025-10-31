@@ -6,6 +6,8 @@ import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { Book } from "@prisma/client";
 
+import { formatDate, formatNumber } from "@/lib/intl-format";
+
 type SessionUser = {
   id: number;
   name: string;
@@ -242,13 +244,7 @@ export function PinjamView({ books, sessionUser, pageInfo }: PinjamViewProps) {
                     {book.status === "BORROWED" && book.dueDate && (
                       <p className="text-xs text-white/60">
                         Estimasi kembali:{" "}
-                        <strong className="text-white/80">
-                          {new Date(book.dueDate).toLocaleDateString("id-ID", {
-                            day: "numeric",
-                            month: "long",
-                            year: "numeric",
-                          })}
-                        </strong>
+                        <strong className="text-white/80">{formatDate(book.dueDate)}</strong>
                       </p>
                     )}
                     {STATUS_META[book.status].helpText && (
@@ -259,7 +255,7 @@ export function PinjamView({ books, sessionUser, pageInfo }: PinjamViewProps) {
                     <span>
                       Stok:{" "}
                       <strong className="text-white/80">
-                        {book.availableCopies}/{book.totalCopies}
+                        {formatNumber(book.availableCopies)}/{formatNumber(book.totalCopies)}
                       </strong>
                     </span>
                     <button

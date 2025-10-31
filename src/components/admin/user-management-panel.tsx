@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 
+import { formatDate, formatNumber } from "@/lib/intl-format";
+
 export type ManagedUser = {
   id: number;
   name: string;
@@ -143,31 +145,22 @@ export function UserManagementPanel({ initialUsers }: UserManagementPanelProps) 
     }
   };
 
-  const formatDate = (value: string) => {
-    const date = new Date(value);
-    return date.toLocaleDateString("id-ID", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
-  };
-
   return (
     <div className="flex h-full flex-col gap-6">
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="rounded-3xl border border-white/10 bg-white/10 p-5">
           <p className="text-xs uppercase tracking-widest text-white/60">Total Pengguna</p>
-          <p className="mt-2 text-2xl font-semibold text-white">{overview.total}</p>
+          <p className="mt-2 text-2xl font-semibold text-white">{formatNumber(overview.total)}</p>
           <p className="text-xs text-white/50">Termasuk pengguna dan admin.</p>
         </div>
         <div className="rounded-3xl border border-emerald-400/30 bg-emerald-400/10 p-5">
           <p className="text-xs uppercase tracking-widest text-emerald-100/80">Admin Aktif</p>
-          <p className="mt-2 text-2xl font-semibold text-emerald-100">{overview.admin}</p>
+          <p className="mt-2 text-2xl font-semibold text-emerald-100">{formatNumber(overview.admin)}</p>
           <p className="text-xs text-emerald-100/70">Pengguna dengan akses penuh.</p>
         </div>
         <div className="rounded-3xl border border-sky-400/30 bg-sky-400/10 p-5">
           <p className="text-xs uppercase tracking-widest text-sky-100/80">Member</p>
-          <p className="mt-2 text-2xl font-semibold text-sky-100">{overview.members}</p>
+          <p className="mt-2 text-2xl font-semibold text-sky-100">{formatNumber(overview.members)}</p>
           <p className="text-xs text-sky-100/70">Akun terdaftar reguler.</p>
         </div>
       </div>
