@@ -4,7 +4,11 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "MeetRead",
   description:
-    "Platform peminjaman buku dengan panel admin dan pengalaman pengguna yang modern.",
+    "Platform peminjaman buku dengan pengalaman pengguna yang modern.",
+  icons: {
+    icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
