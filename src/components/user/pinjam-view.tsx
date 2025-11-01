@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { Book } from "@prisma/client";
+import { openWhatsApp } from "@/lib/whatsapp";
 
 type SessionUser = {
   id: number;
@@ -90,9 +91,7 @@ export function PinjamView({ books, sessionUser, pageInfo }: PinjamViewProps) {
         throw new Error(result.error ?? "Gagal mengajukan peminjaman.");
       }
 
-      if (result.data?.whatsappUrl) {
-        window.open(result.data.whatsappUrl, "_blank", "noopener");
-      }
+      if (result.data?.whatsappUrl) openWhatsApp(result.data.whatsappUrl);
 
       setFeedback("Permintaan peminjaman dikirim. Silakan lanjutkan percakapan lewat WhatsApp.");
       router.refresh();

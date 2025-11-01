@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { formatDate, formatNumber } from "@/lib/intl-format";
+import { openWhatsApp } from "@/lib/whatsapp";
 
 type DetailBook = {
   id: number;
@@ -108,9 +109,7 @@ export function BookDetailView({ book, sessionUser }: BookDetailViewProps) {
         throw new Error(result.error ?? "Gagal mengajukan peminjaman.");
       }
 
-      if (result.data?.whatsappUrl) {
-        window.open(result.data.whatsappUrl, "_blank", "noopener");
-      }
+      if (result.data?.whatsappUrl) openWhatsApp(result.data.whatsappUrl);
 
       setFeedback("Permintaan peminjaman dikirim. Silakan lanjutkan percakapan lewat WhatsApp.");
       router.refresh();
