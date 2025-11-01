@@ -2,8 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { BorrowRequestStatus } from "@prisma/client";
-import type { Book, BorrowRequest } from "@prisma/client";
+import { BookStatus, BorrowRequestStatus, type Book, type BorrowRequest } from "@prisma/client";
 
 import { formatDate } from "@/lib/intl-format";
 
@@ -86,8 +85,8 @@ function deriveOptimisticState({
         req.id === targetRequest.id
           ? {
               ...req,
-              status: "APPROVED",
-              book: { ...req.book, status: "BORROWED", dueDate },
+              status: BorrowRequestStatus.APPROVED,
+              book: { ...req.book, status: BookStatus.BORROWED, dueDate },
             }
           : req,
       );
@@ -95,7 +94,7 @@ function deriveOptimisticState({
       book.id === targetRequest.book.id
         ? {
             ...book,
-            status: "BORROWED",
+            status: BookStatus.BORROWED,
             borrowerId: targetRequest.requesterId,
             dueDate,
             availableCopies: Math.max(0, book.availableCopies - 1),
@@ -124,16 +123,16 @@ function deriveOptimisticState({
       if (hasOtherPending) {
         return {
           ...book,
-          status: "PENDING",
+          status: BookStatus.PENDING,
           borrowerId: null,
           dueDate: null,
         };
       }
-      const fallbackStatus = book.lendable
+      const fallbackStatus: BookStatus = book.lendable
         ? book.availableCopies > 0
-          ? "AVAILABLE"
-          : "RESERVED"
-        : "UNAVAILABLE";
+          ? BookStatus.AVAILABLE
+          : BookStatus.RESERVED
+        : BookStatus.UNAVAILABLE;
       return {
         ...book,
         status: fallbackStatus,
@@ -169,11 +168,11 @@ function deriveOptimisticState({
       return book;
     }
     const restored = Math.min(book.totalCopies, book.availableCopies + 1);
-    const nextStatus = book.lendable
+    const nextStatus: BookStatus = book.lendable
       ? restored > 0
-        ? "AVAILABLE"
-        : "RESERVED"
-      : "UNAVAILABLE";
+        ? BookStatus.AVAILABLE
+        : BookStatus.RESERVED
+      : BookStatus.UNAVAILABLE;
     return {
       ...book,
       status: nextStatus,
@@ -214,7 +213,7 @@ export function KoleksikuView({ collections, requests }: KoleksikuViewProps) {
   }, [requests]);
 
   const pendingCount = useMemo(
-    () => loanRequests.filter((request) => request.status === "PENDING").length,
+    () => loanRequests.filter((request) => request.status === BorrowRequestStatus.PENDING).length,
     [loanRequests],
   );
 
@@ -439,7 +438,10 @@ export function KoleksikuView({ collections, requests }: KoleksikuViewProps) {
           ) : (
             <div className="space-y-4">
               {loanRequests.map((request) => {
-                const statusKey = request.status === "APPROVED" ? "APPROVED" : "PENDING";
+                const statusKey: Extract<BorrowRequestStatus, "PENDING" | "APPROVED"> =
+                  request.status === BorrowRequestStatus.APPROVED
+                    ? BorrowRequestStatus.APPROVED
+                    : BorrowRequestStatus.PENDING;
                 const meta = REQUEST_STATUS_META[statusKey];
                 const isProcessing = pendingAction?.requestId === request.id;
                 const processingType = pendingAction?.type;
@@ -475,7 +477,9 @@ export function KoleksikuView({ collections, requests }: KoleksikuViewProps) {
                       <div>
                         <p className="text-slate-500">Batas Pengembalian</p>
                         <p className="font-semibold text-slate-800">
-                          {request.status === "APPROVED" ? formatDate(request.book.dueDate) : "-"}
+                          {request.status === BorrowRequestStatus.APPROVED
+                            ? formatDate(request.book.dueDate)
+                            : "-"}
                         </p>
                       </div>
                     </div>
@@ -487,7 +491,7 @@ export function KoleksikuView({ collections, requests }: KoleksikuViewProps) {
                     )}
                     <p className="mt-3 text-xs text-slate-500">{meta.helpText}</p>
                     <div className="mt-4 flex flex-wrap gap-2">
-                      {request.status === "PENDING" ? (
+                      {request.status === BorrowRequestStatus.PENDING ? (
                         <>
                           <button
                             type="button"

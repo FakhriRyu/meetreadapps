@@ -20,7 +20,7 @@ const CollectionSchema = z.object({
     .max(32, "ISBN maksimal 32 karakter")
     .nullish(),
   publishedYear: z
-    .number({ invalid_type_error: "Tahun terbit tidak valid" })
+    .number({ error: "Tahun terbit tidak valid" })
     .int()
     .min(1000, "Tahun terbit tidak valid")
     .max(new Date().getFullYear() + 1, "Tahun terbit tidak valid")
