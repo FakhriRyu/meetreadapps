@@ -8,17 +8,19 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
-        url: "/favicon.svg",
-        type: "image/svg+xml",
-        sizes: "any",
+        url: "/meetread-logo.jpeg",
+        type: "image/jpeg",
+        sizes: "500x500",
       },
     ],
     apple: [
       {
-        url: "/favicon.svg",
+        url: "/meetread-logo.jpeg",
+        type: "image/jpeg",
+        sizes: "500x500",
       },
     ],
-    shortcut: ["/favicon.svg"],
+    shortcut: ["/meetread-logo.jpeg"],
   },
 };
 

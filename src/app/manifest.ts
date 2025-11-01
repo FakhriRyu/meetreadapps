@@ -12,9 +12,10 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: "#0b66c2",
     icons: [
       {
-        src: "/favicon.svg",
-        sizes: "any",
-        type: "image/svg+xml",
+        src: "/meetread-logo.jpeg",
+        sizes: "500x500",
+        type: "image/jpeg",
+        purpose: "any",
       },
     ],
   };
