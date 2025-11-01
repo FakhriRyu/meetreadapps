@@ -83,6 +83,20 @@ export async function POST(request: NextRequest, context: RouteContext) {
       );
     }
 
+    if (borrowRequest.book.lendable === false) {
+      return NextResponse.json(
+        { error: "Buku sedang dinonaktifkan dari peminjaman. Aktifkan kembali sebelum menyetujui." },
+        { status: 400 },
+      );
+    }
+
+    if (borrowRequest.book.availableCopies <= 0) {
+      return NextResponse.json(
+        { error: "Stok buku kosong. Perbarui stok sebelum menyetujui permintaan." },
+        { status: 400 },
+      );
+    }
+
     await prisma.$transaction(async (tx) => {
       await tx.borrowRequest.update({
         where: { id: borrowRequest.id },

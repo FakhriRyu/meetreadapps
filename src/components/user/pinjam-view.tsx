@@ -6,8 +6,6 @@ import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { Book } from "@prisma/client";
 
-import { formatDate } from "@/lib/intl-format";
-
 type SessionUser = {
   id: number;
   name: string;

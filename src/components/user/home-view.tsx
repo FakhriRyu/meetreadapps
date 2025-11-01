@@ -85,12 +85,6 @@ export function HomeView({ books, sessionUser }: HomeViewProps) {
     return baseFilteredBooks.filter((book) => book.author.trim().toLowerCase() === normalizedAuthor);
   }, [baseFilteredBooks, resolvedAuthor]);
 
-  const stats = useMemo(() => {
-    const total = books.length;
-    const available = books.reduce((sum, book) => sum + book.availableCopies, 0);
-    return { total, available };
-  }, [books]);
-
   const freshArrivals = useMemo(() => filteredBooks.slice(0, 6), [filteredBooks]);
 
   const topReads = useMemo(() => {

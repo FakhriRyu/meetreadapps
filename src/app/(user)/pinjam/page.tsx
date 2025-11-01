@@ -1,5 +1,4 @@
-import { Suspense } from "react";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
@@ -27,9 +26,9 @@ export default async function PinjamPage(props: PinjamPageProps) {
     ...(query.length > 0
       ? {
           OR: [
-            { title: { contains: query } },
-            { author: { contains: query } },
-            { category: { contains: query } },
+            { title: { contains: query, mode: "insensitive" } },
+            { author: { contains: query, mode: "insensitive" } },
+            { category: { contains: query, mode: "insensitive" } },
           ],
         }
       : undefined),
@@ -50,23 +49,27 @@ export default async function PinjamPage(props: PinjamPageProps) {
   const currentPage = Math.min(page, totalPages);
 
   if (currentPage !== page) {
-    // redirect to last page via notFound followed by client side handling
-    notFound();
+    const params = new URLSearchParams();
+    if (currentPage > 1) {
+      params.set("page", String(currentPage));
+    }
+    if (query.length > 0) {
+      params.set("query", query);
+    }
+    redirect(`/pinjam${params.toString() ? `?${params.toString()}` : ""}`);
   }
 
   return (
-    <Suspense fallback={null}>
-      <PinjamView
-        books={books}
-        sessionUser={sessionUser}
-        pageInfo={{
-          totalCount,
-          currentPage,
-          totalPages,
-          pageSize,
-          query,
-        }}
-      />
-    </Suspense>
+    <PinjamView
+      books={books}
+      sessionUser={sessionUser}
+      pageInfo={{
+        totalCount,
+        currentPage,
+        totalPages,
+        pageSize,
+        query,
+      }}
+    />
   );
 }

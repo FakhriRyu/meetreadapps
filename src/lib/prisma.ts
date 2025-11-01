@@ -31,7 +31,15 @@ if (normalizedUrl && normalizedUrl !== process.env.DATABASE_URL) {
   process.env.DATABASE_URL = normalizedUrl;
 }
 
-ensureSqliteFile(process.env.DATABASE_URL);
+const shouldEnsureSqliteFile =
+  process.env.NODE_ENV !== "production" && process.env.DATABASE_URL?.startsWith("file:");
+if (shouldEnsureSqliteFile) {
+  try {
+    ensureSqliteFile(process.env.DATABASE_URL);
+  } catch (error) {
+    console.warn("Prisma: gagal memastikan file SQLite:", error);
+  }
+}
 
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;

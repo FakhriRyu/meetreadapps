@@ -83,12 +83,12 @@ export function AuthPanel({ defaultMode }: AuthPanelProps) {
     const from = searchParams.get("from") ?? "beranda";
     const book = searchParams.get("book");
     if (from === "pinjam") {
-      return book ? `/?tab=pinjam&book=${book}` : "/?tab=pinjam";
+      return book ? `/pinjam?book=${book}` : "/pinjam";
     }
     if (from === "profil") {
-      return "/?tab=profil";
+      return "/profil";
     }
-    return `/${from}`;
+    return from.startsWith("/") ? from : `/${from}`;
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {

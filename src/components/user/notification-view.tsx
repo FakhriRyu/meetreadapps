@@ -88,7 +88,7 @@ export function NotificationView({ notifications }: NotificationViewProps) {
               >
                 <p className="text-sm text-slate-500">{formatDate(notification.createdAt)}</p>
                 <p className="mt-1 text-base font-semibold text-slate-900">
-                  Permintaan "{notification.book.title}" {meta.title.toLowerCase()}.
+                  Permintaan &quot;{notification.book.title}&quot; {meta.title.toLowerCase()}.
                 </p>
                 <p className="mt-1 text-sm text-slate-600">
                   {notification.message?.trim().length ? notification.message : meta.defaultMessage}

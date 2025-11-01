@@ -93,6 +93,7 @@ export function ProfilView({ sessionUser }: ProfilViewProps) {
       profileImage: sessionUser?.profileImage ?? "",
     });
   }, [
+    sessionUser,
     sessionUser?.id,
     sessionUser?.name,
     sessionUser?.email,
@@ -133,7 +134,7 @@ export function ProfilView({ sessionUser }: ProfilViewProps) {
 
     fetchSummary();
     return () => controller.abort();
-  }, [sessionUser?.id]);
+  }, [sessionUser, sessionUser?.id]);
 
   const isAuthenticated = Boolean(sessionUser);
 
