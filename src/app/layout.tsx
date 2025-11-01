@@ -6,8 +6,19 @@ export const metadata: Metadata = {
   description:
     "Platform peminjaman buku dengan pengalaman pengguna yang modern.",
   icons: {
-    icon: "/favicon.svg",
-    shortcut: "/favicon.svg",
+    icon: [
+      {
+        url: "/favicon.svg",
+        type: "image/svg+xml",
+        sizes: "any",
+      },
+    ],
+    apple: [
+      {
+        url: "/favicon.svg",
+      },
+    ],
+    shortcut: ["/favicon.svg"],
   },
 };
 
