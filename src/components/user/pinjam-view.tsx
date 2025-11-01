@@ -201,7 +201,7 @@ export function PinjamView({ books, sessionUser, pageInfo }: PinjamViewProps) {
               <Link
                 key={`book-${book.id}`}
                 href={`/books/${book.id}`}
-                className="group grid gap-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-100 transition hover:-translate-y-1 hover:border-indigo-200 hover:shadow-md sm:grid-cols-[5rem_1fr]"
+                className="group grid gap-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-100 transition hover:-translate-y-1 hover:border-indigo-200 hover:shadow-md grid-cols-[5rem_1fr]"
               >
                 <div className="relative h-28 w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
                   {book.coverImageUrl ? (
