@@ -226,43 +226,43 @@ export function BookAdminPanel({ initialBooks }: BookAdminPanelProps) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-slate-900">
       <section className="grid gap-4 md:grid-cols-4">
-        <StatCard label="Koleksi Buku" value={stats.total.toString()} accent="from-rose-500/90 via-rose-400 to-orange-300" />
+        <StatCard label="Koleksi Buku" value={stats.total.toString()} accent="from-rose-100 via-rose-50 to-orange-50" />
         <StatCard
           label="Eksemplar Tersedia"
           value={stats.available.toString()}
-          accent="from-emerald-500 via-emerald-400 to-teal-300"
+          accent="from-emerald-100 via-emerald-50 to-teal-50"
           subtitle={`${stats.loaned} dipinjam`}
         />
-        <StatCard label="Eksemplar Total" value={stats.totalCopies.toString()} accent="from-blue-500 via-violet-500 to-indigo-400" />
-        <StatCard label="Kategori Aktif" value={stats.categories.length.toString()} accent="from-amber-400 via-amber-300 to-yellow-200" />
+        <StatCard label="Eksemplar Total" value={stats.totalCopies.toString()} accent="from-indigo-100 via-blue-50 to-indigo-50" />
+        <StatCard label="Kategori Aktif" value={stats.categories.length.toString()} accent="from-amber-100 via-amber-50 to-yellow-50" />
       </section>
 
-      <section className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur">
+      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-100">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-white">Daftar Buku</h2>
-            <p className="text-sm text-white/70">Kelola data buku, stok, dan informasi peminjaman.</p>
+            <h2 className="text-lg font-semibold text-slate-900">Daftar Buku</h2>
+            <p className="text-sm text-slate-500">Kelola data buku, stok, dan informasi peminjaman.</p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <div className="relative flex-1 sm:min-w-[220px]">
               <input
-                className="w-full rounded-full border border-white/10 bg-white/10 px-4 py-2 pr-10 text-sm text-white placeholder-white/60 backdrop-blur focus:border-white/30 focus:outline-none"
+                className="w-full rounded-full border border-slate-200 bg-white px-4 py-2 pr-10 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
                 placeholder="Cari judul, penulis, atau ISBN…"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
               />
-              <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-white/60">
+              <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-slate-400">
                 <MagnifierIcon />
               </span>
             </div>
             <button
               type="button"
               onClick={openCreateModal}
-              className="group inline-flex items-center justify-center rounded-full bg-emerald-400 px-5 py-2 text-sm font-semibold text-emerald-950 shadow-lg shadow-emerald-500/30 transition hover:bg-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-200 focus:ring-offset-2 focus:ring-offset-emerald-900/40"
+              className="group inline-flex items-center justify-center rounded-full bg-gradient-to-r from-indigo-500 to-sky-500 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-indigo-200 transition hover:from-indigo-400 hover:to-sky-400 focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:ring-offset-2 focus:ring-offset-white"
             >
-              <span className="mr-2 text-lg leading-none text-emerald-950/80 transition group-hover:text-emerald-900">＋</span>
+              <span className="mr-2 text-lg leading-none text-white/70 transition group-hover:text-white">＋</span>
               Tambah Buku
             </button>
           </div>
@@ -272,17 +272,17 @@ export function BookAdminPanel({ initialBooks }: BookAdminPanelProps) {
           <div
             className={`mt-6 rounded-2xl border p-4 text-sm font-medium ${
               status.type === "success"
-                ? "border-emerald-500/40 bg-emerald-400/20 text-emerald-50"
-                : "border-rose-500/40 bg-rose-400/20 text-rose-50"
+                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                : "border-rose-200 bg-rose-50 text-rose-700"
             }`}
           >
             {status.message}
           </div>
         )}
 
-        <div className="mt-6 overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-xl shadow-black/10">
-          <table className="min-w-full divide-y divide-white/10">
-            <thead className="bg-white/10 text-left text-xs font-semibold uppercase tracking-wide text-white/70">
+        <div className="mt-6 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm shadow-slate-100">
+          <table className="min-w-full divide-y divide-slate-200">
+            <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
               <tr>
                 <th className="px-6 py-4">Buku</th>
                 <th className="px-6 py-4">Kategori</th>
@@ -292,19 +292,19 @@ export function BookAdminPanel({ initialBooks }: BookAdminPanelProps) {
                 <th className="px-6 py-4 text-right">Aksi</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5 text-sm text-white/80">
+            <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
               {filteredBooks.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-white/60">
+                  <td colSpan={6} className="px-6 py-8 text-center text-slate-500">
                     Belum ada buku yang cocok dengan pencarian.
                   </td>
                 </tr>
               ) : (
                 filteredBooks.map((book) => (
-                  <tr key={book.id} className="transition hover:bg-white/10">
+                  <tr key={book.id} className="transition hover:bg-slate-50">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">
-                        <div className="relative h-16 w-12 flex-shrink-0 overflow-hidden rounded-xl border border-white/10 bg-white/10 shadow-inner shadow-black/30">
+                        <div className="relative h-16 w-12 flex-shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-100 shadow-inner shadow-slate-200">
                           {book.coverImageUrl ? (
                             <Image
                               src={book.coverImageUrl}
@@ -314,34 +314,34 @@ export function BookAdminPanel({ initialBooks }: BookAdminPanelProps) {
                               className="object-cover"
                             />
                           ) : (
-                            <div className="flex h-full w-full items-center justify-center text-xs text-white/40">
+                            <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">
                               No Cover
                             </div>
                           )}
                         </div>
                         <div>
-                          <p className="font-semibold text-white">{book.title}</p>
-                          <p className="text-xs text-white/60">{book.author}</p>
+                          <p className="font-semibold text-slate-900">{book.title}</p>
+                          <p className="text-xs text-slate-500">{book.author}</p>
                           {book.description && (
-                            <p className="mt-1 line-clamp-2 text-xs text-white/50">{book.description}</p>
+                            <p className="mt-1 line-clamp-2 text-xs text-slate-500">{book.description}</p>
                           )}
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       {book.category ? (
-                        <span className="inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white">
+                        <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
                           {book.category}
                         </span>
                       ) : (
-                        <span className="text-xs text-white/40">-</span>
+                        <span className="text-xs text-slate-300">-</span>
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm font-semibold text-white">
-                        {book.availableCopies} <span className="text-white/60">/ {book.totalCopies}</span>
+                      <div className="text-sm font-semibold text-slate-900">
+                        {book.availableCopies} <span className="text-slate-500">/ {book.totalCopies}</span>
                       </div>
-                      <div className="mt-1 h-1.5 w-24 overflow-hidden rounded-full bg-white/10">
+                      <div className="mt-1 h-1.5 w-24 overflow-hidden rounded-full bg-slate-200">
                         <div
                           className="h-full rounded-full bg-emerald-400 transition-all"
                           style={{ width: `${Math.min(100, (book.availableCopies / book.totalCopies) * 100)}%` }}
@@ -352,14 +352,14 @@ export function BookAdminPanel({ initialBooks }: BookAdminPanelProps) {
                       {book.publishedYear ? (
                         <span>{book.publishedYear}</span>
                       ) : (
-                        <span className="text-xs text-white/40">-</span>
+                        <span className="text-xs text-slate-300">-</span>
                       )}
                     </td>
                     <td className="px-6 py-4">
                       {book.isbn ? (
-                        <code className="rounded-lg bg-white/10 px-2 py-1 text-xs text-white/80">{book.isbn}</code>
+                        <code className="rounded-lg bg-slate-100 px-2 py-1 text-xs text-slate-600">{book.isbn}</code>
                       ) : (
-                        <span className="text-xs text-white/40">-</span>
+                        <span className="text-xs text-slate-300">-</span>
                       )}
                     </td>
                     <td className="px-6 py-4">
@@ -367,14 +367,14 @@ export function BookAdminPanel({ initialBooks }: BookAdminPanelProps) {
                         <button
                           type="button"
                           onClick={() => openEditModal(book)}
-                          className="rounded-full border border-white/20 px-3 py-1.5 text-xs font-semibold text-white transition hover:border-white/40 hover:bg-white/10"
+                          className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-indigo-200 hover:text-indigo-600"
                         >
                           Edit
                         </button>
                         <button
                           type="button"
                           onClick={() => handleDelete(book)}
-                          className="rounded-full border border-rose-300/60 px-3 py-1.5 text-xs font-semibold text-rose-100 transition hover:border-rose-200 hover:bg-rose-400/20"
+                          className="rounded-full border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-600 transition hover:border-rose-300 hover:bg-rose-50"
                         >
                           Hapus
                         </button>
@@ -389,22 +389,22 @@ export function BookAdminPanel({ initialBooks }: BookAdminPanelProps) {
       </section>
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4 backdrop-blur">
-          <div className="relative w-full max-w-3xl rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900 via-slate-900/95 to-slate-800 p-8 shadow-2xl shadow-black/30">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 px-4 backdrop-blur-sm">
+          <div className="relative w-full max-w-3xl rounded-3xl border border-slate-200 bg-white p-8 text-slate-900 shadow-2xl shadow-indigo-100">
             <button
               type="button"
               onClick={closeModal}
-              className="absolute right-5 top-5 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/10 text-white/80 transition hover:bg-white/20"
+              className="absolute right-5 top-5 inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-slate-500 transition hover:bg-slate-200"
             >
               <span className="text-lg leading-none">✕</span>
             </button>
-            <h3 className="text-xl font-semibold text-white">{modalTitle}</h3>
-            <p className="mt-1 text-sm text-white/70">
+            <h3 className="text-xl font-semibold text-slate-900">{modalTitle}</h3>
+            <p className="mt-1 text-sm text-slate-500">
               Isi seluruh informasi penting agar petugas perpustakaan mudah memantau peminjaman.
             </p>
 
             <form
-              className="mt-6 grid gap-4 text-sm text-white/70 md:grid-cols-2"
+              className="mt-6 grid gap-4 text-sm text-slate-600 md:grid-cols-2"
               onSubmit={(event) => {
                 event.preventDefault();
                 handleSubmit();
@@ -459,7 +459,7 @@ export function BookAdminPanel({ initialBooks }: BookAdminPanelProps) {
                 onChange={handleNumberInput("availableCopies")}
               />
               <div className="md:col-span-2">
-                <label className="block text-xs font-semibold uppercase tracking-wide text-white/60">
+                <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500">
                   Deskripsi
                 </label>
                 <textarea
@@ -468,7 +468,7 @@ export function BookAdminPanel({ initialBooks }: BookAdminPanelProps) {
                   onChange={(event) =>
                     setFormState((prev) => ({ ...prev, description: event.target.value }))
                   }
-                  className="mt-2 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white placeholder-white/50 focus:border-white/30 focus:outline-none"
+                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
                   placeholder="Ringkasan singkat untuk membantu pemilihan pembaca…"
                 />
               </div>
@@ -476,14 +476,14 @@ export function BookAdminPanel({ initialBooks }: BookAdminPanelProps) {
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="rounded-full border border-white/10 px-5 py-2 text-sm font-semibold text-white/80 transition hover:border-white/30 hover:bg-white/10"
+                  className="rounded-full border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-600 transition hover:border-indigo-200 hover:text-indigo-600"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="rounded-full bg-gradient-to-r from-emerald-400 to-teal-400 px-6 py-2 text-sm font-semibold text-emerald-950 shadow-lg shadow-emerald-500/30 transition hover:from-emerald-300 hover:to-teal-300 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-full bg-gradient-to-r from-indigo-500 to-sky-500 px-6 py-2 text-sm font-semibold text-white shadow-lg shadow-indigo-200 transition hover:from-indigo-400 hover:to-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {submitting ? "Menyimpan…" : "Simpan"}
                 </button>
@@ -494,25 +494,25 @@ export function BookAdminPanel({ initialBooks }: BookAdminPanelProps) {
       )}
 
       {confirmingDelete && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/80 px-4 backdrop-blur">
-          <div className="w-full max-w-md rounded-3xl border border-white/10 bg-slate-900/95 p-6 text-white shadow-2xl shadow-black/40">
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/30 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 text-slate-900 shadow-2xl shadow-indigo-100">
             <h4 className="text-lg font-semibold">Hapus buku ini?</h4>
-            <p className="mt-2 text-sm text-white/70">
-              Buku <span className="font-semibold text-white">{confirmingDelete.title}</span> akan
+            <p className="mt-2 text-sm text-slate-500">
+              Buku <span className="font-semibold text-slate-900">{confirmingDelete.title}</span> akan
               dihapus dan tidak dapat dipulihkan.
             </p>
             <div className="mt-6 flex justify-end gap-3">
               <button
                 type="button"
                 onClick={() => setConfirmingDelete(null)}
-                className="rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/30 hover:bg-white/10"
+                className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-indigo-200 hover:text-indigo-600"
               >
                 Batal
               </button>
               <button
                 type="button"
                 onClick={confirmDelete}
-                className="rounded-full bg-rose-500 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-rose-500/40 transition hover:bg-rose-400"
+                className="rounded-full bg-rose-500 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-rose-200 transition hover:bg-rose-400"
               >
                 Hapus
               </button>
@@ -534,11 +534,11 @@ type StatCardProps = {
 function StatCard({ label, value, accent, subtitle }: StatCardProps) {
   return (
     <div
-      className={`rounded-3xl border border-white/10 bg-gradient-to-br ${accent} p-5 text-white shadow-lg shadow-black/20 backdrop-blur`}
+      className={`rounded-3xl border border-slate-200 bg-gradient-to-br ${accent} p-5 text-slate-900 shadow-sm shadow-slate-100`}
     >
-      <p className="text-xs font-semibold uppercase tracking-wider text-white/80">{label}</p>
-      <p className="mt-3 text-3xl font-bold">{value}</p>
-      {subtitle && <p className="mt-1 text-xs text-white/80">{subtitle}</p>}
+      <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{label}</p>
+      <p className="mt-3 text-3xl font-bold text-slate-900">{value}</p>
+      {subtitle && <p className="mt-1 text-xs text-slate-600">{subtitle}</p>}
     </div>
   );
 }
@@ -554,14 +554,14 @@ type FormFieldProps = {
 function FormField({ label, value, onChange, required, placeholder }: FormFieldProps) {
   return (
     <label className="block">
-      <span className="text-xs font-semibold uppercase tracking-wide text-white/60">
-        {label} {required && <span className="text-rose-200">*</span>}
+      <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+        {label} {required && <span className="text-rose-500">*</span>}
       </span>
       <input
         value={value}
         placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-2 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white placeholder-white/50 focus:border-white/30 focus:outline-none"
+        className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
         required={required}
       />
     </label>

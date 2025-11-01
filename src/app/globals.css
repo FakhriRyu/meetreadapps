@@ -1,10 +1,10 @@
 @import "tailwindcss";
 
 :root {
-  color-scheme: dark;
-  --background: #020617;
-  --foreground: #f8fafc;
-  --muted: rgba(148, 163, 184, 0.35);
+  color-scheme: light;
+  --background: #f5f7ff;
+  --foreground: #0f172a;
+  --muted: rgba(100, 116, 139, 0.35);
 }
 
 @theme inline {
@@ -21,16 +21,16 @@ body {
     "Roboto", "Helvetica Neue", Arial, sans-serif;
   background: radial-gradient(
       circle at top left,
-      rgba(52, 211, 153, 0.15),
+      rgba(129, 140, 248, 0.18),
       transparent 45%
     ),
-    radial-gradient(circle at 80% 20%, rgba(129, 140, 248, 0.2), transparent 40%),
-    radial-gradient(circle at 50% 100%, rgba(248, 113, 113, 0.12), transparent 40%),
+    radial-gradient(circle at 80% 20%, rgba(56, 189, 248, 0.18), transparent 40%),
+    radial-gradient(circle at 50% 100%, rgba(16, 185, 129, 0.15), transparent 40%),
     var(--background);
   color: var(--foreground);
 }
 
 ::selection {
-  background: rgba(52, 211, 153, 0.35);
+  background: rgba(129, 140, 248, 0.25);
   color: var(--foreground);
 }

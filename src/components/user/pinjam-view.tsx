@@ -6,7 +6,7 @@ import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { Book } from "@prisma/client";
 
-import { formatDate, formatNumber } from "@/lib/intl-format";
+import { formatDate } from "@/lib/intl-format";
 
 type SessionUser = {
   id: number;
@@ -35,26 +35,26 @@ const STATUS_META: Record<
 > = {
   AVAILABLE: {
     label: "Tersedia",
-    badgeClass: "bg-emerald-400/15 text-emerald-100 border border-emerald-300/40",
+    badgeClass: "bg-emerald-100 text-emerald-700 border border-emerald-200",
   },
   PENDING: {
     label: "Menunggu Konfirmasi",
-    badgeClass: "bg-amber-300/20 text-amber-100 border border-amber-200/40",
+    badgeClass: "bg-amber-100 text-amber-700 border border-amber-200",
     helpText: "Permintaan sedang diproses oleh pemilik.",
   },
   RESERVED: {
     label: "Dipesan",
-    badgeClass: "bg-sky-300/20 text-sky-100 border border-sky-200/40",
+    badgeClass: "bg-sky-100 text-sky-700 border border-sky-200",
     helpText: "Buku sudah dipesan oleh pengguna lain.",
   },
   BORROWED: {
     label: "Sedang Dipinjam",
-    badgeClass: "bg-rose-400/25 text-rose-100 border border-rose-300/50",
+    badgeClass: "bg-rose-100 text-rose-700 border border-rose-200",
     helpText: "Menunggu pengembalian dari peminjam.",
   },
   UNAVAILABLE: {
     label: "Tidak Dipinjamkan",
-    badgeClass: "bg-white/10 text-white/60 border border-white/10",
+    badgeClass: "bg-slate-100 text-slate-500 border border-slate-200",
     helpText: "Pemilik sedang menonaktifkan peminjaman.",
   },
 };
@@ -139,27 +139,30 @@ export function PinjamView({ books, sessionUser, pageInfo }: PinjamViewProps) {
   };
 
   return (
-    <div className="relative min-h-screen bg-slate-950 px-6 pb-24 pt-10 text-white">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -left-20 top-10 h-72 w-72 rounded-full bg-emerald-500/20 blur-3xl" />
-        <div className="absolute right-0 top-1/3 h-80 w-80 rounded-full bg-sky-500/15 blur-3xl" />
-        <div className="absolute -bottom-24 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-rose-500/10 blur-3xl" />
-      </div>
-
+    <div className="min-h-screen bg-[#f5f7ff] px-6 pb-24 pt-10 text-slate-900">
       {!isAuthenticated && (
-        <div className="relative mb-5 rounded-3xl border border-white/10 bg-white/10 p-4 text-sm text-white/80">
+        <div className="mb-5 rounded-3xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
           Masuk terlebih dahulu untuk mengajukan peminjaman. Kamu masih bisa melihat daftar buku dan langkah peminjaman.
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="relative mt-6">
-        <input
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="Cari judul, kategori, atau penulis…"
-          className="w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 pr-28 text-sm text-white placeholder-white/60 focus:border-white/30 focus:outline-none"
-        />
-        <div className="absolute inset-y-0 right-0 flex items-center gap-2 pr-4">
+      <form onSubmit={handleSubmit} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-100">
+        <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+          <MagnifierIcon className="h-5 w-5 text-slate-400" />
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Cari judul, kategori, atau penulis…"
+            className="flex-1 bg-transparent text-sm text-slate-700 placeholder-slate-400 focus:outline-none"
+          />
+          <button
+            type="submit"
+            className="inline-flex items-center rounded-full bg-indigo-500 px-4 py-2 text-xs font-semibold text-white shadow-sm shadow-indigo-200 transition hover:bg-indigo-600"
+          >
+            Cari
+          </button>
+        </div>
+        {search && (
           <button
             type="button"
             onClick={() => {
@@ -169,38 +172,30 @@ export function PinjamView({ books, sessionUser, pageInfo }: PinjamViewProps) {
               params.delete("page");
               router.push(`/pinjam?${params.toString()}`);
             }}
-            className="text-xs font-semibold text-white/60 underline-offset-4 transition hover:text-white"
+            className="mt-3 text-xs font-semibold text-indigo-500 underline-offset-4 hover:text-indigo-600"
           >
-            Reset
+            Reset pencarian
           </button>
-          <button
-            type="submit"
-            className="flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-white/70 transition hover:border-white/20 hover:text-white"
-          >
-            <MagnifierIcon />
-            Cari
-          </button>
-        </div>
+        )}
       </form>
+
       {feedback && (
-        <div className="mt-4 rounded-3xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white/80">
+        <div className="mt-6 rounded-3xl border border-indigo-200 bg-indigo-50 px-5 py-4 text-sm text-indigo-700">
           {feedback}
         </div>
       )}
 
-      <section className="relative mt-8 space-y-4">
+      <section className="mt-8 space-y-4">
         <header className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-white/70">
-            Semua Buku
-          </h3>
-          <span className="text-xs text-white/50">
+          <h3 className="text-lg font-semibold text-slate-900">Semua Buku</h3>
+          <span className="text-xs text-slate-500">
             Halaman {pageInfo.currentPage} dari {pageInfo.totalPages} • Total {pageInfo.totalCount} buku
           </span>
         </header>
 
         <div className="space-y-3">
           {books.length === 0 ? (
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-5 text-center text-sm text-white/70">
+            <div className="rounded-3xl border border-slate-200 bg-white p-5 text-center text-sm text-slate-500 shadow-sm shadow-slate-100">
               Tidak ditemukan buku sesuai pencarian ini.
             </div>
           ) : (
@@ -208,55 +203,30 @@ export function PinjamView({ books, sessionUser, pageInfo }: PinjamViewProps) {
               <Link
                 key={`book-${book.id}`}
                 href={`/books/${book.id}`}
-                className="group grid grid-cols-[5rem_1fr] gap-4 rounded-3xl border border-white/10 bg-white/5 p-4 shadow-lg shadow-black/20 transition hover:border-white/20 hover:bg-white/10 sm:grid-cols-[6rem_1fr]"
+                className="group grid gap-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-100 transition hover:-translate-y-1 hover:border-indigo-200 hover:shadow-md sm:grid-cols-[5rem_1fr]"
               >
-                <div className="relative h-28 w-full overflow-hidden rounded-2xl border border-white/10 bg-white/10 sm:h-32">
+                <div className="relative h-28 w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
                   {book.coverImageUrl ? (
                     <Image
                       src={book.coverImageUrl}
                       alt={book.title}
                       fill
-                      sizes="96px"
+                      sizes="120px"
                       className="object-cover transition duration-300 group-hover:scale-105"
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-xs text-white/60">
-                      Tanpa Sampul
-                    </div>
+                    <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">Tanpa Sampul</div>
                   )}
                 </div>
-                <div className="flex flex-col justify-between">
-                  <div className="space-y-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h4 className="text-base font-semibold text-white group-hover:text-emerald-200">{book.title}</h4>
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_META[book.status].badgeClass}`}
-                      >
-                        {STATUS_META[book.status].label}
-                      </span>
-                    </div>
-                    <p className="text-xs text-white/60">
-                      {book.author} • {book.category ?? "Umum"}
-                    </p>
-                    {book.description && (
-                      <p className="line-clamp-2 text-xs text-white/60">{book.description}</p>
-                    )}
-                    {book.status === "BORROWED" && book.dueDate && (
-                      <p className="text-xs text-white/60">
-                        Estimasi kembali:{" "}
-                        <strong className="text-white/80">{formatDate(book.dueDate)}</strong>
-                      </p>
-                    )}
-                    {STATUS_META[book.status].helpText && (
-                      <p className="text-xs text-white/50">{STATUS_META[book.status].helpText}</p>
-                    )}
+                <div className="flex flex-col justify-between gap-3">
+                  <div>
+                    <h4 className="text-base font-semibold text-slate-900">{book.title}</h4>
+                    <p className="text-xs text-slate-500">{book.author}</p>
+                    <p className="text-xs text-slate-500">{book.category ?? "Umum"}</p>
                   </div>
-                  <div className="flex items-center justify-between text-xs text-white/60">
-                    <span>
-                      Stok:{" "}
-                      <strong className="text-white/80">
-                        {formatNumber(book.availableCopies)}/{formatNumber(book.totalCopies)}
-                      </strong>
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <span className={`inline-flex items-center rounded-full px-3 py-1 font-semibold ${STATUS_META[book.status].badgeClass}`}>
+                      {STATUS_META[book.status].label}
                     </span>
                     <button
                       type="button"
@@ -265,9 +235,9 @@ export function PinjamView({ books, sessionUser, pageInfo }: PinjamViewProps) {
                         handleBorrowClick(book);
                       }}
                       disabled={book.status !== "AVAILABLE" || requestingId === book.id}
-                      className="rounded-full border border-emerald-300/60 px-4 py-2 font-semibold text-emerald-200 transition hover:border-emerald-200 hover:bg-emerald-400/20 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="inline-flex items-center rounded-full bg-indigo-500 px-4 py-2 font-semibold text-white transition hover:bg-indigo-600 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
                     >
-                      {requestingId === book.id ? "Mengirim..." : "Ajukan Pinjam"}
+                      {requestingId === book.id ? "Mengirim..." : "Ajukan"}
                     </button>
                   </div>
                 </div>
@@ -277,12 +247,12 @@ export function PinjamView({ books, sessionUser, pageInfo }: PinjamViewProps) {
         </div>
 
         {pageInfo.totalPages > 1 && (
-          <nav className="flex flex-wrap items-center justify-center gap-2 pt-2 text-xs font-semibold text-white/70">
+          <nav className="flex flex-wrap items-center justify-center gap-2 pt-2 text-xs font-semibold text-slate-600">
             <button
               type="button"
               onClick={() => handlePageChange(pageInfo.currentPage - 1)}
               disabled={pageInfo.currentPage <= 1}
-              className="rounded-full border border-white/10 px-3 py-1 transition hover:border-white/20 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-full border border-slate-200 bg-white px-3 py-1 transition hover:border-indigo-200 hover:text-indigo-600 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
             >
               Sebelumnya
             </button>
@@ -290,29 +260,18 @@ export function PinjamView({ books, sessionUser, pageInfo }: PinjamViewProps) {
             {paginationPages[0] > 1 && (
               <>
                 <PageButton page={1} active={pageInfo.currentPage === 1} onClick={handlePageChange} />
-                {paginationPages[0] > 2 && <span className="px-1 text-white/40">…</span>}
+                {paginationPages[0] > 2 && <span className="px-1 text-slate-400">…</span>}
               </>
             )}
 
             {paginationPages.map((page) => (
-              <PageButton
-                key={`page-${page}`}
-                page={page}
-                active={pageInfo.currentPage === page}
-                onClick={handlePageChange}
-              />
+              <PageButton key={`page-${page}`} page={page} active={pageInfo.currentPage === page} onClick={handlePageChange} />
             ))}
 
             {paginationPages[paginationPages.length - 1] < pageInfo.totalPages && (
               <>
-                {paginationPages[paginationPages.length - 1] < pageInfo.totalPages - 1 && (
-                  <span className="px-1 text-white/40">…</span>
-                )}
-                <PageButton
-                  page={pageInfo.totalPages}
-                  active={pageInfo.currentPage === pageInfo.totalPages}
-                  onClick={handlePageChange}
-                />
+                {paginationPages[paginationPages.length - 1] < pageInfo.totalPages - 1 && <span className="px-1 text-slate-400">…</span>}
+                <PageButton page={pageInfo.totalPages} active={pageInfo.currentPage === pageInfo.totalPages} onClick={handlePageChange} />
               </>
             )}
 
@@ -320,7 +279,7 @@ export function PinjamView({ books, sessionUser, pageInfo }: PinjamViewProps) {
               type="button"
               onClick={() => handlePageChange(pageInfo.currentPage + 1)}
               disabled={pageInfo.currentPage >= pageInfo.totalPages}
-              className="rounded-full border border-white/10 px-3 py-1 transition hover:border-white/20 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-full border border-slate-200 bg-white px-3 py-1 transition hover:border-indigo-200 hover:text-indigo-600 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
             >
               Selanjutnya
             </button>
@@ -346,8 +305,8 @@ function PageButton({
       onClick={() => onClick(page)}
       className={`rounded-full border px-3 py-1 transition ${
         active
-          ? "border-emerald-400/60 bg-emerald-400/15 text-emerald-100"
-          : "border-white/10 bg-white/5 text-white/70 hover:border-white/20 hover:text-white"
+          ? "border-indigo-400 bg-indigo-500 text-white shadow-sm shadow-indigo-200"
+          : "border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-indigo-600"
       }`}
     >
       {page}
@@ -355,12 +314,12 @@ function PageButton({
   );
 }
 
-function MagnifierIcon() {
+function MagnifierIcon({ className }: { className?: string }) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 24 24"
-      className="h-4 w-4"
+      className={className ?? "h-5 w-5"}
       fill="none"
       stroke="currentColor"
       strokeWidth="1.6"

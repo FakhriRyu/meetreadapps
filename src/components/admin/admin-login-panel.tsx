@@ -41,47 +41,47 @@ export function AdminLoginPanel() {
   };
 
   return (
-    <div className="w-full max-w-md rounded-3xl border border-white/10 bg-slate-900/80 p-8 text-white shadow-2xl shadow-black/40 backdrop-blur">
+    <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-8 text-slate-900 shadow-xl shadow-indigo-100">
       <div className="space-y-2">
-        <div className="inline-flex items-center rounded-full border border-emerald-400/40 bg-emerald-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-emerald-100">
+        <div className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-emerald-600">
           Panel Admin
         </div>
-        <h1 className="text-2xl font-semibold leading-tight text-white">Masuk sebagai Administrator</h1>
-        <p className="text-sm text-white/70">
+        <h1 className="text-2xl font-semibold leading-tight text-slate-900">Masuk sebagai Administrator</h1>
+        <p className="text-sm text-slate-600">
           Gunakan kredensial admin untuk mengelola katalog buku dan data pengguna.
         </p>
-        <div className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-xs text-white/70">
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-500">
           {/* Default: <span className="font-semibold text-white">admin@meetread.com / admin</span> */}
         </div>
       </div>
 
       <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-        <label className="block text-sm text-white/80">
+        <label className="block text-sm font-medium text-slate-700">
           Email Admin
           <input
             type="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             placeholder="admin@meetread.com"
-            className="mt-2 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white placeholder-white/60 focus:border-emerald-300/40 focus:outline-none"
+            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-100"
             required
           />
         </label>
-        <label className="block text-sm text-white/80">
+        <label className="block text-sm font-medium text-slate-700">
           Kata Sandi
           <input
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             placeholder="Masukkan kata sandi admin"
-            className="mt-2 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white placeholder-white/60 focus:border-emerald-300/40 focus:outline-none"
+            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-100"
             required
             minLength={4}
           />
         </label>
 
         {status && (
-          <div className="rounded-2xl border border-rose-400/40 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
             {status}
           </div>
         )}
@@ -89,22 +89,22 @@ export function AdminLoginPanel() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full rounded-full bg-gradient-to-r from-emerald-400 to-sky-400 px-6 py-3 text-sm font-semibold text-emerald-950 shadow-lg shadow-emerald-400/30 transition hover:from-emerald-300 hover:to-sky-300 disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full rounded-full bg-gradient-to-r from-emerald-500 to-sky-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-200 transition hover:from-emerald-400 hover:to-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isSubmitting ? "Memproses..." : "Masuk Panel Admin"}
         </button>
       </form>
 
-      <div className="mt-6 space-y-3 text-center text-sm text-white/70">
+      <div className="mt-6 space-y-3 text-center text-sm text-slate-500">
         <Link
           href="/login"
-          className="inline-flex items-center justify-center gap-2 text-white/70 underline-offset-2 transition hover:text-white hover:underline"
+          className="inline-flex items-center justify-center gap-2 text-indigo-500 underline-offset-2 transition hover:text-indigo-600 hover:underline"
         >
           <span>←</span> Masuk sebagai Pengguna
         </Link>
         <Link
           href="/"
-          className="block text-white/70 underline-offset-2 transition hover:text-white hover:underline"
+          className="block text-slate-500 underline-offset-2 transition hover:text-indigo-500 hover:underline"
         >
           Kembali ke Beranda
         </Link>

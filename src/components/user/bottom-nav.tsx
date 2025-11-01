@@ -21,7 +21,7 @@ export function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-50 mx-auto mb-4 flex w-full max-w-md items-center justify-between rounded-full border border-white/10 bg-slate-900/80 px-4 py-2 shadow-lg shadow-black/30 backdrop-blur">
+    <nav className="fixed inset-x-0 bottom-0 z-50 mx-auto mb-4 flex w-full max-w-md items-center justify-between rounded-full border border-slate-200 bg-white/95 px-4 py-2 shadow-lg shadow-slate-200 backdrop-blur">
       {NAV_ITEMS.map((item) => {
         const isActive = pathname === item.href;
         return (
@@ -29,15 +29,15 @@ export function BottomNav() {
             key={item.href}
             href={item.href}
             className={`flex flex-1 flex-col items-center gap-1 rounded-full px-3 py-2 text-xs font-medium transition ${
-              isActive ? "text-white" : "text-white/60"
+              isActive ? "text-indigo-600" : "text-slate-500"
             }`}
             aria-current={isActive ? "page" : undefined}
           >
             <span
               className={`flex h-9 w-9 items-center justify-center rounded-full border ${
                 isActive
-                  ? "border-white/20 bg-emerald-400/20 text-white"
-                  : "border-transparent bg-white/5 text-white/70"
+                  ? "border-indigo-200 bg-indigo-100 text-indigo-600 shadow-sm shadow-indigo-100"
+                  : "border-slate-200 bg-slate-100 text-slate-500"
               }`}
             >
               {item.icon}

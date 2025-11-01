@@ -160,15 +160,15 @@ export function AuthPanel({ defaultMode }: AuthPanelProps) {
   };
 
   return (
-    <div className="w-full max-w-md rounded-3xl border border-white/10 bg-slate-900/80 p-8 text-white shadow-2xl shadow-black/40 backdrop-blur">
+    <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-8 text-slate-900 shadow-xl shadow-indigo-100">
       <div className="space-y-2">
-        <div className="inline-flex items-center rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-white/60">
+        <div className="inline-flex items-center rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-indigo-600">
           MeetRead
         </div>
-        <h1 className="text-2xl font-semibold leading-tight text-white">{title}</h1>
-        <p className="text-sm text-white/70">{subtitle}</p>
+        <h1 className="text-2xl font-semibold leading-tight text-slate-900">{title}</h1>
+        <p className="text-sm text-slate-600">{subtitle}</p>
         {redirectMessage && (
-          <div className="rounded-2xl border border-emerald-400/40 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
             {redirectMessage}
           </div>
         )}
@@ -176,19 +176,19 @@ export function AuthPanel({ defaultMode }: AuthPanelProps) {
 
       <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
         {mode === "register" && (
-          <label className="block text-sm text-white/80">
+          <label className="block text-sm font-medium text-slate-700">
             Nama Lengkap
             <input
               value={formState.name}
               onChange={handleInputChange("name")}
               placeholder="Tuliskan nama lengkapmu"
-              className="mt-2 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white placeholder-white/60 focus:border-white/20 focus:outline-none"
+              className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
               required
             />
           </label>
         )}
         {mode === "register" && (
-          <label className="block text-sm text-white/80">
+          <label className="block text-sm font-medium text-slate-700">
             Nomor WhatsApp
             <input
               type="tel"
@@ -198,43 +198,43 @@ export function AuthPanel({ defaultMode }: AuthPanelProps) {
               pattern="^62[0-9]{8,15}$"
               title="Nomor telepon harus diawali 62 dan minimal 10 digit"
               inputMode="numeric"
-              className="mt-2 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white placeholder-white/60 focus:border-white/20 focus:outline-none"
+              className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
               required
             />
           </label>
         )}
-        <label className="block text-sm text-white/80">
+        <label className="block text-sm font-medium text-slate-700">
           Email
           <input
             type="email"
             value={formState.email}
             onChange={handleInputChange("email")}
             placeholder="contoh@mail.com"
-            className="mt-2 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white placeholder-white/60 focus:border-white/20 focus:outline-none"
+            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
             required
           />
         </label>
-        <label className="block text-sm text-white/80">
+        <label className="block text-sm font-medium text-slate-700">
           Kata Sandi
           <input
             type="password"
             value={formState.password}
             onChange={handleInputChange("password")}
             placeholder="Minimal 8 karakter"
-            className="mt-2 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white placeholder-white/60 focus:border-white/20 focus:outline-none"
+            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
             required
             minLength={8}
           />
         </label>
         {mode === "register" && (
-          <label className="block text-sm text-white/80">
+          <label className="block text-sm font-medium text-slate-700">
             Konfirmasi Kata Sandi
             <input
               type="password"
               value={formState.confirmPassword}
               onChange={handleInputChange("confirmPassword")}
               placeholder="Ulangi kata sandimu"
-              className="mt-2 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white placeholder-white/60 focus:border-white/20 focus:outline-none"
+              className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
               required
               minLength={8}
             />
@@ -242,7 +242,7 @@ export function AuthPanel({ defaultMode }: AuthPanelProps) {
         )}
 
         {status && (
-          <div className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white/80">
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
             {status}
           </div>
         )}
@@ -250,13 +250,13 @@ export function AuthPanel({ defaultMode }: AuthPanelProps) {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full rounded-full bg-gradient-to-r from-emerald-400 to-sky-400 px-6 py-3 text-sm font-semibold text-emerald-950 shadow-lg shadow-emerald-400/30 transition hover:from-emerald-300 hover:to-sky-300 disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full rounded-full bg-gradient-to-r from-indigo-500 to-sky-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-200 transition hover:from-indigo-400 hover:to-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isSubmitting ? "Memproses..." : mode === "login" ? "Masuk Sekarang" : "Daftar Sekarang"}
         </button>
       </form>
 
-      <div className="mt-6 space-y-3 text-center text-sm text-white/70">
+      <div className="mt-6 space-y-3 text-center text-sm text-slate-500">
         <p>
           {mode === "login" ? (
             <>
@@ -264,7 +264,7 @@ export function AuthPanel({ defaultMode }: AuthPanelProps) {
               <button
                 type="button"
                 onClick={switchMode}
-                className="font-semibold text-emerald-300 underline-offset-2 transition hover:text-emerald-200 hover:underline"
+                className="font-semibold text-indigo-500 underline-offset-2 transition hover:text-indigo-600 hover:underline"
               >
                 Daftar sekarang
               </button>
@@ -275,7 +275,7 @@ export function AuthPanel({ defaultMode }: AuthPanelProps) {
               <button
                 type="button"
                 onClick={switchMode}
-                className="font-semibold text-emerald-300 underline-offset-2 transition hover:text-emerald-200 hover:underline"
+                className="font-semibold text-indigo-500 underline-offset-2 transition hover:text-indigo-600 hover:underline"
               >
                 Masuk di sini
               </button>
@@ -284,7 +284,7 @@ export function AuthPanel({ defaultMode }: AuthPanelProps) {
         </p>
         <Link
           href="/"
-          className="inline-flex items-center justify-center gap-2 text-white/70 underline-offset-2 transition hover:text-white hover:underline"
+          className="inline-flex items-center justify-center gap-2 text-slate-500 underline-offset-2 transition hover:text-indigo-500 hover:underline"
         >
           <span>←</span> Kembali ke Beranda
         </Link>

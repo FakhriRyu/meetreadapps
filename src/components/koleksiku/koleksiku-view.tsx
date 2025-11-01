@@ -45,12 +45,12 @@ const REQUEST_STATUS_META: Record<
 > = {
   PENDING: {
     label: "Menunggu Konfirmasi",
-    badgeClass: "bg-amber-400/20 text-amber-100 border border-amber-200/40",
+    badgeClass: "bg-amber-100 text-amber-700 border border-amber-200",
     helpText: "Segera tentukan apakah buku akan dipinjamkan.",
   },
   APPROVED: {
     label: "Sedang Dipinjam",
-    badgeClass: "bg-emerald-400/20 text-emerald-100 border border-emerald-200/30",
+    badgeClass: "bg-emerald-100 text-emerald-700 border border-emerald-200",
     helpText: "Buku sedang dipinjam dan menunggu pengembalian.",
   },
 };
@@ -320,6 +320,8 @@ export function KoleksikuView({ collections, requests }: KoleksikuViewProps) {
         category: editingItem.category,
         description: editingItem.description,
         coverImageUrl: editingItem.coverImageUrl,
+        isbn: editingItem.isbn ?? null,
+        publishedYear: editingItem.publishedYear ?? null,
         lendable: editingItem.lendable,
         totalCopies: editingItem.totalCopies,
         availableCopies: editingItem.availableCopies,
@@ -397,160 +399,162 @@ export function KoleksikuView({ collections, requests }: KoleksikuViewProps) {
   };
 
   return (
-    <div className="relative min-h-screen px-6 pb-28 pt-10">
-      <header className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold text-white">Koleksiku</h1>
-          <p className="text-sm text-white/70">Kelola buku milikmu dan atur status peminjaman.</p>
-        </div>
-        <button
-          type="button"
-          onClick={openCreateModal}
-          className="rounded-full bg-gradient-to-r from-emerald-400 to-sky-400 px-5 py-2 text-sm font-semibold text-emerald-950 shadow-lg shadow-emerald-400/30 transition hover:from-emerald-300 hover:to-sky-300"
-        >
-          Tambah Koleksi
-        </button>
-      </header>
-
-      <section className="mt-8 space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="min-h-screen bg-[#f5f7ff] px-6 pb-28 pt-10 text-slate-900">
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-10">
+        <header className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-xs uppercase tracking-widest text-white/60">Permintaan Peminjaman</p>
-            <h2 className="text-lg font-semibold text-white">Butuh Aksi ({pendingCount})</h2>
+            <h1 className="text-2xl font-semibold text-slate-900">Koleksiku</h1>
+            <p className="text-sm text-slate-500">Kelola buku milikmu dan atur status peminjaman.</p>
           </div>
-          <div className="rounded-full border border-white/10 px-4 py-1 text-xs text-white/70">
-            {loanRequests.length} permintaan aktif
-          </div>
-        </div>
+          <button
+            type="button"
+            onClick={openCreateModal}
+            className="rounded-full bg-indigo-500 px-5 py-2 text-sm font-semibold text-white shadow-sm shadow-indigo-200 transition hover:bg-indigo-600"
+          >
+            Tambah Koleksi
+          </button>
+        </header>
 
-        {requestFeedback && (
-          <div className="rounded-2xl border border-emerald-400/40 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
-            {requestFeedback}
+        <section className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-xs uppercase tracking-widest text-slate-500">Permintaan Peminjaman</p>
+              <h2 className="text-lg font-semibold text-slate-900">Butuh Aksi ({pendingCount})</h2>
+            </div>
+            <div className="rounded-full border border-slate-200 bg-white px-4 py-1 text-xs text-slate-600 shadow-sm shadow-slate-100">
+              {loanRequests.length} permintaan aktif
+            </div>
           </div>
-        )}
 
-        {loanRequests.length === 0 ? (
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-5 text-center text-sm text-white/70">
-            Belum ada permintaan baru. Saat ada pengguna yang ingin meminjam bukumu, mereka akan muncul di sini.
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {loanRequests.map((request) => {
-              const statusKey = request.status === "APPROVED" ? "APPROVED" : "PENDING";
-              const meta = REQUEST_STATUS_META[statusKey];
-              const isProcessing = pendingAction?.requestId === request.id;
-              const processingType = pendingAction?.type;
-              return (
-                <div
-                  key={request.id}
-                  className="rounded-3xl border border-white/10 bg-white/5 p-5 text-sm text-white shadow-lg shadow-black/20"
-                >
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                      <p className="text-base font-semibold text-white">{request.book.title}</p>
-                      <p className="text-xs text-white/60">Permintaan oleh {request.requester.name}</p>
+          {requestFeedback && (
+            <div className="rounded-2xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-700">
+              {requestFeedback}
+            </div>
+          )}
+
+          {loanRequests.length === 0 ? (
+            <div className="rounded-3xl border border-slate-200 bg-white p-5 text-center text-sm text-slate-500 shadow-sm shadow-slate-100">
+              Belum ada permintaan baru. Saat ada pengguna yang ingin meminjam bukumu, mereka akan muncul di sini.
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {loanRequests.map((request) => {
+                const statusKey = request.status === "APPROVED" ? "APPROVED" : "PENDING";
+                const meta = REQUEST_STATUS_META[statusKey];
+                const isProcessing = pendingAction?.requestId === request.id;
+                const processingType = pendingAction?.type;
+                return (
+                  <div
+                    key={request.id}
+                    className="rounded-3xl border border-slate-200 bg-white p-5 text-sm text-slate-600 shadow-sm shadow-slate-100"
+                  >
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <p className="text-base font-semibold text-slate-900">{request.book.title}</p>
+                        <p className="text-xs text-slate-500">Permintaan oleh {request.requester.name}</p>
+                      </div>
+                      <span className={`rounded-full px-3 py-1 text-xs font-semibold ${meta.badgeClass}`}>
+                        {meta.label}
+                      </span>
                     </div>
-                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${meta.badgeClass}`}>
-                      {meta.label}
-                    </span>
-                  </div>
-                  <div className="mt-3 grid gap-3 text-xs text-white/70 sm:grid-cols-2">
-                    <div>
-                      <p className="text-white/60">Email</p>
-                      <p className="font-semibold text-white/90">{request.requester.email}</p>
+                    <div className="mt-3 grid gap-3 text-xs text-slate-600 sm:grid-cols-2">
+                      <div>
+                        <p className="text-slate-500">Email</p>
+                        <p className="font-semibold text-slate-800">{request.requester.email}</p>
+                      </div>
+                      <div>
+                        <p className="text-slate-500">WhatsApp</p>
+                        <p className="font-semibold text-slate-800">
+                          {request.requester.phoneNumber ?? "Belum tersedia"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-slate-500">Diajukan</p>
+                        <p className="font-semibold text-slate-800">{formatDate(request.createdAt)}</p>
+                      </div>
+                      <div>
+                        <p className="text-slate-500">Batas Pengembalian</p>
+                        <p className="font-semibold text-slate-800">
+                          {request.status === "APPROVED" ? formatDate(request.book.dueDate) : "-"}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-white/60">WhatsApp</p>
-                      <p className="font-semibold text-white/90">
-                        {request.requester.phoneNumber ?? "Belum tersedia"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-white/60">Diajukan</p>
-                      <p className="font-semibold text-white/90">{formatDate(request.createdAt)}</p>
-                    </div>
-                    <div>
-                      <p className="text-white/60">Batas Pengembalian</p>
-                      <p className="font-semibold text-white/90">
-                        {request.status === "APPROVED" ? formatDate(request.book.dueDate) : "-"}
-                      </p>
-                    </div>
-                  </div>
-                  {request.message && (
-                    <div className="mt-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-white/80">
-                      <p className="text-white/60">Catatan peminjam:</p>
-                      <p className="mt-1 text-white/90">{request.message}</p>
-                    </div>
-                  )}
-                  <p className="mt-3 text-xs text-white/60">{meta.helpText}</p>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {request.status === "PENDING" ? (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => openActionModal("approve", request)}
-                          disabled={isProcessing}
-                          className="flex-1 rounded-full bg-emerald-400 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-emerald-950 shadow-lg shadow-emerald-400/30 transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:px-5"
-                        >
-                          {isProcessing && processingType === "approve" ? "Memproses..." : "Setujui"}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => openActionModal("reject", request)}
-                          disabled={isProcessing}
-                          className="flex-1 rounded-full border border-rose-300/60 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-rose-200 transition hover:border-rose-200 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:px-5"
-                        >
-                          {isProcessing && processingType === "reject" ? "Memproses..." : "Tolak"}
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => openActionModal("extend", request)}
-                          disabled={isProcessing}
-                          className="flex-1 rounded-full border border-emerald-300/60 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-emerald-100 transition hover:border-emerald-200 hover:bg-emerald-400/20 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:px-5"
-                        >
-                          {isProcessing && processingType === "extend" ? "Memproses..." : "Perpanjang Tempo"}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => openActionModal("complete", request)}
-                          disabled={isProcessing}
-                          className="flex-1 rounded-full border border-white/20 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-white transition hover:border-emerald-200 hover:text-emerald-100 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:px-5"
-                        >
-                          {isProcessing && processingType === "complete" ? "Memproses..." : "Tandai Dikembalikan"}
-                        </button>
-                      </>
+                    {request.message && (
+                      <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
+                        <p className="text-slate-500">Catatan peminjam:</p>
+                        <p className="mt-1 text-slate-700">{request.message}</p>
+                      </div>
                     )}
+                    <p className="mt-3 text-xs text-slate-500">{meta.helpText}</p>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {request.status === "PENDING" ? (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => openActionModal("approve", request)}
+                            disabled={isProcessing}
+                            className="flex-1 rounded-full bg-indigo-500 px-4 py-2 text-xs font-semibold text-white shadow-sm shadow-indigo-200 transition hover:bg-indigo-600 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 sm:flex-none sm:px-5"
+                          >
+                            {isProcessing && processingType === "approve" ? "Memproses..." : "Setujui"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => openActionModal("reject", request)}
+                            disabled={isProcessing}
+                            className="flex-1 rounded-full border border-rose-200 px-4 py-2 text-xs font-semibold text-rose-600 transition hover:border-rose-300 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:px-5"
+                          >
+                            {isProcessing && processingType === "reject" ? "Memproses..." : "Tolak"}
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => openActionModal("extend", request)}
+                            disabled={isProcessing}
+                            className="flex-1 rounded-full border border-emerald-200 px-4 py-2 text-xs font-semibold text-emerald-600 transition hover:border-emerald-300 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:px-5"
+                          >
+                            {isProcessing && processingType === "extend" ? "Memproses..." : "Perpanjang Tempo"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => openActionModal("complete", request)}
+                            disabled={isProcessing}
+                            className="flex-1 rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 transition hover:border-emerald-200 hover:text-emerald-600 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:px-5"
+                          >
+                            {isProcessing && processingType === "complete" ? "Memproses..." : "Tandai Dikembalikan"}
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
+                );
+              })}
+            </div>
+          )}
+        </section>
 
-      <section className="mt-8 space-y-4">
-        <CollectionList collections={items} onEdit={openEditModal} onDelete={handleDelete} deletingId={deletingId} />
-      </section>
+        <section className="space-y-4">
+          <CollectionList collections={items} onEdit={openEditModal} onDelete={handleDelete} deletingId={deletingId} />
+        </section>
+      </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4 backdrop-blur">
-          <div className="w-full max-w-2xl rounded-3xl border border-white/10 bg-slate-900/95 p-6 text-white shadow-2xl shadow-black/40">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-2xl max-h-[calc(100vh-5.5rem)] overflow-y-auto rounded-3xl border border-slate-200 bg-white p-6 text-slate-800 shadow-xl shadow-slate-200 sm:max-h-[calc(100vh-6.5rem)]">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">
+              <h2 className="text-lg font-semibold text-slate-900">
                 {editingItem ? "Edit Buku Koleksi" : "Tambah Buku Koleksi"}
               </h2>
               <button
                 type="button"
                 onClick={() => setModalOpen(false)}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 text-white/80 transition hover:bg-white/10"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-600 transition hover:border-indigo-200 hover:bg-slate-100"
               >
                 ✕
               </button>
             </div>
-            <p className="mt-2 text-sm text-white/70">
+            <p className="mt-2 text-sm text-slate-500">
               Bagikan koleksi buku pribadimu agar teman dapat meminjam, atau simpan hanya untuk catatan pribadi.
             </p>
             <div className="mt-5">
@@ -571,10 +575,10 @@ export function KoleksikuView({ collections, requests }: KoleksikuViewProps) {
       )}
 
       {actionState && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center bg-slate-950/80 px-4 backdrop-blur">
-          <div className="w-full max-w-lg rounded-3xl border border-white/10 bg-slate-900/95 p-6 text-white shadow-2xl shadow-black/40">
+        <div className="fixed inset-0 z-60 flex items-center justify-center bg-slate-900/30 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-lg max-h-[calc(100vh-5.5rem)] overflow-y-auto rounded-3xl border border-slate-200 bg-white p-6 text-slate-800 shadow-xl shadow-slate-200 sm:max-h-[calc(100vh-6.5rem)]">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">
+              <h3 className="text-lg font-semibold text-slate-900">
                 {actionState.type === "approve"
                   ? "Setujui Permintaan"
                   : actionState.type === "reject"
@@ -586,35 +590,35 @@ export function KoleksikuView({ collections, requests }: KoleksikuViewProps) {
               <button
                 type="button"
                 onClick={closeActionModal}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 text-white/80 transition hover:bg-white/10"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-600 transition hover:border-indigo-200 hover:bg-slate-100"
               >
                 ✕
               </button>
             </div>
-            <p className="mt-2 text-sm text-white/70">
-              Buku: <span className="font-semibold text-white">{actionState.request.book.title}</span>
+            <p className="mt-2 text-sm text-slate-500">
+              Buku: <span className="font-semibold text-slate-900">{actionState.request.book.title}</span>
             </p>
             <form className="mt-5 space-y-4" onSubmit={handleActionSubmit}>
               {(actionState.type === "approve" || actionState.type === "extend") && (
-                <label className="block text-sm text-white/80">
+                <label className="block text-sm text-slate-600">
                   Tanggal Pengembalian
                   <input
                     type="date"
                     min={formatDateInput(new Date())}
                     value={actionDueDate}
                     onChange={(event) => setActionDueDate(event.target.value)}
-                    className="mt-2 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white focus:border-white/20 focus:outline-none"
+                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 focus:border-indigo-200 focus:outline-none"
                     required
                   />
                 </label>
               )}
-              <label className="block text-sm text-white/80">
+              <label className="block text-sm text-slate-600">
                 Catatan (opsional)
                 <textarea
                   value={actionMessage}
                   onChange={(event) => setActionMessage(event.target.value)}
                   rows={3}
-                  className="mt-2 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white placeholder-white/60 focus:border-white/20 focus:outline-none"
+                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 placeholder-slate-400 focus:border-indigo-200 focus:outline-none"
                   placeholder={
                     actionState.type === "approve"
                       ? "Beritahu peminjam instruksi tambahan."
@@ -627,7 +631,7 @@ export function KoleksikuView({ collections, requests }: KoleksikuViewProps) {
                 />
               </label>
               {actionError && (
-                <div className="rounded-2xl border border-rose-400/40 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
+                <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600">
                   {actionError}
                 </div>
               )}
@@ -635,14 +639,14 @@ export function KoleksikuView({ collections, requests }: KoleksikuViewProps) {
                 <button
                   type="button"
                   onClick={closeActionModal}
-                  className="rounded-full border border-white/20 px-5 py-2 text-sm font-semibold text-white transition hover:border-white/40 hover:bg-white/10"
+                  className="rounded-full border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-600 transition hover:border-indigo-200 hover:text-indigo-600"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={actionLoading}
-                  className="rounded-full bg-gradient-to-r from-emerald-400 to-sky-400 px-6 py-2 text-sm font-semibold text-emerald-950 shadow-lg shadow-emerald-400/30 transition hover:from-emerald-300 hover:to-sky-300 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-full bg-indigo-500 px-6 py-2 text-sm font-semibold text-white shadow-sm shadow-indigo-200 transition hover:bg-indigo-600 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
                 >
                   {actionLoading ? "Memproses..." : "Simpan"}
                 </button>

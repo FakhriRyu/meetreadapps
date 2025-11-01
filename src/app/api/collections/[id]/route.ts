@@ -3,16 +3,28 @@ import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
-import { BookStatus } from "@prisma/client";
+import { BookStatus, Prisma } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
 const CollectionSchema = z.object({
   title: z.string().trim().min(1, "Judul wajib diisi"),
   author: z.string().trim().min(1, "Penulis wajib diisi"),
-  category: z.string().trim().optional(),
-  description: z.string().trim().optional(),
-  coverImageUrl: z.string().trim().url().optional().or(z.literal("")),
+  category: z.string().trim().nullish(),
+  description: z.string().trim().nullish(),
+  coverImageUrl: z.string().trim().url().nullish(),
+  isbn: z
+    .string()
+    .trim()
+    .min(3, "ISBN minimal 3 karakter")
+    .max(32, "ISBN maksimal 32 karakter")
+    .nullish(),
+  publishedYear: z
+    .number({ invalid_type_error: "Tahun terbit tidak valid" })
+    .int()
+    .min(1000, "Tahun terbit tidak valid")
+    .max(new Date().getFullYear() + 1, "Tahun terbit tidak valid")
+    .nullish(),
   lendable: z.boolean(),
   totalCopies: z.number().int().min(1),
   availableCopies: z.number().int().min(0),
@@ -58,6 +70,15 @@ export async function PUT(
       );
     }
 
+    const normalizedCategory = data.category && data.category.trim().length > 0 ? data.category.trim() : null;
+    const normalizedDescription =
+      data.description && data.description.trim().length > 0 ? data.description.trim() : null;
+    const normalizedCover =
+      data.coverImageUrl && data.coverImageUrl.trim().length > 0 ? data.coverImageUrl.trim() : null;
+    const normalizedIsbn = data.isbn && data.isbn.trim().length > 0 ? data.isbn.trim() : null;
+    const normalizedPublishedYear =
+      typeof data.publishedYear === "number" ? data.publishedYear : null;
+
     const current = await prisma.book.findFirst({
       where: { id, ownerId: sessionUser.id },
       select: { status: true },
@@ -85,9 +106,11 @@ export async function PUT(
       data: {
         title: data.title,
         author: data.author,
-        category: data.category,
-        description: data.description,
-        coverImageUrl: data.coverImageUrl && data.coverImageUrl.length > 0 ? data.coverImageUrl : null,
+        category: normalizedCategory,
+        description: normalizedDescription,
+        coverImageUrl: normalizedCover,
+        isbn: normalizedIsbn,
+        publishedYear: normalizedPublishedYear,
         lendable: data.lendable,
         totalCopies: data.totalCopies,
         availableCopies: data.availableCopies,
@@ -98,6 +121,15 @@ export async function PUT(
 
     return NextResponse.json({ data: updated });
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P2002") {
+        return NextResponse.json(
+          { error: "ISBN sudah terdaftar. Gunakan ISBN lain." },
+          { status: 409 },
+        );
+      }
+    }
+
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.issues[0]?.message ?? "Data tidak valid" }, { status: 400 });
     }

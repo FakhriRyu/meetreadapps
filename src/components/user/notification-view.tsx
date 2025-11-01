@@ -28,51 +28,51 @@ const STATUS_META: Record<
 > = {
   APPROVED: {
     title: "Permintaan disetujui",
-    accent: "from-emerald-500/20 via-emerald-400/10 to-emerald-300/10 border-emerald-400/50",
+    accent: "from-emerald-50 via-emerald-50 to-white border-emerald-200",
     defaultMessage: "Pemilik menyetujui permintaanmu. Hubungi mereka untuk penjemputan.",
   },
   REJECTED: {
     title: "Permintaan ditolak",
-    accent: "from-rose-500/20 via-rose-400/10 to-rose-300/10 border-rose-400/50",
+    accent: "from-rose-50 via-rose-50 to-white border-rose-200",
     defaultMessage: "Permintaanmu tidak dapat diproses oleh pemilik.",
   },
   CANCELLED: {
     title: "Permintaan dibatalkan",
-    accent: "from-white/20 via-white/10 to-white/5 border-white/30",
+    accent: "from-slate-50 via-slate-50 to-white border-slate-200",
     defaultMessage: "Permintaan dibatalkan oleh sistem atau pemilik.",
   },
   RETURNED: {
     title: "Peminjaman selesai",
-    accent: "from-sky-500/20 via-sky-400/10 to-sky-300/10 border-sky-400/40",
+    accent: "from-sky-50 via-sky-50 to-white border-sky-200",
     defaultMessage: "Terima kasih sudah mengembalikan buku tepat waktu.",
   },
   EXTENDED: {
     title: "Jatuh tempo diperpanjang",
-    accent: "from-indigo-500/20 via-indigo-400/10 to-sky-300/10 border-indigo-400/50",
+    accent: "from-indigo-50 via-indigo-50 to-white border-indigo-200",
     defaultMessage: "Pemilik memperpanjang durasi peminjaman. Perhatikan tanggal baru.",
   },
 };
 
 export function NotificationView({ notifications }: NotificationViewProps) {
   return (
-    <div className="relative min-h-screen px-6 pb-28 pt-10">
-      <header className="flex flex-wrap items-center justify-between gap-4">
+    <div className="min-h-screen bg-[#f5f7ff] px-6 pb-28 pt-10 text-slate-900">
+      <header className="flex flex-wrap items-center justify-between gap-4 max-w-4xl mx-auto">
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-white/50">Pemberitahuan</p>
-          <h1 className="text-2xl font-semibold text-white">Notifikasi Terbaru</h1>
-          <p className="text-sm text-white/70">Catatan status peminjaman buku yang kamu ajukan.</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Pemberitahuan</p>
+          <h1 className="text-2xl font-semibold text-slate-900">Notifikasi Terbaru</h1>
+          <p className="text-sm text-slate-500">Catatan status peminjaman buku yang kamu ajukan.</p>
         </div>
         <Link
           href="/beranda"
-          className="inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/30 hover:bg-white/10"
+          className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-indigo-500 shadow-sm shadow-slate-100 transition hover:border-indigo-200 hover:bg-indigo-50"
         >
           ← Kembali ke Beranda
         </Link>
       </header>
 
-      <section className="mt-8 space-y-4">
+      <section className="mx-auto mt-8 space-y-4 max-w-4xl">
         {notifications.length === 0 ? (
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6 text-center text-sm text-white/70">
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-500 shadow-sm shadow-slate-100">
             Belum ada notifikasi. Saat pemilik memproses permintaanmu, kabar terbaru akan muncul di sini.
           </div>
         ) : (
@@ -84,25 +84,25 @@ export function NotificationView({ notifications }: NotificationViewProps) {
             return (
               <div
                 key={notification.id}
-                className={`rounded-3xl border bg-gradient-to-br ${meta.accent} p-5 text-white shadow-lg shadow-black/20`}
+                className={`rounded-3xl border bg-gradient-to-br ${meta.accent} p-5 text-slate-800 shadow-sm shadow-slate-100`}
               >
-                <p className="text-sm text-white/70">{formatDate(notification.createdAt)}</p>
-                <p className="mt-1 text-base font-semibold">
+                <p className="text-sm text-slate-500">{formatDate(notification.createdAt)}</p>
+                <p className="mt-1 text-base font-semibold text-slate-900">
                   Permintaan "{notification.book.title}" {meta.title.toLowerCase()}.
                 </p>
-                <p className="mt-1 text-sm text-white/80">
+                <p className="mt-1 text-sm text-slate-600">
                   {notification.message?.trim().length ? notification.message : meta.defaultMessage}
                 </p>
                 <div className="mt-4 flex gap-3">
                   <Link
                     href={`/books/${notification.book.id}`}
-                    className="inline-flex items-center rounded-full border border-white/30 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-white transition hover:border-white/60 hover:bg-white/10"
+                    className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-widest text-indigo-500 transition hover:border-indigo-200 hover:bg-indigo-50"
                   >
                     Lihat Buku
                   </Link>
                   <Link
                     href="/permintaan"
-                    className="inline-flex items-center rounded-full border border-white/15 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-white/80 transition hover:border-white/30 hover:bg-white/10"
+                    className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-widest text-slate-500 transition hover:border-indigo-200 hover:bg-indigo-50"
                   >
                     Lihat Timeline
                   </Link>

@@ -122,21 +122,20 @@ export function HomeView({ books, sessionUser }: HomeViewProps) {
 
   const profileImage = sessionUser?.profileImage?.trim() ?? null;
   const hasProfileImage = Boolean(profileImage);
+  const firstName = sessionUser?.name?.split(" ")[0] ?? "Pembaca";
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-slate-950 text-white">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -left-16 top-8 h-56 w-56 rounded-full bg-emerald-500/20 blur-3xl" />
-        <div className="absolute right-0 top-1/3 h-60 w-60 rounded-full bg-sky-500/15 blur-3xl" />
-        <div className="absolute -bottom-20 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-rose-500/10 blur-3xl" />
-      </div>
-
-      <main className="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col px-6 pb-28 pt-10">
-        <header className="space-y-6">
-          <div className="flex items-center justify-end gap-3">
+    <div className="min-h-screen bg-[#f5f7ff] text-slate-900">
+      <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-6 pb-24 pt-10">
+        <header className="flex items-start justify-between gap-6">
+          <div className="space-y-1">
+            <p className="text-sm text-slate-500">Hai, {firstName}! 👋</p>
+            <h1 className="text-2xl font-semibold text-slate-900">Temukan bacaan favoritmu.</h1>
+          </div>
+          <div className="flex items-center gap-3">
             <Link
               href="/notifikasi"
-              className="relative flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/10 text-white/70 transition hover:border-white/20 hover:bg-white/15"
+              className="relative flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:border-slate-300 hover:text-slate-700"
               aria-label="Notifikasi"
             >
               <BellIcon />
@@ -144,59 +143,37 @@ export function HomeView({ books, sessionUser }: HomeViewProps) {
             </Link>
             <Link
               href="/profil"
-              className="relative block h-10 w-10 overflow-hidden rounded-full border border-white/10 bg-white/10 transition hover:border-white/20 hover:bg-white/15"
+              className="relative block h-11 w-11 overflow-hidden rounded-full border border-slate-200 bg-white transition hover:border-slate-300"
               aria-label="Profil"
             >
               {hasProfileImage ? (
-                <Image
-                  src={profileImage!}
-                  alt={sessionUser?.name ?? "Profil"}
-                  fill
-                  sizes="40px"
-                  className="object-cover"
-                />
+                <Image src={profileImage!} alt={sessionUser?.name ?? "Profil"} fill sizes="44px" className="object-cover" />
               ) : (
-                <Image
-                  src={avatarFallbackUrl}
-                  alt={sessionUser?.name ?? "Profil"}
-                  fill
-                  sizes="40px"
-                  className="object-cover"
-                />
+                <Image src={avatarFallbackUrl} alt={sessionUser?.name ?? "Profil"} fill sizes="44px" className="object-cover" />
               )}
               {!hasProfileImage && (
-                <span className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-white/90">
+                <span className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-slate-700">
                   {avatarInitials}
                 </span>
               )}
             </Link>
           </div>
+        </header>
 
-          <div className="rounded-3xl border border-white/10 bg-white/10 p-6 shadow-lg shadow-black/20">
-            <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3">
-              <MagnifierIcon className="h-4 w-4 text-white/60" />
+        <section className="mt-8 space-y-6">
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-100">
+            <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+              <MagnifierIcon className="h-5 w-5 text-slate-400" />
               <input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Cari judul, penulis, atau kategori..."
-                className="flex-1 bg-transparent text-sm text-white placeholder-white/60 focus:outline-none"
+                className="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 focus:outline-none"
               />
-            </div>
-
-            <div className="mt-5 flex items-center justify-between text-xs text-white/70">
-              <div>
-                <p>Total Koleksi</p>
-                <p className="text-lg font-semibold text-white">{stats.total} Buku</p>
-              </div>
-              <div className="h-10 w-px bg-white/10" />
-              <div>
-                <p>Eksemplar Tersedia</p>
-                <p className="text-lg font-semibold text-white">{stats.available}</p>
-              </div>
             </div>
           </div>
 
-          <div className="-mx-2 flex gap-2 overflow-x-auto pb-2 pt-1">
+          <div className="-mx-2 flex gap-2 overflow-x-auto pb-1">
             {categories.map((category) => {
               const isActive = category === resolvedCategory;
               return (
@@ -204,10 +181,10 @@ export function HomeView({ books, sessionUser }: HomeViewProps) {
                   key={category}
                   type="button"
                   onClick={() => setActiveCategory(category)}
-                  className={`whitespace-nowrap rounded-full border px-4 py-2 text-xs font-semibold transition ${
+                  className={`mx-2 whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition ${
                     isActive
-                      ? "border-emerald-400/60 bg-emerald-400/15 text-emerald-100"
-                      : "border-white/10 bg-white/5 text-white/70 hover:border-white/20 hover:text-white"
+                      ? "bg-indigo-500 text-white shadow-sm shadow-indigo-200"
+                      : "border border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-indigo-600"
                   }`}
                 >
                   {category}
@@ -215,19 +192,14 @@ export function HomeView({ books, sessionUser }: HomeViewProps) {
               );
             })}
           </div>
-        </header>
+        </section>
 
-        <section className="mt-8 space-y-8">
+        <section className="mt-10 space-y-10">
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-white">Fresh Arrivals</h2>
-              <span className="text-xs font-semibold uppercase tracking-widest text-white/50">
-                {freshArrivals.length} Buku
-              </span>
-            </div>
-            <div className="-mx-2 flex gap-4 overflow-x-auto pb-2">
+            <SectionHeading label="Koleksi Populer" />
+            <div className="-mx-2 flex gap-5 overflow-x-auto pb-2">
               {freshArrivals.length === 0 ? (
-                <div className="mx-2 w-full rounded-3xl border border-white/10 bg-white/5 p-5 text-center text-sm text-white/70">
+                <div className="mx-2 w-full rounded-3xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-500 shadow-sm shadow-slate-100">
                   Belum ada buku dalam kategori ini. Coba kata kunci lain ya!
                 </div>
               ) : (
@@ -235,25 +207,29 @@ export function HomeView({ books, sessionUser }: HomeViewProps) {
                   <Link
                     key={`arrival-${book.id}`}
                     href={`/books/${book.id}`}
-                    className="group relative mx-2 w-36 flex-shrink-0 overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-4 shadow-lg shadow-black/20 transition hover:border-white/20 hover:bg-white/10"
+                    className="group relative mx-2 w-40 flex-shrink-0 overflow-hidden rounded-3xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-100 transition hover:-translate-y-1 hover:border-indigo-200 hover:shadow-md"
                   >
-                    <div className="relative h-40 w-full overflow-hidden rounded-2xl border border-white/5 bg-white/10">
+                    <div className="relative h-44 w-full overflow-hidden rounded-2xl bg-slate-100">
                       {book.coverImageUrl ? (
                         <Image
                           src={book.coverImageUrl}
                           alt={book.title}
                           fill
-                          sizes="150px"
+                          sizes="160px"
                           className="object-cover transition duration-300 group-hover:scale-105"
                         />
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center text-xs text-white/50">
+                        <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">
                           Tidak ada sampul
                         </div>
                       )}
                     </div>
-                    <p className="mt-3 line-clamp-1 text-sm font-semibold text-white">{book.title}</p>
-                    <p className="line-clamp-1 text-xs text-white/60">{book.category ?? "Umum"}</p>
+                    <p className="mt-3 line-clamp-1 text-sm font-semibold text-slate-900">{book.title}</p>
+                    <p className="line-clamp-1 text-xs text-slate-500">{book.category ?? "Umum"}</p>
+                    <span className="mt-3 inline-flex items-center text-xs font-medium text-indigo-500">
+                      Telusuri
+                      <ArrowIcon className="ml-1 h-3 w-3" />
+                    </span>
                   </Link>
                 ))
               )}
@@ -261,27 +237,22 @@ export function HomeView({ books, sessionUser }: HomeViewProps) {
           </div>
 
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-white">Authors</h2>
-              <span className="text-xs font-semibold uppercase tracking-widest text-white/50">
-                {authors.length} Terpilih
-              </span>
-            </div>
-          <div className="-mx-2 flex gap-3 overflow-x-auto pb-2">
-            {authors.length === 0 ? (
-              <div className="mx-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/70">
-                Penulis belum tersedia untuk pilihan ini.
-              </div>
-            ) : (
+            <SectionHeading label="Penulis Pilihan" />
+            <div className="-mx-2 flex gap-3 overflow-x-auto pb-2">
+              {authors.length === 0 ? (
+                <div className="mx-2 rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm text-slate-500 shadow-sm shadow-slate-100">
+                  Penulis belum tersedia untuk pilihan ini.
+                </div>
+              ) : (
                 <>
                   <button
                     type="button"
                     onClick={() => setActiveAuthor(null)}
                     aria-pressed={resolvedAuthor === null}
-                    className={`mx-2 flex h-16 min-w-[6rem] items-center justify-center rounded-2xl border px-4 text-center text-xs font-semibold transition ${
+                    className={`mx-2 flex h-20 min-w-[7rem] items-center justify-center rounded-2xl px-4 text-center text-sm font-semibold transition ${
                       resolvedAuthor === null
-                        ? "border-emerald-400/60 bg-emerald-400/15 text-emerald-100 shadow-md shadow-emerald-400/20"
-                        : "border-white/10 bg-white/5 text-white/70 hover:border-white/20 hover:text-white"
+                        ? "bg-indigo-500 text-white shadow-sm shadow-indigo-200"
+                        : "border border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-indigo-600"
                     }`}
                   >
                     Semua Penulis
@@ -294,10 +265,10 @@ export function HomeView({ books, sessionUser }: HomeViewProps) {
                         key={`author-${author}`}
                         onClick={() => setActiveAuthor(isActive ? null : author)}
                         aria-pressed={isActive}
-                        className={`mx-2 flex h-16 min-w-[6rem] items-center justify-center rounded-2xl border px-4 text-center text-xs font-semibold transition ${
+                        className={`mx-2 flex h-20 min-w-[7rem] items-center justify-center rounded-2xl px-4 text-center text-sm font-semibold transition ${
                           isActive
-                            ? "border-emerald-400/60 bg-emerald-400/15 text-emerald-100 shadow-md shadow-emerald-400/20"
-                            : "border-white/10 bg-white/5 text-white/80 hover:border-white/20 hover:text-white"
+                            ? "bg-indigo-500 text-white shadow-sm shadow-indigo-200"
+                            : "border border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-indigo-600"
                         }`}
                       >
                         {author}
@@ -306,70 +277,58 @@ export function HomeView({ books, sessionUser }: HomeViewProps) {
                   })}
                 </>
               )}
-          </div>
+            </div>
           </div>
 
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-white">Top Reads</h2>
-              <span className="text-xs font-semibold uppercase tracking-widest text-white/50">
-                Rekomendasi
-              </span>
-            </div>
+            <SectionHeading label="Rekomendasi" caption="Berdasarkan peminjaman terbaru" />
             <div className="space-y-4">
               {topReads.length === 0 ? (
-                <div className="rounded-3xl border border-white/10 bg-white/5 p-6 text-center text-sm text-white/70">
+                <div className="rounded-3xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-500 shadow-sm shadow-slate-100">
                   Buku yang kamu cari belum ditemukan. Yuk telusuri kategori lain!
                 </div>
               ) : (
-                topReads.map((book) => {
-                  return (
-                    <Link
-                      key={`top-${book.id}`}
-                      href={`/books/${book.id}`}
-                      className="flex gap-4 rounded-3xl border border-white/10 bg-white/5 p-4 shadow-lg shadow-black/20 transition hover:border-white/20 hover:bg-white/10"
-                    >
-                      <div className="relative h-20 w-16 flex-shrink-0 overflow-hidden rounded-2xl border border-white/10 bg-white/10">
-                        {book.coverImageUrl ? (
-                          <Image
-                            src={book.coverImageUrl}
-                            alt={book.title}
-                            fill
-                            sizes="80px"
-                            className="object-cover"
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center text-xs text-white/50">
-                            Tidak ada sampul
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex flex-1 flex-col justify-between">
-                        <div>
-                          <p className="text-sm font-semibold text-white">{book.title}</p>
-                          <p className="text-xs text-white/60">{book.author}</p>
+                topReads.map((book) => (
+                  <Link
+                    key={`top-${book.id}`}
+                    href={`/books/${book.id}`}
+                    className="flex gap-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-100 transition hover:-translate-y-1 hover:border-indigo-200 hover:shadow-md"
+                  >
+                    <div className="relative h-20 w-16 flex-shrink-0 overflow-hidden rounded-2xl bg-slate-100">
+                      {book.coverImageUrl ? (
+                        <Image src={book.coverImageUrl} alt={book.title} fill sizes="80px" className="object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">
+                          Tidak ada sampul
                         </div>
-                        <div className="flex flex-wrap gap-3 text-xs text-white/60">
-                          <span>
-                            Rilis:{" "}
-                            <strong className="text-white/80">
-                              {book.publishedYear ? book.publishedYear : "Tidak diketahui"}
-                            </strong>
-                          </span>
-                          <span>
-                            Stok:{" "}
-                            <strong className="text-white/80">
-                              {book.availableCopies}/{book.totalCopies}
-                            </strong>
-                          </span>
-                          <span>
-                            Kategori: <strong className="text-white/80">{book.category ?? "Umum"}</strong>
-                          </span>
-                        </div>
+                      )}
+                    </div>
+                    <div className="flex flex-1 flex-col justify-between">
+                      <div className="space-y-1">
+                        <p className="text-sm font-semibold text-slate-900">{book.title}</p>
+                        <p className="text-xs text-slate-500">{book.author}</p>
                       </div>
-                    </Link>
-                  );
-                })
+                      <div className="flex flex-wrap gap-3 text-xs text-slate-500">
+                        <span>
+                          Rilis:{" "}
+                          <strong className="text-slate-700">{book.publishedYear ? book.publishedYear : "Tidak diketahui"}</strong>
+                        </span>
+                        <span>
+                          Stok:{" "}
+                          <strong className="text-slate-700">
+                            {book.availableCopies}/{book.totalCopies}
+                          </strong>
+                        </span>
+                        <span>
+                          Kategori: <strong className="text-slate-700">{book.category ?? "Umum"}</strong>
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex h-full items-center">
+                      <ArrowIcon className="h-4 w-4 text-indigo-400" />
+                    </div>
+                  </Link>
+                ))
               )}
             </div>
           </div>
@@ -379,12 +338,27 @@ export function HomeView({ books, sessionUser }: HomeViewProps) {
   );
 }
 
+function SectionHeading({ label, caption }: { label: string; caption?: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <div>
+        <span className="relative inline-flex text-lg font-semibold text-slate-900">
+          {label}
+          <span className="absolute left-0 bottom-0 h-2 w-full translate-y-2 rounded-full bg-indigo-200/70" aria-hidden />
+        </span>
+        {caption ? <p className="mt-3 text-xs text-slate-500">{caption}</p> : null}
+      </div>
+      <span className="text-xs font-medium text-indigo-500">Lihat semua</span>
+    </div>
+  );
+}
+
 function MagnifierIcon({ className }: { className?: string }) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 24 24"
-      className={className ?? "h-4 w-4"}
+      className={className ?? "h-5 w-5"}
       fill="none"
       stroke="currentColor"
       strokeWidth="1.6"
@@ -397,14 +371,7 @@ function MagnifierIcon({ className }: { className?: string }) {
 
 function BellIcon() {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      className="h-4 w-4"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-    >
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.6">
       <path d="M18 16v-5a6 6 0 0 0-12 0v5" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M5 16h14l-1.5 2.5a1 1 0 0 1-.86.5H7.36a1 1 0 0 1-.86-.5L5 16Z" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M10 20a2 2 0 0 0 4 0" strokeLinecap="round" strokeLinejoin="round" />
@@ -412,4 +379,10 @@ function BellIcon() {
   );
 }
 
- 
+function ArrowIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className={className ?? "h-4 w-4"} fill="none" stroke="currentColor" strokeWidth="1.6">
+      <path d="m9 6 6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}

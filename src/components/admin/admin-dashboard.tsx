@@ -75,15 +75,15 @@ export function AdminDashboard({ adminName, initialBooks, initialUsers }: AdminD
   }, [adminName]);
 
   return (
-    <div className="flex w-full flex-col gap-6 lg:flex-row">
-      <aside className="hidden w-72 flex-shrink-0 flex-col gap-6 rounded-3xl border border-white/10 bg-white/5 p-6 text-sm text-white lg:flex">
-        <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/10 p-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full border border-emerald-400/40 bg-emerald-400/10 text-base font-semibold text-emerald-100">
+    <div className="flex w-full flex-col gap-6 text-slate-900 lg:flex-row">
+      <aside className="hidden w-72 flex-shrink-0 flex-col gap-6 rounded-3xl border border-slate-200 bg-white p-6 text-sm shadow-sm shadow-slate-100 lg:flex">
+        <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 text-base font-semibold text-emerald-600">
             {initials}
           </div>
           <div>
-            <p className="text-xs uppercase tracking-widest text-white/60">Administrator</p>
-            <p className="text-sm font-semibold text-white">{adminName}</p>
+            <p className="text-xs uppercase tracking-widest text-slate-500">Administrator</p>
+            <p className="text-sm font-semibold text-slate-900">{adminName}</p>
           </div>
         </div>
         <nav className="flex flex-col gap-2">
@@ -96,14 +96,14 @@ export function AdminDashboard({ adminName, initialBooks, initialUsers }: AdminD
                 onClick={() => setActiveSection(section.id)}
                 className={`flex items-center justify-between rounded-2xl border px-4 py-3 text-left transition ${
                   isActive
-                    ? "border-emerald-400/60 bg-emerald-400/10 text-emerald-100"
-                    : "border-white/10 bg-white/5 text-white/70 hover:border-white/20 hover:text-white"
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                    : "border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-indigo-600"
                 }`}
               >
                 <span className="flex items-center gap-3 text-sm font-semibold">
                   <span
                     className={`flex h-7 w-7 items-center justify-center rounded-full border ${
-                      isActive ? "border-emerald-200/60 bg-emerald-200/10" : "border-white/10 bg-white/5"
+                      isActive ? "border-emerald-200 bg-emerald-100" : "border-slate-200 bg-slate-100"
                     }`}
                   >
                     {section.icon}
@@ -111,14 +111,14 @@ export function AdminDashboard({ adminName, initialBooks, initialUsers }: AdminD
                   {section.label}
                 </span>
                 {isActive && (
-                  <span className="text-xs uppercase tracking-widest text-emerald-100/80">AKTIF</span>
+                  <span className="text-xs uppercase tracking-widest text-emerald-600/90">AKTIF</span>
                 )}
               </button>
             );
           })}
         </nav>
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-xs text-white/60">
-          <p className="font-semibold uppercase tracking-widest text-white/70">Tip Admin</p>
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-500">
+          <p className="font-semibold uppercase tracking-widest text-slate-600">Tip Admin</p>
           <p className="mt-2">
             Segarkan halaman setelah melakukan migrasi database agar data terbaru ditarik ke panel.
           </p>
@@ -126,20 +126,20 @@ export function AdminDashboard({ adminName, initialBooks, initialUsers }: AdminD
       </aside>
 
       <div className="flex-1">
-        <div className="mb-6 flex flex-col gap-4 rounded-3xl border border-white/10 bg-white/5 p-6 text-white lg:hidden">
+        <div className="mb-6 flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white p-6 text-slate-900 shadow-sm shadow-slate-100 lg:hidden">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs uppercase tracking-widest text-white/60">Administrator</p>
-              <p className="text-base font-semibold text-white">{adminName}</p>
+              <p className="text-xs uppercase tracking-widest text-slate-500">Administrator</p>
+              <p className="text-base font-semibold text-slate-900">{adminName}</p>
             </div>
-            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-emerald-300/40 bg-emerald-400/10 text-sm font-semibold text-emerald-100">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 text-sm font-semibold text-emerald-600">
               {initials}
             </div>
           </div>
           <select
             value={activeSection}
             onChange={(event) => setActiveSection(event.target.value as SectionKey)}
-            className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white focus:border-white/30 focus:outline-none"
+            className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
           >
             {sections.map((section) => (
               <option key={section.id} value={section.id}>
@@ -149,14 +149,14 @@ export function AdminDashboard({ adminName, initialBooks, initialUsers }: AdminD
           </select>
         </div>
 
-        <header className="space-y-3 rounded-3xl border border-white/10 bg-white/5 p-6 text-white">
-          <span className="inline-flex items-center rounded-full border border-white/10 bg-white/10 px-4 py-1 text-xs font-semibold uppercase tracking-widest text-white/70">
+        <header className="space-y-3 rounded-3xl border border-slate-200 bg-white p-6 text-slate-900 shadow-sm shadow-slate-100">
+          <span className="inline-flex items-center rounded-full border border-indigo-100 bg-indigo-50 px-4 py-1 text-xs font-semibold uppercase tracking-widest text-indigo-600">
             {current.label}
           </span>
           <h1 className="text-3xl font-bold sm:text-4xl">
             {current.id === "books" ? "Dashboard Koleksi" : "Manajemen Pengguna"}
           </h1>
-          <p className="max-w-2xl text-sm text-white/70">{current.description}</p>
+          <p className="max-w-2xl text-sm text-slate-500">{current.description}</p>
         </header>
 
         <section className="mt-6">

@@ -18,6 +18,8 @@ export type CollectionPayload = {
   category?: string | null;
   description?: string | null;
   coverImageUrl?: string | null;
+  isbn?: string | null;
+  publishedYear?: number | null;
   lendable: boolean;
   totalCopies: number;
   availableCopies: number;
@@ -30,6 +32,8 @@ const emptyState: CollectionPayload = {
   category: null,
   description: null,
   coverImageUrl: null,
+  isbn: null,
+  publishedYear: null,
   lendable: true,
   totalCopies: 1,
   availableCopies: 1,
@@ -37,15 +41,17 @@ const emptyState: CollectionPayload = {
 };
 
 const normalizeText = (value: string | null | undefined) => {
-  if (!value) return undefined;
+  if (value === null || value === undefined) return null;
   const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : undefined;
+  return trimmed.length > 0 ? trimmed : null;
 };
 
 export function CollectionForm({ onSubmit, onClose, isSubmitting, initialData, submitLabel }: CollectionFormProps) {
   const [formState, setFormState] = useState<CollectionPayload>(initialData ?? emptyState);
   const [error, setError] = useState<string | null>(null);
   const isEditing = Boolean(initialData);
+  const optionalNumericFields = useMemo(() => new Set<keyof CollectionPayload>(["publishedYear"]), []);
+  const currentYear = useMemo(() => new Date().getFullYear() + 1, []);
 
   const statusOptions = useMemo(
     () => [
@@ -62,8 +68,13 @@ export function CollectionForm({ onSubmit, onClose, isSubmitting, initialData, s
     (field: keyof CollectionPayload) => (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const rawValue = event.target.value;
     if (event.target.type === "number") {
-      const numericValue = rawValue === "" ? 0 : Number(rawValue);
-      setFormState((prev) => ({ ...prev, [field]: numericValue as never }));
+      if (optionalNumericFields.has(field)) {
+        const numericValue = rawValue === "" ? null : Number(rawValue);
+        setFormState((prev) => ({ ...prev, [field]: numericValue as never }));
+      } else {
+        const numericValue = rawValue === "" ? 0 : Number(rawValue);
+        setFormState((prev) => ({ ...prev, [field]: numericValue as never }));
+      }
       return;
     }
 
@@ -89,6 +100,8 @@ export function CollectionForm({ onSubmit, onClose, isSubmitting, initialData, s
         category: normalizeText(formState.category),
         description: normalizeText(formState.description),
         coverImageUrl: normalizeText(formState.coverImageUrl),
+        isbn: normalizeText(formState.isbn),
+        publishedYear: formState.publishedYear ?? null,
         status: formState.status,
       });
       setFormState(emptyState);
@@ -99,104 +112,129 @@ export function CollectionForm({ onSubmit, onClose, isSubmitting, initialData, s
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4 pb-24 text-slate-900 sm:pb-4">
       <div className="grid gap-3 sm:grid-cols-2">
-        <label className="text-sm text-white/80">
+        <label className="text-sm font-medium text-slate-700">
           Judul Buku
           <input
             value={formState.title}
             onChange={handleChange("title")}
             required
-            className="mt-2 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white placeholder-white/60 focus:border-white/20 focus:outline-none"
+            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
             placeholder="Misal: Laskar Pelangi"
           />
         </label>
-        <label className="text-sm text-white/80">
+        <label className="text-sm font-medium text-slate-700">
           Penulis
           <input
             value={formState.author}
             onChange={handleChange("author")}
             required
-            className="mt-2 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white placeholder-white/60 focus:border-white/20 focus:outline-none"
+            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
             placeholder="Misal: Andrea Hirata"
           />
         </label>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
-        <label className="text-sm text-white/80">
+        <label className="text-sm font-medium text-slate-700">
           Kategori
           <input
             value={formState.category ?? ""}
             onChange={handleChange("category")}
-            className="mt-2 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white placeholder-white/60 focus:border-white/20 focus:outline-none"
+            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
             placeholder="Fiksi, Bisnis, dll"
           />
         </label>
-        <label className="text-sm text-white/80">
+        <label className="text-sm font-medium text-slate-700">
           URL Sampul (opsional)
           <input
             value={formState.coverImageUrl ?? ""}
             onChange={handleChange("coverImageUrl")}
-            className="mt-2 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white placeholder-white/60 focus:border-white/20 focus:outline-none"
+            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
             placeholder="https://..."
           />
         </label>
       </div>
-      <label className="text-sm text-white/80">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className="text-sm font-medium text-slate-700">
+          ISBN (opsional)
+          <input
+            value={formState.isbn ?? ""}
+            onChange={handleChange("isbn")}
+            maxLength={32}
+            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+            placeholder="Contoh: 9786020633176"
+          />
+        </label>
+        <label className="text-sm font-medium text-slate-700">
+          Tahun Terbit (opsional)
+          <input
+            type="number"
+            inputMode="numeric"
+            min={1000}
+            max={currentYear}
+            value={formState.publishedYear ?? ""}
+            onChange={handleChange("publishedYear")}
+            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+            placeholder="Contoh: 2024"
+          />
+        </label>
+      </div>
+      <label className="text-sm font-medium text-slate-700">
         Deskripsi
         <textarea
           value={formState.description ?? ""}
           onChange={handleChange("description")}
           rows={3}
-          className="mt-2 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white placeholder-white/60 focus:border-white/20 focus:outline-none"
+          className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
           placeholder="Ceritakan sedikit tentang keadaan buku atau catatan khusus."
         />
       </label>
       <div className="grid gap-3 sm:grid-cols-2">
-        <label className="text-sm text-white/80">
+        <label className="text-sm font-medium text-slate-700">
           Total Eksemplar
           <input
             type="number"
             min={1}
             value={formState.totalCopies}
             onChange={handleChange("totalCopies")}
-            className="mt-2 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white placeholder-white/60 focus:border-white/20 focus:outline-none"
+            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
           />
         </label>
-        <label className="text-sm text-white/80">
+        <label className="text-sm font-medium text-slate-700">
           Eksemplar Tersedia
           <input
             type="number"
             min={0}
             value={formState.availableCopies}
             onChange={handleChange("availableCopies")}
-            className="mt-2 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white placeholder-white/60 focus:border-white/20 focus:outline-none"
+            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
           />
         </label>
       </div>
-      <label className="flex items-center gap-3 text-sm text-white/80">
+      <label className="flex items-center gap-3 text-sm text-slate-700">
         <input
           type="checkbox"
           checked={formState.lendable}
           onChange={handleCheckbox}
-          className="h-4 w-4 rounded border-white/20 bg-white/10 text-emerald-400 focus:ring-emerald-300"
+          className="h-4 w-4 rounded border-slate-300 text-indigo-500 focus:ring-indigo-200"
         />
         Izinkan koleksi ini dipinjamkan
       </label>
 
       {error && (
-        <div className="rounded-2xl border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
           {error}
         </div>
       )}
 
       {isEditing && (
-        <label className="block text-sm text-white/80">
+        <label className="block text-sm font-medium text-slate-700">
           Status Peminjaman
           <select
             value={formState.status ?? "AVAILABLE"}
             onChange={handleChange("status")}
-            className="mt-2 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white focus:border-white/20 focus:outline-none"
+            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
           >
             {statusOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -211,14 +249,14 @@ export function CollectionForm({ onSubmit, onClose, isSubmitting, initialData, s
         <button
           type="button"
           onClick={onClose}
-          className="rounded-full border border-white/20 px-6 py-3 text-sm font-semibold text-white transition hover:border-white/40 hover:bg-white/10"
+          className="rounded-full border border-slate-200 px-6 py-3 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50"
         >
           Batal
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
-          className="rounded-full bg-gradient-to-r from-emerald-400 to-sky-400 px-6 py-3 text-sm font-semibold text-emerald-950 shadow-lg shadow-emerald-400/30 transition hover:from-emerald-300 hover:to-sky-300 disabled:cursor-not-allowed disabled:opacity-60"
+          className="rounded-full bg-gradient-to-r from-indigo-500 to-sky-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-200 transition hover:from-indigo-400 hover:to-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isSubmitting ? "Menyimpan..." : submitLabel ?? (initialData ? "Simpan Perubahan" : "Simpan Koleksi")}
         </button>
