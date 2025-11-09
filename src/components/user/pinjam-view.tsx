@@ -64,10 +64,11 @@ export function PinjamView({ books, sessionUser, pageInfo }: PinjamViewProps) {
 
   const [search, setSearch] = useState(pageInfo.query);
   const [requestingId, setRequestingId] = useState<number | null>(null);
+  const [confirmingBook, setConfirmingBook] = useState<Book | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
   const isAuthenticated = Boolean(sessionUser);
 
-  const handleBorrowClick = async (book: Book) => {
+  const handleBorrowClick = (book: Book) => {
     if (!isAuthenticated) {
       window.location.assign(`/login?from=pinjam&book=${book.id}`);
       return;
@@ -78,13 +79,22 @@ export function PinjamView({ books, sessionUser, pageInfo }: PinjamViewProps) {
       return;
     }
 
+    setFeedback(null);
+    setConfirmingBook(book);
+  };
+
+  const submitBorrowRequest = async () => {
+    if (!confirmingBook) {
+      return;
+    }
+
     try {
-      setRequestingId(book.id);
+      setRequestingId(confirmingBook.id);
       setFeedback(null);
       const response = await fetch("/api/borrow/request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bookId: book.id }),
+        body: JSON.stringify({ bookId: confirmingBook.id }),
       });
       const result = await response.json();
       if (!response.ok) {
@@ -99,6 +109,7 @@ export function PinjamView({ books, sessionUser, pageInfo }: PinjamViewProps) {
       setFeedback(error instanceof Error ? error.message : "Gagal mengajukan peminjaman.");
     } finally {
       setRequestingId(null);
+      setConfirmingBook(null);
     }
   };
 
@@ -231,7 +242,11 @@ export function PinjamView({ books, sessionUser, pageInfo }: PinjamViewProps) {
                         event.preventDefault();
                         handleBorrowClick(book);
                       }}
-                      disabled={book.status !== "AVAILABLE" || requestingId === book.id}
+                      disabled={
+                        book.status !== "AVAILABLE" ||
+                        requestingId === book.id ||
+                        confirmingBook?.id === book.id
+                      }
                       className="inline-flex items-center rounded-full bg-indigo-500 px-4 py-2 font-semibold text-white transition hover:bg-indigo-600 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
                     >
                       {requestingId === book.id ? "Mengirim..." : "Ajukan"}
@@ -283,6 +298,39 @@ export function PinjamView({ books, sessionUser, pageInfo }: PinjamViewProps) {
           </nav>
         )}
       </section>
+
+      {confirmingBook && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 text-slate-900 shadow-2xl shadow-indigo-100">
+            <h3 className="text-lg font-semibold">Teruskan Lewat WhatsApp?</h3>
+            <p className="mt-2 text-sm text-slate-600">
+              Kamu akan diarahkan ke WhatsApp untuk menghubungi pemilik buku{" "}
+              <span className="font-semibold">{confirmingBook.title}</span>. Setelah kamu melanjutkan, status buku
+              akan berubah menjadi menunggu konfirmasi.
+            </p>
+            <p className="mt-2 text-xs text-slate-500">
+              Jika memilih tidak, permintaan tidak dikirim dan status buku tetap seperti semula.
+            </p>
+            <div className="mt-6 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setConfirmingBook(null)}
+                className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-slate-600 transition hover:border-indigo-200 hover:text-indigo-600"
+              >
+                Tidak
+              </button>
+              <button
+                type="button"
+                onClick={submitBorrowRequest}
+                disabled={requestingId === confirmingBook.id}
+                className="rounded-full bg-gradient-to-r from-indigo-500 to-sky-500 px-5 py-2 text-xs font-semibold uppercase tracking-widest text-white shadow-lg shadow-indigo-200 transition hover:from-indigo-400 hover:to-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {requestingId === confirmingBook.id ? "Mengirim..." : "Lanjut ke WhatsApp"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -46,6 +46,7 @@ export function BookDetailView({ book, sessionUser }: BookDetailViewProps) {
   const isAuthenticated = Boolean(sessionUser);
   const [isSubmitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [isConfirmOpen, setConfirmOpen] = useState(false);
   const copiesSummary = useMemo(() => {
     const borrowed = book.totalCopies - book.availableCopies;
     return {
@@ -75,6 +76,35 @@ export function BookDetailView({ book, sessionUser }: BookDetailViewProps) {
     return null;
   }, [book.borrowerName, book.dueDate, book.lastRequesterName]);
 
+  const showUnavailableFeedback = () => {
+    if (borrowerInfo) {
+      setFeedback(
+        borrowerInfo.due
+          ? `Buku ini sedang diproses oleh ${borrowerInfo.name} hingga ${borrowerInfo.due}.`
+          : `Buku ini sedang diproses oleh ${borrowerInfo.name}.`,
+      );
+    } else if (book.lastRequesterName) {
+      setFeedback(`Permintaan peminjaman sedang diproses untuk ${book.lastRequesterName}.`);
+    } else {
+      setFeedback("Buku ini belum tersedia untuk dipinjam saat ini.");
+    }
+  };
+
+  const handleBorrowClick = () => {
+    if (!isAuthenticated) {
+      router.push(`/login?from=pinjam&book=${book.id}`);
+      return;
+    }
+
+    if (!book.lendable || book.status !== "AVAILABLE") {
+      showUnavailableFeedback();
+      return;
+    }
+
+    setFeedback(null);
+    setConfirmOpen(true);
+  };
+
   const handleBorrow = async () => {
     if (!isAuthenticated) {
       router.push(`/login?from=pinjam&book=${book.id}`);
@@ -82,17 +112,7 @@ export function BookDetailView({ book, sessionUser }: BookDetailViewProps) {
     }
 
     if (!book.lendable || book.status !== "AVAILABLE") {
-      if (borrowerInfo) {
-        setFeedback(
-          borrowerInfo.due
-            ? `Buku ini sedang diproses oleh ${borrowerInfo.name} hingga ${borrowerInfo.due}.`
-            : `Buku ini sedang diproses oleh ${borrowerInfo.name}.`,
-        );
-      } else if (book.lastRequesterName) {
-        setFeedback(`Permintaan peminjaman sedang diproses untuk ${book.lastRequesterName}.`);
-      } else {
-        setFeedback("Buku ini belum tersedia untuk dipinjam saat ini.");
-      }
+      showUnavailableFeedback();
       return;
     }
 
@@ -274,7 +294,7 @@ export function BookDetailView({ book, sessionUser }: BookDetailViewProps) {
           )}
           <button
             type="button"
-            onClick={handleBorrow}
+            onClick={handleBorrowClick}
             disabled={
               isSubmitting ||
               !book.lendable ||
@@ -287,6 +307,41 @@ export function BookDetailView({ book, sessionUser }: BookDetailViewProps) {
           </button>
         </div>
       </main>
+
+      {isConfirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 text-slate-900 shadow-2xl shadow-indigo-100">
+            <h3 className="text-lg font-semibold">Konfirmasi Pengajuan</h3>
+            <p className="mt-2 text-sm text-slate-600">
+              Kamu akan diarahkan ke WhatsApp untuk melanjutkan percakapan dengan pemilik buku. Jika setuju, status buku
+              akan berubah menjadi menunggu konfirmasi.
+            </p>
+            <p className="mt-2 text-xs text-slate-500">
+              Pilih tidak jika belum ingin menghubungi lewat WhatsApp. Status buku tetap seperti semula.
+            </p>
+            <div className="mt-6 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setConfirmOpen(false)}
+                className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-slate-600 transition hover:border-indigo-200 hover:text-indigo-600"
+              >
+                Tidak
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setConfirmOpen(false);
+                  void handleBorrow();
+                }}
+                disabled={isSubmitting}
+                className="rounded-full bg-gradient-to-r from-indigo-500 to-sky-500 px-5 py-2 text-xs font-semibold uppercase tracking-widest text-white shadow-lg shadow-indigo-200 transition hover:from-indigo-400 hover:to-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isSubmitting ? "Mengirim..." : "Lanjut ke WhatsApp"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
