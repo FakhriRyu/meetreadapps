@@ -17,6 +17,8 @@ type FormState = {
   name: string;
   email: string;
   role: "USER" | "ADMIN";
+  newPassword: string;
+  confirmPassword: string;
 };
 
 type StatusState =
@@ -38,6 +40,8 @@ export function UserManagementPanel({ initialUsers }: UserManagementPanelProps) 
     name: "",
     email: "",
     role: "USER",
+    newPassword: "",
+    confirmPassword: "",
   });
   const [isSubmitting, setSubmitting] = useState(false);
 
@@ -69,6 +73,8 @@ export function UserManagementPanel({ initialUsers }: UserManagementPanelProps) 
       name: user.name,
       email: user.email,
       role: user.role,
+      newPassword: "",
+      confirmPassword: "",
     });
     setStatus(null);
     setModalOpen(true);
@@ -85,7 +91,12 @@ export function UserManagementPanel({ initialUsers }: UserManagementPanelProps) 
       return;
     }
 
-    const payload: Partial<FormState> = {};
+    const payload: {
+      name?: string;
+      email?: string;
+      role?: "USER" | "ADMIN";
+      password?: string;
+    } = {};
     if (formState.name.trim() !== editingUser.name) {
       payload.name = formState.name.trim();
     }
@@ -94,6 +105,19 @@ export function UserManagementPanel({ initialUsers }: UserManagementPanelProps) 
     }
     if (formState.role !== editingUser.role) {
       payload.role = formState.role;
+    }
+    const trimmedNewPassword = formState.newPassword.trim();
+    const trimmedConfirmPassword = formState.confirmPassword.trim();
+    if (trimmedNewPassword || trimmedConfirmPassword) {
+      if (trimmedNewPassword.length < 8) {
+        setStatus({ type: "error", message: "Kata sandi minimal 8 karakter." });
+        return;
+      }
+      if (trimmedNewPassword !== trimmedConfirmPassword) {
+        setStatus({ type: "error", message: "Konfirmasi kata sandi tidak cocok." });
+        return;
+      }
+      payload.password = trimmedNewPassword;
     }
 
     if (Object.keys(payload).length === 0) {
@@ -129,6 +153,11 @@ export function UserManagementPanel({ initialUsers }: UserManagementPanelProps) 
         current.map((user) => (user.id === updated.id ? updated : user)),
       );
 
+      setFormState((prev) => ({
+        ...prev,
+        newPassword: "",
+        confirmPassword: "",
+      }));
       setStatus({
         type: "success",
         message: "Data pengguna berhasil diperbarui.",
@@ -285,6 +314,38 @@ export function UserManagementPanel({ initialUsers }: UserManagementPanelProps) 
                   <option value="ADMIN">ADMIN</option>
                 </select>
               </label>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+                  Ganti Kata Sandi
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                  Kosongkan kolom di bawah jika tidak ingin mengubah kata sandi pengguna.
+                </p>
+                <label className="mt-3 block text-sm font-medium text-slate-700">
+                  Kata Sandi Baru
+                  <input
+                    type="password"
+                    value={formState.newPassword}
+                    onChange={(event) =>
+                      setFormState((prev) => ({ ...prev, newPassword: event.target.value }))
+                    }
+                    placeholder="Minimal 8 karakter"
+                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                  />
+                </label>
+                <label className="mt-3 block text-sm font-medium text-slate-700">
+                  Konfirmasi Kata Sandi
+                  <input
+                    type="password"
+                    value={formState.confirmPassword}
+                    onChange={(event) =>
+                      setFormState((prev) => ({ ...prev, confirmPassword: event.target.value }))
+                    }
+                    placeholder="Ulangi kata sandi baru"
+                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                  />
+                </label>
+              </div>
             </div>
 
             <div className="mt-6 flex items-center justify-end gap-3">

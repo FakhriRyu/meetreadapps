@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
+import { hashPassword } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { Prisma } from "@prisma/client";
@@ -10,6 +11,7 @@ const UpdateUserSchema = z
     name: z.string().trim().min(2, "Nama minimal 2 karakter").optional(),
     email: z.string().trim().email("Email tidak valid").optional(),
     role: z.enum(["USER", "ADMIN"]).optional(),
+    password: z.string().trim().min(8, "Kata sandi minimal 8 karakter").optional(),
   })
   .refine((value) => Object.keys(value).length > 0, {
     message: "Tidak ada perubahan yang diberikan.",
@@ -35,6 +37,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
     const json = await request.json();
     const data = UpdateUserSchema.parse(json);
+    const passwordHash = data.password ? await hashPassword(data.password) : undefined;
 
     const updated = await prisma.user.update({
       where: { id: userId },
@@ -42,6 +45,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         ...(data.name ? { name: data.name } : {}),
         ...(data.email ? { email: data.email.toLowerCase() } : {}),
         ...(data.role ? { role: data.role } : {}),
+        ...(passwordHash ? { passwordHash } : {}),
       },
       select: {
         id: true,
