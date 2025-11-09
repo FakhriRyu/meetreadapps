@@ -76,7 +76,7 @@ model BorrowRequest {
   updatedAt   DateTime             @updatedAt
   notifications BorrowNotification[]
 
-  book      Book @relation(fields: [bookId], references: [id])
+  book      Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
   requester User @relation(fields: [requesterId], references: [id])
 }
 
