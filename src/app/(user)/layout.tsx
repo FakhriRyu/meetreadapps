@@ -4,8 +4,6 @@ import type { ReactNode } from "react";
 import { BottomNav } from "@/components/user/bottom-nav";
 import { getSessionUser } from "@/lib/session";
 
-export const dynamic = "force-dynamic";
-
 export default async function UserLayout({ children }: { children: ReactNode }) {
   const sessionUser = await getSessionUser();
 

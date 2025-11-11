@@ -33,6 +33,8 @@ model Book {
   requests        BorrowRequest[]
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+
+  @@index([ownerId, createdAt])
 }
 
 model User {
@@ -78,6 +80,9 @@ model BorrowRequest {
 
   book      Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
   requester User @relation(fields: [requesterId], references: [id])
+
+  @@index([requesterId, createdAt])
+  @@index([bookId, status])
 }
 
 enum BorrowRequestStatus {
@@ -96,6 +101,8 @@ model BorrowNotification {
   createdAt DateTime          @default(now())
 
   request BorrowRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@index([requestId, createdAt])
 }
 
 enum NotificationType {

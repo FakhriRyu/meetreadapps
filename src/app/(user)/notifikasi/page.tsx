@@ -4,8 +4,6 @@ import { NotificationView } from "@/components/user/notification-view";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 
-export const dynamic = "force-dynamic";
-
 export default async function NotifikasiPage() {
   const sessionUser = await getSessionUser();
 

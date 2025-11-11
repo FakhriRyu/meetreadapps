@@ -4,8 +4,6 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { KoleksikuView } from "@/components/koleksiku/koleksiku-view";
 
-export const dynamic = "force-dynamic";
-
 export default async function KoleksikuPage() {
   const sessionUser = await getSessionUser();
 

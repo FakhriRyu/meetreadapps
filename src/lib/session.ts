@@ -1,9 +1,10 @@
 import { cookies } from "next/headers";
+import { cache } from "react";
 
 import { prisma } from "@/lib/prisma";
 import { SESSION_COOKIE_NAME, parseSessionCookie } from "@/lib/auth";
 
-export async function getSessionUser() {
+export const getSessionUser = cache(async () => {
   const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
   const session = parseSessionCookie(token ?? null);
@@ -38,4 +39,4 @@ export async function getSessionUser() {
     role: user.role,
     joinedAt: user.createdAt,
   };
-}
+});

@@ -14,8 +14,13 @@ type SessionUser = {
   profileImage?: string | null;
 };
 
+type HomeBook = Pick<
+  Book,
+  "id" | "title" | "author" | "category" | "coverImageUrl" | "publishedYear" | "totalCopies" | "availableCopies"
+>;
+
 type HomeViewProps = {
-  books: Book[];
+  books: HomeBook[];
   sessionUser: SessionUser | null;
 };
 

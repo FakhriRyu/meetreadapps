@@ -5,8 +5,6 @@ import { getSessionUser } from "@/lib/session";
 import { PinjamView } from "@/components/user/pinjam-view";
 import { Prisma } from "@prisma/client";
 
-export const dynamic = "force-dynamic";
-
 type PinjamPageProps = {
   searchParams: Promise<{ page?: string; query?: string }>;
 };

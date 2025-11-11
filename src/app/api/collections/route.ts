@@ -5,8 +5,6 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { BookStatus, Prisma } from "@prisma/client";
 
-export const dynamic = "force-dynamic";
-
 const CollectionSchema = z.object({
   title: z.string().trim().min(1, "Judul wajib diisi"),
   author: z.string().trim().min(1, "Penulis wajib diisi"),

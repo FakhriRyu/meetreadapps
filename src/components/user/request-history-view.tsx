@@ -1,8 +1,5 @@
-"use client";
-
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo } from "react";
 
 import type { BookStatus, BorrowRequestStatus } from "@prisma/client";
 
@@ -68,25 +65,21 @@ const STATUS_META: Record<
 };
 
 export function RequestHistoryView({ requests }: RequestHistoryViewProps) {
-  const stats = useMemo(() => {
-    return requests.reduce(
-      (acc, request) => {
-        acc.total += 1;
-        acc.byStatus[request.status] = (acc.byStatus[request.status] ?? 0) + 1;
-        if (request.status === "APPROVED") acc.active += 1;
-        if (request.status === "PENDING") acc.pending += 1;
-        if (request.status === "RETURNED") acc.completed += 1;
-        return acc;
-      },
-      {
-        total: 0,
-        pending: 0,
-        active: 0,
-        completed: 0,
-        byStatus: {} as Record<BorrowRequestStatus, number>,
-      },
-    );
-  }, [requests]);
+  const stats = requests.reduce(
+    (acc, request) => {
+      acc.total += 1;
+      if (request.status === "APPROVED") acc.active += 1;
+      if (request.status === "PENDING") acc.pending += 1;
+      if (request.status === "RETURNED") acc.completed += 1;
+      return acc;
+    },
+    {
+      total: 0,
+      pending: 0,
+      active: 0,
+      completed: 0,
+    },
+  );
 
   return (
     <div className="min-h-screen bg-[#f5f7ff] px-6 pb-28 pt-10 text-slate-900">

@@ -4,8 +4,6 @@ import { BookDetailView } from "@/components/books/book-detail-view";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 
-export const dynamic = "force-dynamic";
-
 type BookDetailPageProps = {
   params: Promise<{ id: string }>;
 };
