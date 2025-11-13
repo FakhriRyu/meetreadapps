@@ -22,8 +22,6 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   compress: true,
-  // Optimasi untuk production
-  swcMinify: true,
   productionBrowserSourceMaps: false,
   // Optimasi bundle
   experimental: {
