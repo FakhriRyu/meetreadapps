@@ -134,6 +134,7 @@ export function HomeView({ books, sessionUser }: HomeViewProps) {
           <div className="flex items-center gap-3">
             <Link
               href="/notifikasi"
+              prefetch={true}
               className="relative flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:border-slate-300 hover:text-slate-700"
               aria-label="Notifikasi"
             >
@@ -142,6 +143,7 @@ export function HomeView({ books, sessionUser }: HomeViewProps) {
             </Link>
             <Link
               href="/profil"
+              prefetch={true}
               className="relative block h-11 w-11 overflow-hidden rounded-full border border-slate-200 bg-white transition hover:border-slate-300"
               aria-label="Profil"
             >
@@ -206,6 +208,7 @@ export function HomeView({ books, sessionUser }: HomeViewProps) {
                   <Link
                     key={`arrival-${book.id}`}
                     href={`/books/${book.id}`}
+                    prefetch={false}
                     className="group relative mx-2 w-40 flex-shrink-0 overflow-hidden rounded-3xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-100 transition hover:-translate-y-1 hover:border-indigo-200 hover:shadow-md"
                   >
                     <div className="relative h-44 w-full overflow-hidden rounded-2xl bg-slate-100">
@@ -291,6 +294,7 @@ export function HomeView({ books, sessionUser }: HomeViewProps) {
                   <Link
                     key={`top-${book.id}`}
                     href={`/books/${book.id}`}
+                    prefetch={false}
                     className="flex gap-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-100 transition hover:-translate-y-1 hover:border-indigo-200 hover:shadow-md"
                   >
                     <div className="relative h-20 w-16 flex-shrink-0 overflow-hidden rounded-2xl bg-slate-100">
