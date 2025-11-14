@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import type { Book } from "@prisma/client";
+import type { Book } from "@/types/enums";
 import { openWhatsApp } from "@/lib/whatsapp";
 
 type SessionUser = {

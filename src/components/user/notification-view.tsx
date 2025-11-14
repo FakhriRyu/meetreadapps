@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import type { BorrowRequestStatus, NotificationType } from "@prisma/client";
+import type { BorrowRequestStatus, NotificationType } from "@/types/enums";
 
 import { formatDate } from "@/lib/intl-format";
 

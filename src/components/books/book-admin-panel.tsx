@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useMemo, useState } from "react";
 
-import type { Book } from "@prisma/client";
+import type { Book } from "@/types/enums";
 import type { BookFormData } from "@/lib/validators/book";
 
 type BookFormState = {

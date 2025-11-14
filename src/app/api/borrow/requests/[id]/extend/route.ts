@@ -5,7 +5,7 @@ import { z } from "zod";
 // import { prisma } from "@/lib/prisma" // DISABLED - Needs Supabase migration;
 import { getSessionUser } from "@/lib/session";
 import { createBorrowNotification } from "@/lib/notifications";
-import { BorrowRequestStatus, NotificationType } from "@prisma/client";
+import { BorrowRequestStatus, NotificationType } from "@/types/enums";
 
 const ExtendSchema = z.object({
   dueDate: z.coerce.date(),

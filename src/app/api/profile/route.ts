@@ -5,7 +5,7 @@ import { z } from "zod";
 // import { prisma } from "@/lib/prisma" // DISABLED - Needs Supabase migration;
 import { getSessionUser } from "@/lib/session";
 import { SESSION_COOKIE_NAME, createSessionCookie } from "@/lib/auth";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/types/enums";
 
 const UpdateProfileSchema = z
   .object({

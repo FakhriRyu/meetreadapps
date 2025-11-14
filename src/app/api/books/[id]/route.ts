@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 // import { prisma } from "@/lib/prisma" // DISABLED - Needs Supabase migration;
 import { BookFormSchema } from "@/lib/validators/book";
 import type { BookFormData } from "@/lib/validators/book";
-import { BookStatus, Prisma } from "@prisma/client";
+import { BookStatus, Prisma } from "@/types/enums";
 
 const toPrismaData = (payload: BookFormData, currentStatus?: BookStatus) => ({
   title: payload.title,

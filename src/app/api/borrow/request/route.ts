@@ -4,7 +4,7 @@ import { z } from "zod";
 
 // import { prisma } from "@/lib/prisma" // DISABLED - Needs Supabase migration;
 import { getSessionUser } from "@/lib/session";
-import { BookStatus, BorrowRequestStatus } from "@prisma/client";
+import { BookStatus, BorrowRequestStatus } from "@/types/enums";
 
 const RequestSchema = z.object({
   bookId: z.number().int().min(1, "ID buku tidak valid"),

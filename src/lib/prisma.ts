@@ -1,3 +1,16 @@
+// ⚠️ DEPRECATED - This file is no longer used
+// All database operations now use Supabase Client
+// See: src/lib/supabase.ts
+
+// If you accidentally imported from this file, update to:
+// import { getSupabaseServer } from '@/lib/supabase'
+
+throw new Error(
+  '❌ Prisma client is disabled. Use Supabase Client instead: import { getSupabaseServer } from "@/lib/supabase"'
+);
+
+// Legacy code commented out:
+/*
 import { PrismaClient } from "@prisma/client";
 import fs from "node:fs";
 import path from "node:path";
@@ -50,3 +63,4 @@ export const prisma = globalForPrisma.prisma ?? new PrismaClient();
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;
 }
+*/

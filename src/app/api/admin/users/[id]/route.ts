@@ -5,7 +5,7 @@ import { z } from "zod";
 import { hashPassword } from "@/lib/auth";
 // import { prisma } from "@/lib/prisma" // DISABLED - Needs Supabase migration;
 import { getSessionUser } from "@/lib/session";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/types/enums";
 
 const UpdateUserSchema = z
   .object({

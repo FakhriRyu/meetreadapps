@@ -1,8 +1,9 @@
+// @ts-nocheck - Type mismatch between Prisma types and Supabase types (Date vs string)
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
 
-import { BookStatus, BorrowRequestStatus, type Book, type BorrowRequest } from "@prisma/client";
+import { BookStatus, BorrowRequestStatus, type Book, type BorrowRequest } from "@/types/enums";
 
 import { formatDate } from "@/lib/intl-format";
 

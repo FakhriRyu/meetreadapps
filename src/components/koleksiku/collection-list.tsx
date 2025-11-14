@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import type { Book } from "@prisma/client";
+import type { Book } from "@/types/enums";
 
 import { formatDate, formatNumber } from "@/lib/intl-format";
 

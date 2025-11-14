@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import type { BookStatus, BorrowRequestStatus } from "@prisma/client";
+import type { BookStatus, BorrowRequestStatus } from "@/types/enums";
 
 import { formatDate, formatTime } from "@/lib/intl-format";
 

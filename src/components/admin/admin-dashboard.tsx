@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, type ReactElement } from "react";
-import type { Book } from "@prisma/client";
+import type { Book } from "@/types/enums";
 
 import { BookAdminPanel } from "@/components/books/book-admin-panel";
 

@@ -4,7 +4,7 @@ import { z } from "zod";
 
 // import { prisma } from "@/lib/prisma" // DISABLED - Needs Supabase migration;
 import { getSessionUser } from "@/lib/session";
-import { BookStatus, Prisma } from "@prisma/client";
+import { BookStatus, Prisma } from "@/types/enums";
 
 const CollectionSchema = z.object({
   title: z.string().trim().min(1, "Judul wajib diisi"),
