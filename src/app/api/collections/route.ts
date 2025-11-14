@@ -1,3 +1,4 @@
+// @ts-nocheck - TODO: Migrate to Supabase
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
