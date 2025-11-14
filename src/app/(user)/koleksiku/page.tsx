@@ -1,8 +1,8 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 
-import { prisma } from "@/lib/prisma";
-import { getSessionUser } from "@/lib/session";
+import { supabaseServer } from "@/lib/supabase";
+import { getSessionUser } from "@/lib/session-supabase";
 import { KoleksikuView } from "@/components/koleksiku/koleksiku-view";
 
 // Revalidate cache setiap 10 detik karena data lebih dinamis
@@ -21,42 +21,51 @@ async function CollectionData() {
     redirect("/login?from=koleksiku");
   }
 
-  const [collections, requests] = await Promise.all([
-    prisma.book.findMany({
-      where: { ownerId: sessionUser.id },
-      orderBy: { createdAt: "desc" },
-    }),
-    prisma.borrowRequest.findMany({
-      where: {
-        book: { ownerId: sessionUser.id },
-        status: { in: ["PENDING", "APPROVED"] },
-      },
-      orderBy: { createdAt: "desc" },
-      include: {
-        book: {
-          select: {
-            id: true,
-            title: true,
-            status: true,
-            dueDate: true,
-            availableCopies: true,
-            totalCopies: true,
-            lendable: true,
-          },
-        },
-        requester: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phoneNumber: true,
-          },
-        },
-      },
-    }),
-  ]);
+  // Fetch collections
+  const { data: collections, error: collectionsError } = await supabaseServer
+    .from('Book')
+    .select('*')
+    .eq('ownerId', sessionUser.id)
+    .order('createdAt', { ascending: false });
 
-  return <KoleksikuView collections={collections} requests={requests} />;
+  // Fetch requests with joins
+  const { data: requestsData, error: requestsError } = await supabaseServer
+    .from('BorrowRequest')
+    .select(`
+      *,
+      book:Book!BorrowRequest_bookId_fkey(
+        id,
+        title,
+        status,
+        dueDate,
+        availableCopies,
+        totalCopies,
+        lendable,
+        ownerId
+      ),
+      requester:User!BorrowRequest_requesterId_fkey(
+        id,
+        name,
+        email,
+        phoneNumber
+      )
+    `)
+    .in('status', ['PENDING', 'APPROVED'])
+    .order('createdAt', { ascending: false });
+
+  // Filter requests to only include books owned by current user
+  const requests = (requestsData || []).filter(
+    (req: any) => req.book?.ownerId === sessionUser.id
+  );
+
+  if (collectionsError) {
+    console.error('Error fetching collections:', collectionsError);
+  }
+  if (requestsError) {
+    console.error('Error fetching requests:', requestsError);
+  }
+
+  return <KoleksikuView collections={collections || []} requests={requests} />;
 }
 
 export default function KoleksikuPage() {

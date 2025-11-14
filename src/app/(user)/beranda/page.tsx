@@ -1,6 +1,6 @@
 import { Suspense } from "react";
-import { prisma } from "@/lib/prisma";
-import { getSessionUser } from "@/lib/session";
+import { supabaseServer } from "@/lib/supabase";
+import { getSessionUser } from "@/lib/session-supabase";
 import { HomeView } from "@/components/user/home-view";
 
 // Revalidate cache setiap 30 detik untuk performa lebih baik
@@ -19,24 +19,18 @@ async function BooksData() {
     return null;
   }
 
-  const books = await prisma.book.findMany({
-    where: {
-      OR: [{ ownerId: null }, { lendable: true }],
-    },
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      title: true,
-      author: true,
-      category: true,
-      coverImageUrl: true,
-      publishedYear: true,
-      totalCopies: true,
-      availableCopies: true,
-    },
-  });
+  const { data: books, error } = await supabaseServer
+    .from('Book')
+    .select('id, title, author, category, coverImageUrl, publishedYear, totalCopies, availableCopies')
+    .or('ownerId.is.null,lendable.eq.true')
+    .order('createdAt', { ascending: false });
 
-  return <HomeView books={books} sessionUser={sessionUser} />;
+  if (error) {
+    console.error('Error fetching books:', error);
+    return <HomeView books={[]} sessionUser={sessionUser} />;
+  }
+
+  return <HomeView books={books || []} sessionUser={sessionUser} />;
 }
 
 export default function BerandaPage() {

@@ -1,10 +1,9 @@
 import { Suspense } from "react";
 import { notFound, redirect } from "next/navigation";
 
-import { prisma } from "@/lib/prisma";
-import { getSessionUser } from "@/lib/session";
+import { supabaseServer } from "@/lib/supabase";
+import { getSessionUser } from "@/lib/session-supabase";
 import { PinjamView } from "@/components/user/pinjam-view";
-import { Prisma } from "@prisma/client";
 
 // Revalidate cache setiap 20 detik
 export const revalidate = 20;
@@ -28,31 +27,29 @@ async function BooksData(props: PinjamPageProps) {
   }
 
   const query = (searchParams.query ?? "").trim();
-
-  const whereClause: Prisma.BookWhereInput = {
-    status: { not: "UNAVAILABLE" },
-    ...(query.length > 0
-      ? {
-          OR: [
-            { title: { contains: query } },
-            { author: { contains: query } },
-            { category: { contains: query } },
-          ],
-        }
-      : undefined),
-  };
-
   const pageSize = 10;
-  const [totalCount, books] = await Promise.all([
-    prisma.book.count({ where: whereClause }),
-    prisma.book.findMany({
-      where: whereClause,
-      orderBy: [{ createdAt: "desc" }],
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-    }),
-  ]);
 
+  // Build query
+  let booksQuery = supabaseServer
+    .from('Book')
+    .select('*', { count: 'exact' })
+    .neq('status', 'UNAVAILABLE');
+
+  // Add search filter if query exists
+  if (query.length > 0) {
+    booksQuery = booksQuery.or(`title.ilike.%${query}%,author.ilike.%${query}%,category.ilike.%${query}%`);
+  }
+
+  // Execute query with pagination
+  const { data: books, error, count } = await booksQuery
+    .order('createdAt', { ascending: false })
+    .range((page - 1) * pageSize, page * pageSize - 1);
+
+  if (error) {
+    console.error('Error fetching books:', error);
+  }
+
+  const totalCount = count ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
   const currentPage = Math.min(page, totalPages);
 
@@ -69,7 +66,7 @@ async function BooksData(props: PinjamPageProps) {
 
   return (
     <PinjamView
-      books={books}
+      books={books || []}
       sessionUser={sessionUser}
       pageInfo={{
         totalCount,

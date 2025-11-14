@@ -2,8 +2,8 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 
 import { NotificationView } from "@/components/user/notification-view";
-import { prisma } from "@/lib/prisma";
-import { getSessionUser } from "@/lib/session";
+import { supabaseServer } from "@/lib/supabase";
+import { getSessionUser } from "@/lib/session-supabase";
 
 // Revalidate cache setiap 5 detik untuk notifikasi real-time
 export const revalidate = 5;
@@ -21,30 +21,37 @@ async function NotificationData() {
     redirect("/login?from=notifikasi");
   }
 
-  const notifications = await prisma.borrowNotification.findMany({
-    where: {
-      request: { requesterId: sessionUser.id },
-    },
-    orderBy: { createdAt: "desc" },
-    take: 30,
-    include: {
-      request: {
-        select: {
-          book: {
-            select: { id: true, title: true },
-          },
-          status: true,
-        },
-      },
-    },
-  });
+  const { data: notifications, error } = await supabaseServer
+    .from('BorrowNotification')
+    .select(`
+      *,
+      request:BorrowRequest!BorrowNotification_requestId_fkey(
+        status,
+        requesterId,
+        book:Book!BorrowRequest_bookId_fkey(
+          id,
+          title
+        )
+      )
+    `)
+    .order('createdAt', { ascending: false })
+    .limit(30);
 
-  const serialized = notifications.map((notification) => ({
+  if (error) {
+    console.error('Error fetching notifications:', error);
+  }
+
+  // Filter notifications for current user only
+  const userNotifications = (notifications || []).filter(
+    (notif: any) => notif.request?.requesterId === sessionUser.id
+  );
+
+  const serialized = userNotifications.map((notification: any) => ({
     id: notification.id,
     status: notification.request.status,
     type: notification.type,
     message: notification.message ?? null,
-    createdAt: notification.createdAt.toISOString(),
+    createdAt: notification.createdAt,
     book: {
       id: notification.request.book.id,
       title: notification.request.book.title,

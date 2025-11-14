@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { getSessionUser } from "@/lib/session";
+import { getSessionUser } from "@/lib/session-supabase";
 import { ProfilView } from "@/components/user/profil-view";
 
 // Metadata untuk SEO

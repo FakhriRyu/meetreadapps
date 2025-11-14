@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { prisma } from "@/lib/prisma";
+import { supabaseServer } from "@/lib/supabase";
 import { hashPassword } from "@/lib/auth";
 
 const RegisterSchema = z.object({
@@ -22,12 +22,13 @@ export async function POST(request: Request) {
       phoneNumber: typeof body.phoneNumber === "string" ? body.phoneNumber.replace(/\s+/g, "") : body.phoneNumber,
     });
 
-    const existing = await prisma.user.findUnique({
-      where: { email: data.email.toLowerCase() },
-      select: { id: true },
-    });
+    const { data: existing, error: checkError } = await supabaseServer
+      .from('User')
+      .select('id')
+      .eq('email', data.email.toLowerCase())
+      .single();
 
-    if (existing) {
+    if (existing && !checkError) {
       return NextResponse.json(
         { error: "Email sudah terdaftar. Silakan gunakan email lain." },
         { status: 409 },
@@ -36,14 +37,18 @@ export async function POST(request: Request) {
 
     const passwordHash = await hashPassword(data.password);
 
-    await prisma.user.create({
-      data: {
+    const { error: insertError } = await supabaseServer
+      .from('User')
+      .insert({
         name: data.name,
         email: data.email.toLowerCase(),
         passwordHash,
         phoneNumber: data.phoneNumber,
-      },
-    });
+      });
+
+    if (insertError) {
+      throw insertError;
+    }
 
     return NextResponse.json({ message: "Registrasi berhasil" }, { status: 201 });
   } catch (error) {
@@ -51,6 +56,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.issues[0]?.message ?? "Data tidak valid" }, { status: 400 });
     }
 
+    console.error('Registration error:', error);
     return NextResponse.json({ error: "Registrasi gagal. Coba lagi nanti." }, { status: 500 });
   }
 }

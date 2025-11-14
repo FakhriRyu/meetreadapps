@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { prisma } from "@/lib/prisma";
+import { supabaseServer } from "@/lib/supabase";
 import {
   SESSION_COOKIE_NAME,
   createSessionCookie,
@@ -18,18 +18,13 @@ export async function POST(request: Request) {
     const body = await request.json();
     const data = LoginSchema.parse(body);
 
-    const user = await prisma.user.findUnique({
-      where: { email: data.email.toLowerCase() },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        passwordHash: true,
-        role: true,
-      },
-    });
+    const { data: user, error } = await supabaseServer
+      .from('User')
+      .select('id, name, email, passwordHash, role')
+      .eq('email', data.email.toLowerCase())
+      .single();
 
-    if (!user) {
+    if (error || !user) {
       return NextResponse.json(
         { error: "Email atau kata sandi salah." },
         { status: 401 },
