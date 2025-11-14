@@ -13,6 +13,14 @@ const LoginSchema = z.object({
   password: z.string().min(8, "Kata sandi minimal 8 karakter"),
 });
 
+type UserLoginData = {
+  id: number;
+  name: string;
+  email: string;
+  passwordHash: string;
+  role: 'USER' | 'ADMIN';
+};
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -30,7 +38,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const user = users[0];
+    const user = users[0] as UserLoginData;
 
     const isValidPassword = await verifyPassword(data.password, user.passwordHash);
     if (!isValidPassword) {
