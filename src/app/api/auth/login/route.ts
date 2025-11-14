@@ -18,18 +18,19 @@ export async function POST(request: Request) {
     const body = await request.json();
     const data = LoginSchema.parse(body);
 
-    const { data: user, error } = await supabaseServer
+    const { data: users, error } = await supabaseServer
       .from('User')
       .select('id, name, email, passwordHash, role')
-      .eq('email', data.email.toLowerCase())
-      .single();
+      .eq('email', data.email.toLowerCase());
 
-    if (error || !user) {
+    if (error || !users || users.length === 0) {
       return NextResponse.json(
         { error: "Email atau kata sandi salah." },
         { status: 401 },
       );
     }
+
+    const user = users[0];
 
     const isValidPassword = await verifyPassword(data.password, user.passwordHash);
     if (!isValidPassword) {

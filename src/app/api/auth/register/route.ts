@@ -22,13 +22,12 @@ export async function POST(request: Request) {
       phoneNumber: typeof body.phoneNumber === "string" ? body.phoneNumber.replace(/\s+/g, "") : body.phoneNumber,
     });
 
-    const { data: existing, error: checkError } = await supabaseServer
+    const { data: existingUsers, error: checkError } = await supabaseServer
       .from('User')
       .select('id')
-      .eq('email', data.email.toLowerCase())
-      .single();
+      .eq('email', data.email.toLowerCase());
 
-    if (existing && !checkError) {
+    if (!checkError && existingUsers && existingUsers.length > 0) {
       return NextResponse.json(
         { error: "Email sudah terdaftar. Silakan gunakan email lain." },
         { status: 409 },
