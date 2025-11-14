@@ -2,7 +2,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-import { prisma } from "@/lib/prisma";
+// import { prisma } from "@/lib/prisma" // DISABLED - Needs Supabase migration;
 import { SESSION_COOKIE_NAME, parseSessionCookie } from "@/lib/auth";
 
 export async function GET() {

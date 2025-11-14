@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-import { prisma } from "@/lib/prisma";
+// import { prisma } from "@/lib/prisma" // DISABLED - Needs Supabase migration;
 import { getSessionUser } from "@/lib/session";
 import { createBorrowNotification } from "@/lib/notifications";
 import { BookStatus, BorrowRequestStatus, NotificationType } from "@prisma/client";

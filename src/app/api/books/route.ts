@@ -1,7 +1,7 @@
 // @ts-nocheck - TODO: Migrate to Supabase
 import { NextResponse } from "next/server";
 
-import { prisma } from "@/lib/prisma";
+// import { prisma } from "@/lib/prisma" // DISABLED - Needs Supabase migration;
 import { BookFormSchema } from "@/lib/validators/book";
 import type { BookFormData } from "@/lib/validators/book";
 import { BookStatus, Prisma } from "@prisma/client";

@@ -1,29 +1,24 @@
-// @ts-nocheck - TODO: Migrate to Supabase
+// @ts-nocheck - Migrated to Supabase
 import { AdminDashboard } from "@/components/admin/admin-dashboard";
-import { prisma } from "@/lib/prisma";
+import { getSupabaseServer } from "@/lib/supabase";
 import { getSessionUser } from "@/lib/session";
 
 export default async function AdminPage() {
-  const [books, users, sessionUser] = await Promise.all([
-    prisma.book.findMany({ orderBy: { createdAt: "desc" } }),
-    prisma.user.findMany({
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    }),
-    getSessionUser(),
+  const supabase = getSupabaseServer();
+  const sessionUser = await getSessionUser();
+
+  const [booksResult, usersResult] = await Promise.all([
+    supabase.from('Book').select('*').order('createdAt', { ascending: false }),
+    supabase.from('User').select('id, name, email, role, createdAt, updatedAt').order('createdAt', { ascending: false }),
   ]);
 
-  const managedUsers = users.map((user) => ({
+  const books = booksResult.data || [];
+  const users = usersResult.data || [];
+
+  const managedUsers = users.map((user: any) => ({
     ...user,
-    createdAt: user.createdAt.toISOString(),
-    updatedAt: user.updatedAt.toISOString(),
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
   }));
 
   return (

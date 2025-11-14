@@ -1,7 +1,7 @@
 // @ts-nocheck - TODO: Migrate to Supabase
 import { NextRequest, NextResponse } from "next/server";
 
-import { prisma } from "@/lib/prisma";
+// import { prisma } from "@/lib/prisma" // DISABLED - Needs Supabase migration;
 import { getSessionUser } from "@/lib/session";
 
 export async function GET(request: NextRequest) {
