@@ -5,6 +5,7 @@ import { z } from "zod";
 // import { prisma } from "@/lib/prisma" // DISABLED - Needs Supabase migration;
 import { getSessionUser } from "@/lib/session";
 import { createBorrowNotification } from "@/lib/notifications";
+import { getSupabaseServer } from "@/lib/supabase";
 import { BookStatus, BorrowRequestStatus, NotificationType } from "@/types/enums";
 
 const CompleteSchema = z.object({
@@ -42,23 +43,30 @@ export async function POST(request: NextRequest, context: RouteContext) {
     const body = await request.json();
     const data = CompleteSchema.parse(body ?? {});
 
-    const borrowRequest = await prisma.borrowRequest.findUnique({
-      where: { id: requestId },
-      include: {
-        book: {
-          select: {
-            id: true,
-            ownerId: true,
-            lendable: true,
-            availableCopies: true,
-            totalCopies: true,
-          },
-        },
-      },
-    });
+    const supabase = getSupabaseServer();
+    const { data: borrowRequest, error: borrowError } = await supabase
+      .from('BorrowRequest')
+      .select(`
+        id,
+        status,
+        bookId,
+        book:Book!BorrowRequest_bookId_fkey(
+          id,
+          ownerId,
+          lendable,
+          availableCopies,
+          totalCopies
+        )
+      `)
+      .eq('id', requestId)
+      .single();
 
-    if (!borrowRequest) {
+    if (borrowError || !borrowRequest) {
       return NextResponse.json({ error: "Permintaan peminjaman tidak ditemukan." }, { status: 404 });
+    }
+
+    if (!borrowRequest.book) {
+      return NextResponse.json({ error: "Data buku tidak ditemukan." }, { status: 404 });
     }
 
     if (borrowRequest.book.ownerId !== sessionUser.id) {
@@ -72,43 +80,53 @@ export async function POST(request: NextRequest, context: RouteContext) {
       );
     }
 
-    const now = new Date();
+    const nowIso = new Date().toISOString();
 
     const nextAvailable = Math.min(
       borrowRequest.book.totalCopies,
       borrowRequest.book.availableCopies + 1,
     );
 
-    await prisma.$transaction(async (tx) => {
-      await tx.borrowRequest.update({
-        where: { id: borrowRequest.id },
-        data: {
-          status: BorrowRequestStatus.RETURNED,
-          ownerDecisionAt: now,
-          ownerMessage: data.message ?? null,
-        },
-      });
+    const message = data.message?.trim() ? data.message : null;
 
-      await tx.book.update({
-        where: { id: borrowRequest.book.id },
-        data: {
-          status:
-            borrowRequest.book.lendable === false
-              ? BookStatus.UNAVAILABLE
-              : nextAvailable > 0
-                ? BookStatus.AVAILABLE
-                : BookStatus.RESERVED,
-          borrowerId: null,
-          dueDate: null,
-          availableCopies: nextAvailable,
-        },
-      });
-    });
+    const { error: updateRequestError } = await supabase
+      .from('BorrowRequest')
+      .update({
+        status: BorrowRequestStatus.RETURNED,
+        ownerDecisionAt: nowIso,
+        ownerMessage: message,
+      })
+      .eq('id', borrowRequest.id);
+
+    if (updateRequestError) {
+      return NextResponse.json({ error: "Gagal memperbarui status permintaan." }, { status: 500 });
+    }
+
+    const targetStatus =
+      borrowRequest.book.lendable === false
+        ? BookStatus.UNAVAILABLE
+        : nextAvailable > 0
+          ? BookStatus.AVAILABLE
+          : BookStatus.RESERVED;
+
+    const { error: updateBookError } = await supabase
+      .from('Book')
+      .update({
+        status: targetStatus,
+        borrowerId: null,
+        dueDate: null,
+        availableCopies: nextAvailable,
+      })
+      .eq('id', borrowRequest.book.id);
+
+    if (updateBookError) {
+      return NextResponse.json({ error: "Gagal memperbarui data buku." }, { status: 500 });
+    }
 
     await createBorrowNotification({
       requestId: borrowRequest.id,
       type: NotificationType.RETURNED,
-      message: data.message ?? null,
+      message,
     });
 
     return NextResponse.json({

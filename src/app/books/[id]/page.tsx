@@ -17,33 +17,51 @@ export default async function BookDetailPage(props: BookDetailPageProps) {
   }
 
   const supabase = getSupabaseServer();
-  const sessionUser = await getSessionUser();
-
-  const { data: book, error } = await supabase
+  const bookQuery = supabase
     .from('Book')
     .select(`
-      *,
+      id,
+      title,
+      author,
+      description,
+      category,
+      coverImageUrl,
+      totalCopies,
+      availableCopies,
+      publishedYear,
+      createdAt,
+      lendable,
+      status,
+      dueDate,
       owner:User!Book_ownerId_fkey(id, name, phoneNumber),
-      borrower:User!Book_borrowerId_fkey(id, name),
-      requests:BorrowRequest(
-        status,
-        createdAt,
-        requester:User!BorrowRequest_requesterId_fkey(name)
-      )
+      borrower:User!Book_borrowerId_fkey(id, name)
     `)
     .eq('id', bookId)
     .single();
 
-  if (error || !book) {
+  const lastRequestQuery = supabase
+    .from('BorrowRequest')
+    .select(`
+      status,
+      createdAt,
+      requester:User!BorrowRequest_requesterId_fkey(name)
+    `)
+    .eq('bookId', bookId)
+    .in('status', ['PENDING', 'APPROVED'])
+    .order('createdAt', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const [sessionUser, { data: book, error: bookError }, { data: lastRequest }] = await Promise.all([
+    getSessionUser(),
+    bookQuery,
+    lastRequestQuery,
+  ]);
+
+  if (bookError || !book) {
     notFound();
   }
 
-  // Filter and sort requests
-  const activeRequests = (book.requests || [])
-    .filter((r: any) => r.status === 'PENDING' || r.status === 'APPROVED')
-    .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-  const lastRequest = activeRequests[0] ?? null;
   const lastRequestStatus = lastRequest?.status;
 
   return (

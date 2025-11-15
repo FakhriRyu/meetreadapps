@@ -5,8 +5,10 @@ import type { Database } from './database.types'
 
 export enum BookStatus {
   AVAILABLE = 'AVAILABLE',
+  PENDING = 'PENDING',
   BORROWED = 'BORROWED',
   RESERVED = 'RESERVED',
+  UNAVAILABLE = 'UNAVAILABLE',
 }
 
 export enum BorrowRequestStatus {
@@ -38,4 +40,3 @@ export type Book = Database['public']['Tables']['Book']['Row']
 export type User = Database['public']['Tables']['User']['Row']
 export type BorrowRequest = Database['public']['Tables']['BorrowRequest']['Row']
 export type BorrowNotification = Database['public']['Tables']['BorrowNotification']['Row']
-
