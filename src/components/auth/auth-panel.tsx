@@ -29,7 +29,7 @@ export function AuthPanel({ defaultMode }: AuthPanelProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [formState, setFormState] = useState<FormState>(initialState);
-  const [status, setStatus] = useState<string | null>(null);
+  const [status, setStatus] = useState<{ type: "error" | "success"; message: string } | null>(null);
   const [isSubmitting, setSubmitting] = useState(false);
 
   const mode: AuthMode = useMemo(() => defaultMode, [defaultMode]);
@@ -97,7 +97,7 @@ export function AuthPanel({ defaultMode }: AuthPanelProps) {
     setStatus(null);
 
     if (mode === "register" && formState.password !== formState.confirmPassword) {
-      setStatus("Konfirmasi kata sandi tidak cocok.");
+      setStatus({ type: "error", message: "Konfirmasi kata sandi tidak cocok." });
       setSubmitting(false);
       return;
     }
@@ -121,7 +121,7 @@ export function AuthPanel({ defaultMode }: AuthPanelProps) {
         }
 
         resetForm();
-        setStatus("Registrasi berhasil! Silakan masuk untuk melanjutkan.");
+        setStatus({ type: "success", message: "Registrasi berhasil! Silakan masuk untuk melanjutkan." });
         router.replace(buildAuthUrl("/login"));
         return;
       } else {
@@ -146,7 +146,8 @@ export function AuthPanel({ defaultMode }: AuthPanelProps) {
         return;
       }
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Terjadi kesalahan.");
+      const message = error instanceof Error ? error.message : "Terjadi kesalahan.";
+      setStatus({ type: "error", message });
     } finally {
       setSubmitting(false);
     }
@@ -242,8 +243,14 @@ export function AuthPanel({ defaultMode }: AuthPanelProps) {
         )}
 
         {status && (
-          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-            {status}
+          <div
+            className={`rounded-2xl border px-4 py-3 text-sm ${
+              status.type === "success"
+                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                : "border-rose-200 bg-rose-50 text-rose-700"
+            }`}
+          >
+            {status.message}
           </div>
         )}
 
