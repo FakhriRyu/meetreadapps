@@ -1,8 +1,8 @@
 // @ts-nocheck - TODO: Migrate to Supabase
 import { NextResponse } from "next/server";
 
-// import { prisma } from "@/lib/prisma" // DISABLED - Needs Supabase migration;
 import { getSessionUser } from "@/lib/session";
+import { getSupabaseServer } from "@/lib/supabase";
 
 export async function GET() {
   const sessionUser = await getSessionUser();
@@ -11,17 +11,15 @@ export async function GET() {
     return NextResponse.json({ error: "Anda tidak memiliki akses." }, { status: 401 });
   }
 
-  const users = await prisma.user.findMany({
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-  });
+  const supabase = getSupabaseServer();
+  const { data: users, error } = await supabase
+    .from('User')
+    .select('id, name, email, role, createdAt, updatedAt')
+    .order('createdAt', { ascending: false });
+
+  if (error) {
+    return NextResponse.json({ error: "Gagal mengambil data pengguna." }, { status: 500 });
+  }
 
   return NextResponse.json({ data: users });
 }

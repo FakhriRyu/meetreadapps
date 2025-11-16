@@ -2,8 +2,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-// import { prisma } from "@/lib/prisma" // DISABLED - Needs Supabase migration;
 import { getSessionUser } from "@/lib/session";
+import { getSupabaseServer } from "@/lib/supabase";
 import { BookStatus, BorrowRequestStatus } from "@/types/enums";
 
 const RequestSchema = z.object({
@@ -32,17 +32,29 @@ export async function POST(request: Request) {
     const body = await request.json();
     const data = RequestSchema.parse(body);
 
-    const book = await prisma.book.findUnique({
-      where: { id: data.bookId },
-      include: {
-        owner: {
-          select: { id: true, name: true, phoneNumber: true },
-        },
-      },
-    });
+    const supabase = getSupabaseServer();
+    const { data: book, error: bookError } = await supabase
+      .from('Book')
+      .select(`
+        id,
+        title,
+        status,
+        ownerId,
+        owner:User!Book_ownerId_fkey(
+          id,
+          name,
+          phoneNumber
+        )
+      `)
+      .eq('id', data.bookId)
+      .single();
 
-    if (!book) {
+    if (bookError?.code === 'PGRST116') {
       return NextResponse.json({ error: "Buku tidak ditemukan." }, { status: 404 });
+    }
+
+    if (bookError || !book) {
+      return NextResponse.json({ error: "Gagal mengambil data buku." }, { status: 500 });
     }
 
     if (!book.owner || !book.ownerId) {
@@ -70,13 +82,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const existingPending = await prisma.borrowRequest.findFirst({
-      where: {
-        bookId: data.bookId,
-        status: { in: [BorrowRequestStatus.PENDING] },
-        requesterId: sessionUser.id,
-      },
-    });
+    const { data: existingPending } = await supabase
+      .from('BorrowRequest')
+      .select('id')
+      .eq('bookId', data.bookId)
+      .eq('requesterId', sessionUser.id)
+      .in('status', [BorrowRequestStatus.PENDING])
+      .maybeSingle();
 
     if (existingPending) {
       return NextResponse.json(
@@ -103,22 +115,28 @@ export async function POST(request: Request) {
     const encodedMessage = encodeURIComponent(messageLines.join("\n"));
     const whatsappUrl = `https://wa.me/${normalizedPhone}?text=${encodedMessage}`;
 
-    await prisma.$transaction(async (tx) => {
-      await tx.borrowRequest.create({
-        data: {
-          bookId: book.id,
-          requesterId: sessionUser.id,
-          status: BorrowRequestStatus.PENDING,
-          message: data.message ?? null,
-          whatsappUrl,
-        },
+    const { error: requestError } = await supabase
+      .from('BorrowRequest')
+      .insert({
+        bookId: book.id,
+        requesterId: sessionUser.id,
+        status: BorrowRequestStatus.PENDING,
+        message: data.message ?? null,
+        whatsappUrl,
       });
 
-      await tx.book.update({
-        where: { id: book.id },
-        data: { status: BookStatus.PENDING },
-      });
-    });
+    if (requestError) {
+      return NextResponse.json({ error: "Gagal membuat permintaan peminjaman." }, { status: 500 });
+    }
+
+    const { error: updateBookError } = await supabase
+      .from('Book')
+      .update({ status: BookStatus.PENDING })
+      .eq('id', book.id);
+
+    if (updateBookError) {
+      return NextResponse.json({ error: "Gagal memperbarui status buku." }, { status: 500 });
+    }
 
     return NextResponse.json({
       data: {

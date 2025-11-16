@@ -3,9 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { hashPassword } from "@/lib/auth";
-// import { prisma } from "@/lib/prisma" // DISABLED - Needs Supabase migration;
 import { getSessionUser } from "@/lib/session";
-import { Prisma } from "@/types/enums";
+import { getSupabaseServer } from "@/lib/supabase";
 
 const UpdateUserSchema = z
   .object({
@@ -40,23 +39,34 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     const data = UpdateUserSchema.parse(json);
     const passwordHash = data.password ? await hashPassword(data.password) : undefined;
 
-    const updated = await prisma.user.update({
-      where: { id: userId },
-      data: {
-        ...(data.name ? { name: data.name } : {}),
-        ...(data.email ? { email: data.email.toLowerCase() } : {}),
-        ...(data.role ? { role: data.role } : {}),
-        ...(passwordHash ? { passwordHash } : {}),
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
+    const supabase = getSupabaseServer();
+    const updatePayload: Record<string, unknown> = {};
+    if (data.name) updatePayload.name = data.name;
+    if (data.email) updatePayload.email = data.email.toLowerCase();
+    if (data.role) updatePayload.role = data.role;
+    if (passwordHash) updatePayload.passwordHash = passwordHash;
+
+    const { data: updated, error } = await supabase
+      .from('User')
+      .update(updatePayload)
+      .eq('id', userId)
+      .select('id, name, email, role, createdAt, updatedAt')
+      .single();
+
+    if (error) {
+      if (error.code === '23505') {
+        return NextResponse.json(
+          { error: "Email sudah digunakan oleh pengguna lain." },
+          { status: 409 },
+        );
+      }
+
+      if (error.code === 'PGRST116') {
+        return NextResponse.json({ error: "Pengguna tidak ditemukan." }, { status: 404 });
+      }
+
+      return NextResponse.json({ error: "Gagal memperbarui data pengguna." }, { status: 500 });
+    }
 
     return NextResponse.json({ data: updated });
   } catch (error) {
@@ -65,19 +75,6 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         { error: error.issues[0]?.message ?? "Data tidak valid." },
         { status: 400 },
       );
-    }
-
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === "P2002") {
-        return NextResponse.json(
-          { error: "Email sudah digunakan oleh pengguna lain." },
-          { status: 409 },
-        );
-      }
-    }
-
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
-      return NextResponse.json({ error: "Pengguna tidak ditemukan." }, { status: 404 });
     }
 
     return NextResponse.json({ error: "Gagal memperbarui data pengguna." }, { status: 500 });

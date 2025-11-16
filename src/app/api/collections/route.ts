@@ -2,9 +2,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-// import { prisma } from "@/lib/prisma" // DISABLED - Needs Supabase migration;
 import { getSessionUser } from "@/lib/session";
-import { BookStatus, Prisma } from "@/types/enums";
+import { getSupabaseServer } from "@/lib/supabase";
+import { BookStatus } from "@/types/enums";
 
 const CollectionSchema = z.object({
   title: z.string().trim().min(1, "Judul wajib diisi"),
@@ -64,35 +64,42 @@ export async function POST(request: Request) {
           ? BookStatus.AVAILABLE
           : BookStatus.RESERVED);
 
-    const created = await prisma.book.create({
-      data: {
-        title: data.title,
-        author: data.author,
-        category: normalizedCategory,
-        description: normalizedDescription,
-        coverImageUrl: normalizedCover,
-        isbn: normalizedIsbn,
-        publishedYear: normalizedPublishedYear,
-        lendable: data.lendable,
-        totalCopies: data.totalCopies,
-        availableCopies: data.availableCopies,
-        ownerId: sessionUser.id,
-        source: "user",
-        status,
-      },
-    });
+    const supabase = getSupabaseServer();
+    const payload = {
+      title: data.title,
+      author: data.author,
+      category: normalizedCategory,
+      description: normalizedDescription,
+      coverImageUrl: normalizedCover,
+      isbn: normalizedIsbn,
+      publishedYear: normalizedPublishedYear,
+      lendable: data.lendable,
+      totalCopies: data.totalCopies,
+      availableCopies: data.availableCopies,
+      ownerId: sessionUser.id,
+      source: "user",
+      status,
+    };
 
-    return NextResponse.json({ data: created }, { status: 201 });
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === "P2002") {
+    const { data: created, error } = await supabase
+      .from('Book')
+      .insert(payload)
+      .select('*')
+      .single();
+
+    if (error) {
+      if (error.code === '23505') {
         return NextResponse.json(
           { error: "ISBN sudah terdaftar. Gunakan ISBN lain." },
           { status: 409 },
         );
       }
+
+      return NextResponse.json({ error: "Gagal menambahkan koleksi." }, { status: 500 });
     }
 
+    return NextResponse.json({ data: created }, { status: 201 });
+  } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.issues[0]?.message ?? "Data tidak valid" }, { status: 400 });
     }

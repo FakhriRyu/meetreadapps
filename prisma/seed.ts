@@ -1,63 +1,40 @@
-import fs from "node:fs";
-import path from "node:path";
-import { PrismaClient } from "@prisma/client";
+import { createClient } from "@supabase/supabase-js";
 
 import { hashPassword } from "../src/lib/auth";
 
-const normalizeSqliteUrl = (url: string | undefined) => {
-  if (!url) return undefined;
-  const prefix = "file:./";
-  if (!url.startsWith(prefix)) return url;
-
-  const relativePath = url.slice(prefix.length);
-  const absolutePath = path.resolve(process.cwd(), relativePath);
-  const normalizedPath = absolutePath.replace(/\\/g, "/");
-  return `file:${normalizedPath}`;
-};
-
-const ensureSqliteFile = (url: string | undefined) => {
-  if (!url?.startsWith("file:")) return;
-  const filePath = url.replace("file:", "");
-  const directory = path.dirname(filePath);
-
-  fs.mkdirSync(directory, { recursive: true });
-
-  if (!fs.existsSync(filePath)) {
-    fs.closeSync(fs.openSync(filePath, "w"));
-  }
-};
-
-const normalizedUrl = normalizeSqliteUrl(process.env.DATABASE_URL);
-if (normalizedUrl && normalizedUrl !== process.env.DATABASE_URL) {
-  process.env.DATABASE_URL = normalizedUrl;
+if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  console.error("Supabase environment variables are missing.");
+  process.exit(1);
 }
 
-ensureSqliteFile(process.env.DATABASE_URL);
-
-const prisma = new PrismaClient();
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY,
+);
 
 async function main() {
   const adminEmail = "admin@meetread.com";
   const adminPasswordHash = await hashPassword("admin");
 
-  await prisma.user.upsert({
-    where: { email: adminEmail },
-    update: {
-      name: "Administrator",
-      passwordHash: adminPasswordHash,
-      role: "ADMIN",
-      phoneNumber: "+62 812 0000 1111",
-      profileImage: "https://i.pravatar.cc/300?u=meetread-admin",
-    },
-    create: {
-      name: "Administrator",
-      email: adminEmail,
-      passwordHash: adminPasswordHash,
-      role: "ADMIN",
-      phoneNumber: "+62 812 0000 1111",
-      profileImage: "https://i.pravatar.cc/300?u=meetread-admin",
-    },
-  });
+  const { error: upsertAdminError } = await supabase
+    .from("User")
+    .upsert(
+      [
+        {
+          name: "Administrator",
+          email: adminEmail,
+          passwordHash: adminPasswordHash,
+          role: "ADMIN",
+          phoneNumber: "+62 812 0000 1111",
+          profileImage: "https://i.pravatar.cc/300?u=meetread-admin",
+        },
+      ],
+      { onConflict: "email" },
+    );
+
+  if (upsertAdminError) {
+    throw upsertAdminError;
+  }
 
   const books = [
     {
@@ -106,14 +83,18 @@ async function main() {
     },
   ];
 
-  await prisma.book.deleteMany();
-  await prisma.book.createMany({ data: books });
+  await supabase.from("Book").delete().neq("id", 0);
+  const { error: insertBooksError } = await supabase.from("Book").insert(books);
+  if (insertBooksError) {
+    throw insertBooksError;
+  }
 }
 
 main()
-  .then(() => prisma.$disconnect())
-  .catch(async (error) => {
+  .then(() => {
+    console.log("Seed selesai.");
+  })
+  .catch((error) => {
     console.error("Seed gagal dijalankan:", error);
-    await prisma.$disconnect();
     process.exit(1);
   });

@@ -2,8 +2,8 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-// import { prisma } from "@/lib/prisma" // DISABLED - Needs Supabase migration;
 import { SESSION_COOKIE_NAME, parseSessionCookie } from "@/lib/auth";
+import { getSupabaseServer } from "@/lib/supabase";
 
 export async function GET() {
   const cookieStore = await cookies();
@@ -14,18 +14,16 @@ export async function GET() {
     return NextResponse.json({ user: null });
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.id },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      phoneNumber: true,
-      profileImage: true,
-      role: true,
-      createdAt: true,
-    },
-  });
+  const supabase = getSupabaseServer();
+  const { data: user, error } = await supabase
+    .from('User')
+    .select('id, name, email, phoneNumber, profileImage, role, createdAt')
+    .eq('id', session.id)
+    .maybeSingle();
+
+  if (error && error.code !== 'PGRST116') {
+    return NextResponse.json({ error: "Gagal mengambil data sesi." }, { status: 500 });
+  }
 
   if (!user) {
     return NextResponse.json({ user: null });

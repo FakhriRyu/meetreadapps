@@ -2,9 +2,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-// import { prisma } from "@/lib/prisma" // DISABLED - Needs Supabase migration;
 import { getSessionUser } from "@/lib/session";
 import { createBorrowNotification } from "@/lib/notifications";
+import { getSupabaseServer } from "@/lib/supabase";
 import { BookStatus, BorrowRequestStatus, NotificationType } from "@/types/enums";
 
 const ApproveSchema = z.object({
@@ -51,26 +51,34 @@ export async function POST(request: NextRequest, context: RouteContext) {
       );
     }
 
-    const borrowRequest = await prisma.borrowRequest.findUnique({
-      where: { id: requestId },
-      include: {
-        book: {
-          select: {
-            id: true,
-            ownerId: true,
-            status: true,
-            lendable: true,
-            availableCopies: true,
-          },
-        },
-        requester: {
-          select: { id: true },
-        },
-      },
-    });
+    const supabase = getSupabaseServer();
+    const { data: borrowRequest, error: requestError } = await supabase
+      .from('BorrowRequest')
+      .select(`
+        id,
+        status,
+        requesterId,
+        bookId,
+        book:Book!BorrowRequest_bookId_fkey(
+          id,
+          ownerId,
+          status,
+          lendable,
+          availableCopies
+        ),
+        requester:User!BorrowRequest_requesterId_fkey(
+          id
+        )
+      `)
+      .eq('id', requestId)
+      .single();
 
-    if (!borrowRequest) {
+    if (requestError?.code === 'PGRST116') {
       return NextResponse.json({ error: "Permintaan peminjaman tidak ditemukan." }, { status: 404 });
+    }
+
+    if (requestError || !borrowRequest) {
+      return NextResponse.json({ error: "Gagal mengambil permintaan." }, { status: 500 });
     }
 
     if (borrowRequest.book.ownerId !== sessionUser.id) {
@@ -98,44 +106,55 @@ export async function POST(request: NextRequest, context: RouteContext) {
       );
     }
 
-    await prisma.$transaction(async (tx) => {
-      await tx.borrowRequest.update({
-        where: { id: borrowRequest.id },
-        data: {
-          status: BorrowRequestStatus.APPROVED,
-          ownerDecisionAt: now,
-          ownerMessage: data.message ?? null,
-        },
-      });
+    const nowIso = now.toISOString();
+    const ownerMessage = data.message ?? null;
 
-      await tx.book.update({
-        where: { id: borrowRequest.book.id },
-        data: {
-          status: BookStatus.BORROWED,
-          borrowerId: borrowRequest.requester.id,
-          dueDate: data.dueDate,
-          availableCopies: Math.max(0, borrowRequest.book.availableCopies - 1),
-        },
-      });
+    const { error: updateCurrentError } = await supabase
+      .from('BorrowRequest')
+      .update({
+        status: BorrowRequestStatus.APPROVED,
+        ownerDecisionAt: nowIso,
+        ownerMessage,
+      })
+      .eq('id', borrowRequest.id);
 
-      await tx.borrowRequest.updateMany({
-        where: {
-          bookId: borrowRequest.book.id,
-          id: { not: borrowRequest.id },
-          status: BorrowRequestStatus.PENDING,
-        },
-        data: {
-          status: BorrowRequestStatus.CANCELLED,
-          ownerDecisionAt: now,
-          ownerMessage: "Permintaan dibatalkan karena buku sudah dipinjam.",
-        },
-      });
-    });
+    if (updateCurrentError) {
+      return NextResponse.json({ error: "Gagal memperbarui permintaan." }, { status: 500 });
+    }
+
+    const { error: updateBookError } = await supabase
+      .from('Book')
+      .update({
+        status: BookStatus.BORROWED,
+        borrowerId: borrowRequest.requester.id,
+        dueDate: data.dueDate.toISOString(),
+        availableCopies: Math.max(0, borrowRequest.book.availableCopies - 1),
+      })
+      .eq('id', borrowRequest.book.id);
+
+    if (updateBookError) {
+      return NextResponse.json({ error: "Gagal memperbarui buku." }, { status: 500 });
+    }
+
+    const { error: cancelOthersError } = await supabase
+      .from('BorrowRequest')
+      .update({
+        status: BorrowRequestStatus.CANCELLED,
+        ownerDecisionAt: nowIso,
+        ownerMessage: "Permintaan dibatalkan karena buku sudah dipinjam.",
+      })
+      .eq('bookId', borrowRequest.book.id)
+      .eq('status', BorrowRequestStatus.PENDING)
+      .neq('id', borrowRequest.id);
+
+    if (cancelOthersError) {
+      return NextResponse.json({ error: "Gagal memperbarui permintaan lain." }, { status: 500 });
+    }
 
     await createBorrowNotification({
       requestId: borrowRequest.id,
       type: NotificationType.APPROVED,
-      message: data.message ?? null,
+      message: ownerMessage,
     });
 
     return NextResponse.json({

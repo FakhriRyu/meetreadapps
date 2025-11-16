@@ -1,12 +1,12 @@
 // @ts-nocheck - TODO: Migrate to Supabase
 import { NextResponse } from "next/server";
 
-// import { prisma } from "@/lib/prisma" // DISABLED - Needs Supabase migration;
+import { getSupabaseServer } from "@/lib/supabase";
 import { BookFormSchema } from "@/lib/validators/book";
 import type { BookFormData } from "@/lib/validators/book";
-import { BookStatus, Prisma } from "@/types/enums";
+import { BookStatus } from "@/types/enums";
 
-const toPrismaData = (payload: BookFormData) => ({
+const buildBookPayload = (payload: BookFormData) => ({
   title: payload.title,
   author: payload.author,
   category: payload.category ?? null,
@@ -23,11 +23,17 @@ const toPrismaData = (payload: BookFormData) => ({
 });
 
 export async function GET() {
-  const books = await prisma.book.findMany({
-    orderBy: [{ createdAt: "desc" }],
-  });
+  const supabase = getSupabaseServer();
+  const { data, error } = await supabase
+    .from('Book')
+    .select('*')
+    .order('createdAt', { ascending: false });
 
-  return NextResponse.json({ data: books });
+  if (error) {
+    return NextResponse.json({ error: "Gagal mengambil data buku." }, { status: 500 });
+  }
+
+  return NextResponse.json({ data: data ?? [] });
 }
 
 export async function POST(request: Request) {
@@ -35,21 +41,26 @@ export async function POST(request: Request) {
     const json = await request.json();
     const data = BookFormSchema.parse(json);
 
-    const created = await prisma.book.create({
-      data: toPrismaData(data),
-    });
+    const supabase = getSupabaseServer();
+    const { data: created, error } = await supabase
+      .from('Book')
+      .insert(buildBookPayload(data))
+      .select('*')
+      .single();
 
-    return NextResponse.json({ data: created }, { status: 201 });
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === "P2002") {
+    if (error) {
+      if (error.code === '23505') {
         return NextResponse.json(
           { error: "ISBN sudah terdaftar. Gunakan ISBN lain." },
           { status: 409 },
         );
       }
+
+      return NextResponse.json({ error: "Gagal membuat buku." }, { status: 500 });
     }
 
+    return NextResponse.json({ data: created }, { status: 201 });
+  } catch (error) {
     if (error instanceof Error) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }

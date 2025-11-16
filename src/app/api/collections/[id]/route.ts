@@ -2,9 +2,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-// import { prisma } from "@/lib/prisma" // DISABLED - Needs Supabase migration;
 import { getSessionUser } from "@/lib/session";
-import { BookStatus, Prisma } from "@/types/enums";
+import { getSupabaseServer } from "@/lib/supabase";
+import { BookStatus } from "@/types/enums";
 
 const CollectionSchema = z.object({
   title: z.string().trim().min(1, "Judul wajib diisi"),
@@ -29,16 +29,6 @@ const CollectionSchema = z.object({
   availableCopies: z.number().int().min(0),
   status: z.nativeEnum(BookStatus).optional(),
 });
-
-const isPrismaNotFoundError = (error: unknown): error is { code: string } => {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "code" in error &&
-    typeof (error as { code?: unknown }).code === "string" &&
-    (error as { code: string }).code === "P2025"
-  );
-};
 
 export async function PUT(
   request: NextRequest,
@@ -78,13 +68,20 @@ export async function PUT(
     const normalizedPublishedYear =
       typeof data.publishedYear === "number" ? data.publishedYear : null;
 
-    const current = await prisma.book.findFirst({
-      where: { id, ownerId: sessionUser.id },
-      select: { status: true },
-    });
+    const supabase = getSupabaseServer();
+    const { data: current, error: currentError } = await supabase
+      .from('Book')
+      .select('status')
+      .eq('id', id)
+      .eq('ownerId', sessionUser.id)
+      .single();
 
-    if (!current) {
+    if (currentError?.code === 'PGRST116') {
       return NextResponse.json({ error: "Koleksi tidak ditemukan." }, { status: 404 });
+    }
+
+    if (currentError || !current) {
+      return NextResponse.json({ error: "Gagal mengambil koleksi." }, { status: 500 });
     }
 
     const nextStatus =
@@ -97,12 +94,9 @@ export async function PUT(
             ? BookStatus.AVAILABLE
             : BookStatus.RESERVED);
 
-    const updated = await prisma.book.update({
-      where: {
-        id,
-        ownerId: sessionUser.id,
-      },
-      data: {
+    const { data: updated, error: updateError } = await supabase
+      .from('Book')
+      .update({
         title: data.title,
         author: data.author,
         category: normalizedCategory,
@@ -115,26 +109,31 @@ export async function PUT(
         availableCopies: data.availableCopies,
         source: "user",
         status: nextStatus,
-      },
-    });
+      })
+      .eq('id', id)
+      .eq('ownerId', sessionUser.id)
+      .select('*')
+      .single();
 
-    return NextResponse.json({ data: updated });
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === "P2002") {
+    if (updateError) {
+      if (updateError.code === '23505') {
         return NextResponse.json(
           { error: "ISBN sudah terdaftar. Gunakan ISBN lain." },
           { status: 409 },
         );
       }
+
+      if (updateError.code === 'PGRST116') {
+        return NextResponse.json({ error: "Koleksi tidak ditemukan." }, { status: 404 });
+      }
+
+      return NextResponse.json({ error: "Gagal memperbarui koleksi." }, { status: 500 });
     }
 
+    return NextResponse.json({ data: updated });
+  } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.issues[0]?.message ?? "Data tidak valid" }, { status: 400 });
-    }
-
-    if (isPrismaNotFoundError(error)) {
-      return NextResponse.json({ error: "Koleksi tidak ditemukan." }, { status: 404 });
     }
 
     return NextResponse.json({ error: "Gagal memperbarui koleksi." }, { status: 500 });
@@ -160,19 +159,25 @@ export async function DELETE(
   }
 
   try {
-    await prisma.book.delete({
-      where: {
-        id,
-        ownerId: sessionUser.id,
-      },
-    });
+    const supabase = getSupabaseServer();
+    const { error } = await supabase
+      .from('Book')
+      .delete()
+      .eq('id', id)
+      .eq('ownerId', sessionUser.id)
+      .select('id')
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return NextResponse.json({ error: "Koleksi tidak ditemukan." }, { status: 404 });
+      }
+
+      return NextResponse.json({ error: "Gagal menghapus koleksi." }, { status: 500 });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    if (isPrismaNotFoundError(error)) {
-      return NextResponse.json({ error: "Koleksi tidak ditemukan." }, { status: 404 });
-    }
-
     return NextResponse.json({ error: "Gagal menghapus koleksi." }, { status: 500 });
   }
 }

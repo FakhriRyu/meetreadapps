@@ -2,9 +2,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-// import { prisma } from "@/lib/prisma" // DISABLED - Needs Supabase migration;
 import { getSessionUser } from "@/lib/session";
 import { hashPassword, verifyPassword } from "@/lib/auth";
+import { getSupabaseServer } from "@/lib/supabase";
 
 const UpdatePasswordSchema = z
   .object({
@@ -32,13 +32,19 @@ export async function PUT(request: Request) {
     const body = await request.json();
     const data = UpdatePasswordSchema.parse(body);
 
-    const user = await prisma.user.findUnique({
-      where: { id: sessionUser.id },
-      select: { passwordHash: true },
-    });
+    const supabase = getSupabaseServer();
+    const { data: user, error } = await supabase
+      .from('User')
+      .select('passwordHash')
+      .eq('id', sessionUser.id)
+      .single();
 
-    if (!user) {
+    if (error?.code === 'PGRST116') {
       return NextResponse.json({ error: "Pengguna tidak ditemukan." }, { status: 404 });
+    }
+
+    if (error || !user) {
+      return NextResponse.json({ error: "Gagal memuat data pengguna." }, { status: 500 });
     }
 
     const isValid = await verifyPassword(data.currentPassword, user.passwordHash);
@@ -47,10 +53,14 @@ export async function PUT(request: Request) {
     }
 
     const newHash = await hashPassword(data.newPassword);
-    await prisma.user.update({
-      where: { id: sessionUser.id },
-      data: { passwordHash: newHash },
-    });
+    const { error: updateError } = await supabase
+      .from('User')
+      .update({ passwordHash: newHash })
+      .eq('id', sessionUser.id);
+
+    if (updateError) {
+      return NextResponse.json({ error: "Gagal memperbarui kata sandi." }, { status: 500 });
+    }
 
     return NextResponse.json({ message: "Kata sandi berhasil diperbarui." });
   } catch (error) {

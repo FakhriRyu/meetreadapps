@@ -2,8 +2,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-// import { prisma } from "@/lib/prisma" // DISABLED - Needs Supabase migration;
 import { SESSION_COOKIE_NAME, createSessionCookie, verifyPassword } from "@/lib/auth";
+import { getSupabaseServer } from "@/lib/supabase";
 
 const LoginAdminSchema = z.object({
   email: z.string().trim().email("Email tidak valid"),
@@ -15,16 +15,16 @@ export async function POST(request: Request) {
     const body = await request.json();
     const data = LoginAdminSchema.parse(body);
 
-    const user = await prisma.user.findUnique({
-      where: { email: data.email.toLowerCase() },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        passwordHash: true,
-        role: true,
-      },
-    });
+    const supabase = getSupabaseServer();
+    const { data: user, error } = await supabase
+      .from('User')
+      .select('id, name, email, passwordHash, role')
+      .eq('email', data.email.toLowerCase())
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      return NextResponse.json({ error: "Gagal memuat akun admin." }, { status: 500 });
+    }
 
     if (!user || user.role !== "ADMIN") {
       return NextResponse.json(

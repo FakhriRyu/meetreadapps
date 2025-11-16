@@ -1,4 +1,4 @@
-// @ts-nocheck - Type mismatch between Prisma types and Supabase types (Date vs string)
+// @ts-nocheck - Temporary: Supabase returns ISO strings while types expect Date
 "use client";
 
 import { useEffect, useMemo, useState } from "react";

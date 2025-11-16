@@ -2,10 +2,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-// import { prisma } from "@/lib/prisma" // DISABLED - Needs Supabase migration;
 import { getSessionUser } from "@/lib/session";
 import { SESSION_COOKIE_NAME, createSessionCookie } from "@/lib/auth";
-import { Prisma } from "@/types/enums";
+import { getSupabaseServer } from "@/lib/supabase";
 
 const UpdateProfileSchema = z
   .object({
@@ -67,19 +66,24 @@ export async function PUT(request: Request) {
       updateData.profileImage = trimmed.length > 0 ? trimmed : null;
     }
 
-    const updated = await prisma.user.update({
-      where: { id: sessionUser.id },
-      data: updateData,
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        phoneNumber: true,
-        profileImage: true,
-        role: true,
-        createdAt: true,
-      },
-    });
+    const supabase = getSupabaseServer();
+    const { data: updated, error } = await supabase
+      .from('User')
+      .update(updateData)
+      .eq('id', sessionUser.id)
+      .select('id, name, email, phoneNumber, profileImage, role, createdAt')
+      .single();
+
+    if (error) {
+      if (error.code === '23505') {
+        return NextResponse.json(
+          { error: "Email sudah digunakan oleh pengguna lain." },
+          { status: 409 },
+        );
+      }
+
+      return NextResponse.json({ error: "Gagal memperbarui profil." }, { status: 500 });
+    }
 
     const session = createSessionCookie({
       id: updated.id,
@@ -116,15 +120,6 @@ export async function PUT(request: Request) {
         { error: error.issues[0]?.message ?? "Data tidak valid." },
         { status: 400 },
       );
-    }
-
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === "P2002") {
-        return NextResponse.json(
-          { error: "Email sudah digunakan oleh pengguna lain." },
-          { status: 409 },
-        );
-      }
     }
 
     return NextResponse.json({ error: "Gagal memperbarui profil." }, { status: 500 });

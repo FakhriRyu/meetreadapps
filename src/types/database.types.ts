@@ -1,5 +1,5 @@
-// Database types generated from Prisma schema
-// This will match your existing Supabase database structure
+// Database types generated from the schema used in Supabase
+// This should match the Supabase database structure
 
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
@@ -179,4 +179,3 @@ export interface Database {
     }
   }
 }
-

@@ -2,9 +2,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-// import { prisma } from "@/lib/prisma" // DISABLED - Needs Supabase migration;
 import { getSessionUser } from "@/lib/session";
 import { createBorrowNotification } from "@/lib/notifications";
+import { getSupabaseServer } from "@/lib/supabase";
 import { BorrowRequestStatus, NotificationType } from "@/types/enums";
 
 const ExtendSchema = z.object({
@@ -50,21 +50,29 @@ export async function POST(request: NextRequest, context: RouteContext) {
       );
     }
 
-    const borrowRequest = await prisma.borrowRequest.findUnique({
-      where: { id: requestId },
-      include: {
-        book: {
-          select: {
-            id: true,
-            ownerId: true,
-            dueDate: true,
-          },
-        },
-      },
-    });
+    const supabase = getSupabaseServer();
+    const { data: borrowRequest, error: requestError } = await supabase
+      .from('BorrowRequest')
+      .select(`
+        id,
+        status,
+        ownerMessage,
+        bookId,
+        book:Book!BorrowRequest_bookId_fkey(
+          id,
+          ownerId,
+          dueDate
+        )
+      `)
+      .eq('id', requestId)
+      .single();
 
-    if (!borrowRequest) {
+    if (requestError?.code === 'PGRST116') {
       return NextResponse.json({ error: "Permintaan tidak ditemukan." }, { status: 404 });
+    }
+
+    if (requestError || !borrowRequest) {
+      return NextResponse.json({ error: "Gagal mengambil permintaan." }, { status: 500 });
     }
 
     if (borrowRequest.book.ownerId !== sessionUser.id) {
@@ -78,22 +86,29 @@ export async function POST(request: NextRequest, context: RouteContext) {
       );
     }
 
-    await prisma.$transaction(async (tx) => {
-      await tx.book.update({
-        where: { id: borrowRequest.book.id },
-        data: {
-          dueDate: data.dueDate,
-        },
-      });
+    const nowIso = now.toISOString();
+    const message = data.message?.trim() ? data.message : borrowRequest.ownerMessage ?? null;
 
-      await tx.borrowRequest.update({
-        where: { id: borrowRequest.id },
-        data: {
-          ownerMessage: data.message ?? borrowRequest.ownerMessage,
-          ownerDecisionAt: now,
-        },
-      });
-    });
+    const { error: updateBookError } = await supabase
+      .from('Book')
+      .update({ dueDate: data.dueDate.toISOString() })
+      .eq('id', borrowRequest.book.id);
+
+    if (updateBookError) {
+      return NextResponse.json({ error: "Gagal memperbarui data buku." }, { status: 500 });
+    }
+
+    const { error: updateRequestError } = await supabase
+      .from('BorrowRequest')
+      .update({
+        ownerMessage: message,
+        ownerDecisionAt: nowIso,
+      })
+      .eq('id', borrowRequest.id);
+
+    if (updateRequestError) {
+      return NextResponse.json({ error: "Gagal memperbarui permintaan." }, { status: 500 });
+    }
 
     await createBorrowNotification({
       requestId: borrowRequest.id,

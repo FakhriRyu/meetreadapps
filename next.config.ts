@@ -23,10 +23,6 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   compress: true,
   productionBrowserSourceMaps: false,
-  // Optimasi bundle
-  experimental: {
-    optimizePackageImports: ["@prisma/client"],
-  },
 };
 
 export default nextConfig;

@@ -1,5 +1,4 @@
-// Enums previously from @prisma/client, now standalone
-// These match the database enum types in Supabase
+// Standalone enums mirroring the Supabase enum types
 
 import type { Database } from './database.types'
 
@@ -31,9 +30,6 @@ export enum UserRole {
   USER = 'USER',
   ADMIN = 'ADMIN',
 }
-
-// Prisma utility type for dynamic data
-export type Prisma = any;
 
 // Export database types for easy importing
 export type Book = Database['public']['Tables']['Book']['Row']
