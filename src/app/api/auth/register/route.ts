@@ -40,6 +40,8 @@ export async function POST(request: Request) {
 
     const passwordHash = await hashPassword(data.password);
 
+    const timestamp = new Date().toISOString();
+
     const { error: insertError } = await supabase
       .from('User')
       .insert([{
@@ -47,6 +49,8 @@ export async function POST(request: Request) {
         email: data.email.toLowerCase(),
         passwordHash,
         phoneNumber: data.phoneNumber,
+        createdAt: timestamp,
+        updatedAt: timestamp,
       }]);
 
     if (insertError) {
