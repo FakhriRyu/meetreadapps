@@ -6,7 +6,7 @@ import { BookFormSchema } from "@/lib/validators/book";
 import type { BookFormData } from "@/lib/validators/book";
 import { BookStatus } from "@/types/enums";
 
-const buildBookPayload = (payload: BookFormData) => ({
+const buildBookPayload = (payload: BookFormData, timestamp: string) => ({
   title: payload.title,
   author: payload.author,
   category: payload.category ?? null,
@@ -20,6 +20,8 @@ const buildBookPayload = (payload: BookFormData) => ({
   coverImageUrl: payload.coverImageUrl ?? null,
   description: payload.description ?? null,
   status: (payload.availableCopies ?? payload.totalCopies) > 0 ? BookStatus.AVAILABLE : BookStatus.RESERVED,
+  createdAt: timestamp,
+  updatedAt: timestamp,
 });
 
 export async function GET() {
@@ -42,9 +44,10 @@ export async function POST(request: Request) {
     const data = BookFormSchema.parse(json);
 
     const supabase = getSupabaseServer();
+    const timestamp = new Date().toISOString();
     const { data: created, error } = await supabase
       .from('Book')
-      .insert(buildBookPayload(data))
+      .insert(buildBookPayload(data, timestamp))
       .select('*')
       .single();
 

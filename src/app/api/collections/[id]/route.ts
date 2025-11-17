@@ -94,6 +94,7 @@ export async function PUT(
             ? BookStatus.AVAILABLE
             : BookStatus.RESERVED);
 
+    const timestamp = new Date().toISOString();
     const { data: updated, error: updateError } = await supabase
       .from('Book')
       .update({
@@ -109,6 +110,7 @@ export async function PUT(
         availableCopies: data.availableCopies,
         source: "user",
         status: nextStatus,
+        updatedAt: timestamp,
       })
       .eq('id', id)
       .eq('ownerId', sessionUser.id)

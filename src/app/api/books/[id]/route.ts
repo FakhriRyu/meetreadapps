@@ -59,9 +59,13 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Gagal mengambil data buku." }, { status: 500 });
     }
 
+    const timestamp = new Date().toISOString();
     const { data: updated, error: updateError } = await supabase
       .from('Book')
-      .update(buildBookPayload(data, existing.status as BookStatus))
+      .update({
+        ...buildBookPayload(data, existing.status as BookStatus),
+        updatedAt: timestamp,
+      })
       .eq('id', bookId)
       .select('*')
       .single();

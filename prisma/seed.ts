@@ -36,7 +36,7 @@ async function main() {
     throw upsertAdminError;
   }
 
-  const books = [
+  const baseBooks = [
     {
       title: "The Pragmatic Programmer",
       author: "Andrew Hunt",
@@ -82,6 +82,15 @@ async function main() {
       description: "Prinsip fokus mendalam untuk mencapai produktivitas maksimal di tengah distraksi.",
     },
   ];
+
+  const books = baseBooks.map((book, index) => {
+    const timestamp = new Date(Date.now() - index * 60_000).toISOString();
+    return {
+      ...book,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+  });
 
   await supabase.from("Book").delete().neq("id", 0);
   const { error: insertBooksError } = await supabase.from("Book").insert(books);

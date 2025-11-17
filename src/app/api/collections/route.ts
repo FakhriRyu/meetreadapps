@@ -65,6 +65,7 @@ export async function POST(request: Request) {
           : BookStatus.RESERVED);
 
     const supabase = getSupabaseServer();
+    const timestamp = new Date().toISOString();
     const payload = {
       title: data.title,
       author: data.author,
@@ -79,6 +80,8 @@ export async function POST(request: Request) {
       ownerId: sessionUser.id,
       source: "user",
       status,
+      createdAt: timestamp,
+      updatedAt: timestamp,
     };
 
     const { data: created, error } = await supabase
