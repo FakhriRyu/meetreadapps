@@ -119,6 +119,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
           status: nextStatus,
           borrowerId: null,
           dueDate: null,
+          updatedAt: nowIso,
         })
         .eq('id', borrowRequest.book.id);
 

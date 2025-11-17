@@ -115,6 +115,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         borrowerId: null,
         dueDate: null,
         availableCopies: nextAvailable,
+        updatedAt: nowIso,
       })
       .eq('id', borrowRequest.book.id);
 

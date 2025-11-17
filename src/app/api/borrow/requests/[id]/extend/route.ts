@@ -91,7 +91,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     const { error: updateBookError } = await supabase
       .from('Book')
-      .update({ dueDate: data.dueDate.toISOString() })
+      .update({ dueDate: data.dueDate.toISOString(), updatedAt: nowIso })
       .eq('id', borrowRequest.book.id);
 
     if (updateBookError) {

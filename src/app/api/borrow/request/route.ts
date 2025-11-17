@@ -129,9 +129,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Gagal membuat permintaan peminjaman." }, { status: 500 });
     }
 
+    const updatedAt = new Date().toISOString();
     const { error: updateBookError } = await supabase
       .from('Book')
-      .update({ status: BookStatus.PENDING })
+      .update({ status: BookStatus.PENDING, updatedAt })
       .eq('id', book.id);
 
     if (updateBookError) {
