@@ -11,6 +11,7 @@ export const getSessionUser = cache(async () => {
   const session = parseSessionCookie(token ?? null);
 
   if (!session) {
+    console.log("getSessionUser: No session found");
     return null;
   }
 
@@ -21,6 +22,7 @@ export const getSessionUser = cache(async () => {
     .single();
 
   if (error || !user) {
+    console.log("getSessionUser: Error fetching user or user not found", error);
     return null;
   }
 

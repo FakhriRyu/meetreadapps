@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { hashPassword } from "@/lib/auth";
-import { getSessionUser } from "@/lib/session";
+import { getSessionUser } from "@/lib/session-supabase";
 import { getSupabaseServer } from "@/lib/supabase";
 
 const UpdateUserSchema = z
@@ -23,8 +23,10 @@ type RouteContext = {
 
 export async function PATCH(request: NextRequest, context: RouteContext) {
   const sessionUser = await getSessionUser();
+  console.log("Admin User Update - Session User:", JSON.stringify(sessionUser, null, 2));
 
   if (!sessionUser || sessionUser.role !== "ADMIN") {
+    console.log("Admin User Update - Unauthorized access attempt");
     return NextResponse.json({ error: "Anda tidak memiliki akses." }, { status: 401 });
   }
 
