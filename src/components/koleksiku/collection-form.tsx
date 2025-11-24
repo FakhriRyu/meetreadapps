@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type BookStatus = "AVAILABLE" | "PENDING" | "RESERVED" | "BORROWED" | "UNAVAILABLE";
 
@@ -49,6 +49,12 @@ const normalizeText = (value: string | null | undefined) => {
 export function CollectionForm({ onSubmit, onClose, isSubmitting, initialData, submitLabel }: CollectionFormProps) {
   const [formState, setFormState] = useState<CollectionPayload>(initialData ?? emptyState);
   const [error, setError] = useState<string | null>(null);
+  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const [filteredCategories, setFilteredCategories] = useState<string[]>([]);
+  const [selectedCategoryIndex, setSelectedCategoryIndex] = useState(-1);
+  const categoryInputRef = useRef<HTMLInputElement>(null);
+  const categoryDropdownRef = useRef<HTMLDivElement>(null);
   const isEditing = Boolean(initialData);
   const optionalNumericFields = useMemo(() => new Set<keyof CollectionPayload>(["publishedYear"]), []);
   const currentYear = useMemo(() => new Date().getFullYear() + 1, []);
@@ -64,21 +70,112 @@ export function CollectionForm({ onSubmit, onClose, isSubmitting, initialData, s
     [],
   );
 
+  // Fetch available categories on mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch("/api/categories");
+        if (response.ok) {
+          const result = await response.json();
+          setAvailableCategories(result.data || []);
+        }
+      } catch (error) {
+        console.error("Failed to fetch categories:", error);
+      }
+    };
+    void fetchCategories();
+  }, []);
+
+  // Handle click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        categoryDropdownRef.current &&
+        !categoryDropdownRef.current.contains(event.target as Node) &&
+        categoryInputRef.current &&
+        !categoryInputRef.current.contains(event.target as Node)
+      ) {
+        setShowCategoryDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Filter categories based on input
+  useEffect(() => {
+    const categoryValue = formState.category?.toLowerCase() || "";
+    if (categoryValue.length > 0) {
+      const filtered = availableCategories.filter((cat) =>
+        cat.toLowerCase().startsWith(categoryValue)
+      );
+      setFilteredCategories(filtered);
+      setSelectedCategoryIndex(-1);
+    } else {
+      setFilteredCategories([]);
+    }
+  }, [formState.category, availableCategories]);
+
   const handleChange =
     (field: keyof CollectionPayload) => (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const rawValue = event.target.value;
-    if (event.target.type === "number") {
-      if (optionalNumericFields.has(field)) {
-        const numericValue = rawValue === "" ? null : Number(rawValue);
-        setFormState((prev) => ({ ...prev, [field]: numericValue as never }));
-      } else {
-        const numericValue = rawValue === "" ? 0 : Number(rawValue);
-        setFormState((prev) => ({ ...prev, [field]: numericValue as never }));
+      const rawValue = event.target.value;
+      if (event.target.type === "number") {
+        if (optionalNumericFields.has(field)) {
+          const numericValue = rawValue === "" ? null : Number(rawValue);
+          setFormState((prev) => ({ ...prev, [field]: numericValue as never }));
+        } else {
+          const numericValue = rawValue === "" ? 0 : Number(rawValue);
+          setFormState((prev) => ({ ...prev, [field]: numericValue as never }));
+        }
+        return;
+      }
+
+      setFormState((prev) => ({ ...prev, [field]: rawValue as never }));
+    };
+
+  const handleCategoryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    setFormState((prev) => ({ ...prev, category: value }));
+    setShowCategoryDropdown(true);
+  };
+
+  const handleCategorySelect = (category: string) => {
+    setFormState((prev) => ({ ...prev, category }));
+    setShowCategoryDropdown(false);
+    setSelectedCategoryIndex(-1);
+  };
+
+  const handleCategoryKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showCategoryDropdown || filteredCategories.length === 0) {
+      if (event.key === "ArrowDown" && filteredCategories.length > 0) {
+        setShowCategoryDropdown(true);
       }
       return;
     }
 
-    setFormState((prev) => ({ ...prev, [field]: rawValue as never }));
+    switch (event.key) {
+      case "ArrowDown":
+        event.preventDefault();
+        setSelectedCategoryIndex((prev) =>
+          prev < filteredCategories.length - 1 ? prev + 1 : prev
+        );
+        break;
+      case "ArrowUp":
+        event.preventDefault();
+        setSelectedCategoryIndex((prev) => (prev > 0 ? prev - 1 : -1));
+        break;
+      case "Enter":
+        event.preventDefault();
+        if (selectedCategoryIndex >= 0 && selectedCategoryIndex < filteredCategories.length) {
+          handleCategorySelect(filteredCategories[selectedCategoryIndex]);
+        }
+        break;
+      case "Escape":
+        setShowCategoryDropdown(false);
+        setSelectedCategoryIndex(-1);
+        break;
+    }
   };
 
   const handleCheckbox = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -136,14 +233,43 @@ export function CollectionForm({ onSubmit, onClose, isSubmitting, initialData, s
         </label>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
-        <label className="text-sm font-medium text-slate-700">
+        <label className="relative text-sm font-medium text-slate-700">
           Kategori
           <input
+            ref={categoryInputRef}
             value={formState.category ?? ""}
-            onChange={handleChange("category")}
+            onChange={handleCategoryChange}
+            onKeyDown={handleCategoryKeyDown}
+            onFocus={() => {
+              if (filteredCategories.length > 0) {
+                setShowCategoryDropdown(true);
+              }
+            }}
             className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
             placeholder="Fiksi, Bisnis, dll"
+            autoComplete="off"
           />
+          {showCategoryDropdown && filteredCategories.length > 0 && (
+            <div
+              ref={categoryDropdownRef}
+              className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-2xl border border-slate-200 bg-white shadow-lg shadow-slate-200"
+            >
+              {filteredCategories.map((category, index) => (
+                <button
+                  key={category}
+                  type="button"
+                  onClick={() => handleCategorySelect(category)}
+                  className={`w-full px-4 py-2.5 text-left text-sm transition ${index === selectedCategoryIndex
+                      ? "bg-indigo-50 text-indigo-700"
+                      : "text-slate-700 hover:bg-slate-50"
+                    } ${index === 0 ? "rounded-t-2xl" : ""} ${index === filteredCategories.length - 1 ? "rounded-b-2xl" : ""
+                    }`}
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
+          )}
         </label>
         <label className="text-sm font-medium text-slate-700">
           URL Sampul (opsional)
