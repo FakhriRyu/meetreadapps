@@ -270,11 +270,10 @@ export function BookAdminPanel({ initialBooks }: BookAdminPanelProps) {
 
         {status && (
           <div
-            className={`mt-6 rounded-2xl border p-4 text-sm font-medium ${
-              status.type === "success"
+            className={`mt-6 rounded-2xl border p-4 text-sm font-medium ${status.type === "success"
                 ? "border-emerald-200 bg-emerald-50 text-emerald-700"
                 : "border-rose-200 bg-rose-50 text-rose-700"
-            }`}
+              }`}
           >
             {status.message}
           </div>
@@ -329,13 +328,23 @@ export function BookAdminPanel({ initialBooks }: BookAdminPanelProps) {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      {book.category ? (
-                        <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
-                          {book.category}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-slate-300">-</span>
-                      )}
+                      <div className="flex flex-col gap-2">
+                        {book.category ? (
+                          <span className="inline-flex w-fit rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+                            {book.category}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-slate-300">-</span>
+                        )}
+                        {book.status && book.status !== "AVAILABLE" && (
+                          <span className={`inline-flex w-fit rounded-full px-3 py-1 text-xs font-medium ${book.status === "PENDING" ? "bg-amber-100 text-amber-700" :
+                              book.status === "BORROWED" ? "bg-indigo-100 text-indigo-700" :
+                                "bg-slate-100 text-slate-700"
+                            }`}>
+                            {book.status}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm font-semibold text-slate-900">

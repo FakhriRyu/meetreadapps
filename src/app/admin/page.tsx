@@ -3,6 +3,8 @@ import { AdminDashboard } from "@/components/admin/admin-dashboard";
 import { getSupabaseServer } from "@/lib/supabase";
 import { getSessionUser } from "@/lib/session";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminPage() {
   const supabase = getSupabaseServer();
   const sessionUser = await getSessionUser();
@@ -13,9 +15,15 @@ export default async function AdminPage() {
     supabase.from('Review').select('*, user:User(id, name, profileImage), book:Book(title, coverImage)').order('createdAt', { ascending: false }),
   ]);
 
+  if (reviewsResult.error) {
+    console.error("Error fetching reviews:", reviewsResult.error);
+  }
+
   const books = booksResult.data || [];
   const users = usersResult.data || [];
   const reviews = reviewsResult.data || [];
+
+  console.log(`AdminPage: Fetched ${books.length} books, ${users.length} users, ${reviews.length} reviews`);
 
   const managedUsers = users.map((user: any) => ({
     ...user,
