@@ -28,6 +28,24 @@ export function ReviewManagementPanel({ initialReviews }: ReviewManagementPanelP
     const router = useRouter();
     const [reviews, setReviews] = useState<Review[]>(initialReviews);
     const [isLoading, setIsLoading] = useState<number | null>(null);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 9;
+
+    const filteredReviews = reviews.filter((review) => {
+        const query = searchQuery.toLowerCase();
+        return (
+            review.comment.toLowerCase().includes(query) ||
+            review.user.name.toLowerCase().includes(query) ||
+            (review.book?.title.toLowerCase().includes(query) ?? false)
+        );
+    });
+
+    const totalPages = Math.ceil(filteredReviews.length / ITEMS_PER_PAGE);
+    const paginatedReviews = filteredReviews.slice(
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE
+    );
 
     const handleDelete = async (reviewId: number) => {
         if (!confirm("Apakah Anda yakin ingin menghapus review ini?")) return;
@@ -54,8 +72,37 @@ export function ReviewManagementPanel({ initialReviews }: ReviewManagementPanelP
 
     return (
         <div className="space-y-6">
+            {/* Search Bar */}
+            <div className="relative">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                    <svg
+                        className="h-5 w-5 text-slate-400"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                        aria-hidden="true"
+                    >
+                        <path
+                            fillRule="evenodd"
+                            d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+                            clipRule="evenodd"
+                        />
+                    </svg>
+                </div>
+                <input
+                    type="text"
+                    className="block w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-3 text-sm placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                    placeholder="Cari review berdasarkan komentar, nama user, atau judul buku..."
+                    value={searchQuery}
+                    onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        setCurrentPage(1); // Reset to first page on search
+                    }}
+                />
+            </div>
+
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {reviews.map((review) => (
+                {paginatedReviews.map((review) => (
                     <div
                         key={review.id}
                         className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md"
@@ -159,7 +206,7 @@ export function ReviewManagementPanel({ initialReviews }: ReviewManagementPanelP
                     </div>
                 ))}
 
-                {reviews.length === 0 && (
+                {filteredReviews.length === 0 && (
                     <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
                         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100">
                             <svg
@@ -173,17 +220,67 @@ export function ReviewManagementPanel({ initialReviews }: ReviewManagementPanelP
                                 <path
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
-                                    d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z"
+                                    d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
                                 />
                             </svg>
                         </div>
-                        <h3 className="mt-4 text-lg font-semibold text-slate-900">Belum ada review</h3>
+                        <h3 className="mt-4 text-lg font-semibold text-slate-900">Tidak ada review ditemukan</h3>
                         <p className="text-sm text-slate-500">
-                            Belum ada pengguna yang memberikan review pada buku koleksi.
+                            Coba kata kunci lain atau hapus filter pencarian.
                         </p>
                     </div>
                 )}
             </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+                <div className="flex items-center justify-between border-t border-slate-200 pt-4">
+                    <button
+                        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                        className="flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                            className="h-5 w-5"
+                        >
+                            <path
+                                fillRule="evenodd"
+                                d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                                clipRule="evenodd"
+                            />
+                        </svg>
+                        Sebelumnya
+                    </button>
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm text-slate-600">
+                            Halaman <span className="font-medium text-slate-900">{currentPage}</span> dari{" "}
+                            <span className="font-medium text-slate-900">{totalPages}</span>
+                        </span>
+                    </div>
+                    <button
+                        onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                        className="flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent"
+                    >
+                        Selanjutnya
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                            className="h-5 w-5"
+                        >
+                            <path
+                                fillRule="evenodd"
+                                d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                                clipRule="evenodd"
+                            />
+                        </svg>
+                    </button>
+                </div>
+            )}
         </div>
     );
 }
