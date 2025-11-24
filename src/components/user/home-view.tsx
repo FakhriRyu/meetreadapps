@@ -182,11 +182,10 @@ export function HomeView({ books, sessionUser }: HomeViewProps) {
                   key={category}
                   type="button"
                   onClick={() => setActiveCategory(category)}
-                  className={`mx-2 whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition ${
-                    isActive
+                  className={`mx-2 whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition ${isActive
                       ? "bg-indigo-500 text-white shadow-sm shadow-indigo-200"
                       : "border border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-indigo-600"
-                  }`}
+                    }`}
                 >
                   {category}
                 </button>
@@ -251,11 +250,10 @@ export function HomeView({ books, sessionUser }: HomeViewProps) {
                     type="button"
                     onClick={() => setActiveAuthor(null)}
                     aria-pressed={resolvedAuthor === null}
-                    className={`mx-2 flex h-20 min-w-[7rem] items-center justify-center rounded-2xl px-4 text-center text-sm font-semibold transition ${
-                      resolvedAuthor === null
+                    className={`mx-2 flex h-20 min-w-[7rem] items-center justify-center rounded-2xl px-4 text-center text-sm font-semibold transition ${resolvedAuthor === null
                         ? "bg-indigo-500 text-white shadow-sm shadow-indigo-200"
                         : "border border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-indigo-600"
-                    }`}
+                      }`}
                   >
                     Semua Penulis
                   </button>
@@ -267,11 +265,10 @@ export function HomeView({ books, sessionUser }: HomeViewProps) {
                         key={`author-${author}`}
                         onClick={() => setActiveAuthor(isActive ? null : author)}
                         aria-pressed={isActive}
-                        className={`mx-2 flex h-20 min-w-[7rem] items-center justify-center rounded-2xl px-4 text-center text-sm font-semibold transition ${
-                          isActive
+                        className={`mx-2 flex h-20 min-w-[7rem] items-center justify-center rounded-2xl px-4 text-center text-sm font-semibold transition ${isActive
                             ? "bg-indigo-500 text-white shadow-sm shadow-indigo-200"
                             : "border border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-indigo-600"
-                        }`}
+                          }`}
                       >
                         {author}
                       </button>
@@ -330,6 +327,90 @@ export function HomeView({ books, sessionUser }: HomeViewProps) {
                     <div className="flex h-full items-center">
                       <ArrowIcon className="h-4 w-4 text-indigo-400" />
                     </div>
+                  </Link>
+                ))
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <SectionHeading label="Rekomendasi Romantis" caption="Kisah cinta yang menghangatkan hati" />
+            <div className="-mx-2 flex gap-5 overflow-x-auto pb-2">
+              {books.filter(b => ["romance", "romantis"].includes((b.category || "").toLowerCase())).slice(0, 3).length === 0 ? (
+                <div className="mx-2 w-full rounded-3xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-500 shadow-sm shadow-slate-100">
+                  Belum ada buku romantis saat ini.
+                </div>
+              ) : (
+                books.filter(b => ["romance", "romantis"].includes((b.category || "").toLowerCase())).slice(0, 3).map((book) => (
+                  <Link
+                    key={`romance-${book.id}`}
+                    href={`/books/${book.id}`}
+                    prefetch={false}
+                    className="group relative mx-2 w-40 flex-shrink-0 overflow-hidden rounded-3xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-100 transition hover:-translate-y-1 hover:border-indigo-200 hover:shadow-md"
+                  >
+                    <div className="relative h-44 w-full overflow-hidden rounded-2xl bg-slate-100">
+                      {book.coverImageUrl ? (
+                        <Image
+                          src={book.coverImageUrl}
+                          alt={book.title}
+                          fill
+                          sizes="160px"
+                          className="object-cover transition duration-300 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">
+                          Tidak ada sampul
+                        </div>
+                      )}
+                    </div>
+                    <p className="mt-3 line-clamp-1 text-sm font-semibold text-slate-900">{book.title}</p>
+                    <p className="line-clamp-1 text-xs text-slate-500">{book.category ?? "Umum"}</p>
+                    <span className="mt-3 inline-flex items-center text-xs font-medium text-indigo-500">
+                      Telusuri
+                      <ArrowIcon className="ml-1 h-3 w-3" />
+                    </span>
+                  </Link>
+                ))
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <SectionHeading label="Rekomendasi Fiksi" caption="Dunia imajinasi tanpa batas" />
+            <div className="-mx-2 flex gap-5 overflow-x-auto pb-2">
+              {books.filter(b => ["fiction", "fiksi"].includes((b.category || "").toLowerCase())).slice(0, 3).length === 0 ? (
+                <div className="mx-2 w-full rounded-3xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-500 shadow-sm shadow-slate-100">
+                  Belum ada buku fiksi saat ini.
+                </div>
+              ) : (
+                books.filter(b => ["fiction", "fiksi"].includes((b.category || "").toLowerCase())).slice(0, 3).map((book) => (
+                  <Link
+                    key={`fiction-${book.id}`}
+                    href={`/books/${book.id}`}
+                    prefetch={false}
+                    className="group relative mx-2 w-40 flex-shrink-0 overflow-hidden rounded-3xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-100 transition hover:-translate-y-1 hover:border-indigo-200 hover:shadow-md"
+                  >
+                    <div className="relative h-44 w-full overflow-hidden rounded-2xl bg-slate-100">
+                      {book.coverImageUrl ? (
+                        <Image
+                          src={book.coverImageUrl}
+                          alt={book.title}
+                          fill
+                          sizes="160px"
+                          className="object-cover transition duration-300 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">
+                          Tidak ada sampul
+                        </div>
+                      )}
+                    </div>
+                    <p className="mt-3 line-clamp-1 text-sm font-semibold text-slate-900">{book.title}</p>
+                    <p className="line-clamp-1 text-xs text-slate-500">{book.category ?? "Umum"}</p>
+                    <span className="mt-3 inline-flex items-center text-xs font-medium text-indigo-500">
+                      Telusuri
+                      <ArrowIcon className="ml-1 h-3 w-3" />
+                    </span>
                   </Link>
                 ))
               )}

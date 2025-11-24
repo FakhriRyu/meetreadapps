@@ -56,7 +56,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     }
 
     if (currentError || !existing) {
-      return NextResponse.json({ error: "Gagal mengambil data buku." }, { status: 500 });
+1      return NextResponse.json({ error: "Gagal mengambil data buku." }, { status: 500 });
     }
 
     const timestamp = new Date().toISOString();
