@@ -52,10 +52,30 @@ export default async function BookDetailPage(props: BookDetailPageProps) {
     .limit(1)
     .maybeSingle();
 
-  const [sessionUser, { data: book, error: bookError }, { data: lastRequest }] = await Promise.all([
+  const reviewsQuery = supabase
+    .from('Review')
+    .select(`
+      id,
+      rating,
+      comment,
+      createdAt,
+      user:User(id, name, profileImage)
+    `)
+    .eq('bookId', bookId)
+    .order('createdAt', { ascending: false })
+    .limit(3);
+
+  const totalReviewsQuery = supabase
+    .from('Review')
+    .select('id', { count: 'exact', head: true })
+    .eq('bookId', bookId);
+
+  const [sessionUser, { data: book, error: bookError }, { data: lastRequest }, { data: reviews }, { count: totalReviews }] = await Promise.all([
     getSessionUser(),
     bookQuery,
     lastRequestQuery,
+    reviewsQuery,
+    totalReviewsQuery,
   ]);
 
   if (bookError || !book) {
@@ -87,6 +107,8 @@ export default async function BookDetailPage(props: BookDetailPageProps) {
         lastRequestStatus,
       }}
       sessionUser={sessionUser}
+      reviews={reviews || []}
+      totalReviews={totalReviews || 0}
     />
   );
 }

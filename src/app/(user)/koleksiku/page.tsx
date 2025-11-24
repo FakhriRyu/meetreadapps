@@ -22,11 +22,24 @@ async function CollectionData() {
   }
 
   // Fetch collections
-  const { data: collections, error: collectionsError } = await supabaseServer
+  const { data: collectionsData, error: collectionsError } = await supabaseServer
     .from('Book')
-    .select('*')
+    .select('*, reviews:Review(rating)')
     .eq('ownerId', sessionUser.id)
     .order('createdAt', { ascending: false });
+
+  const collections = (collectionsData || []).map((book: any) => {
+    const reviews = book.reviews || [];
+    const averageRating =
+      reviews.length > 0
+        ? reviews.reduce((acc: number, r: { rating: number }) => acc + r.rating, 0) / reviews.length
+        : undefined;
+
+    return {
+      ...book,
+      averageRating,
+    };
+  });
 
   // Fetch requests with joins
   const { data: requestsData, error: requestsError } = await supabaseServer
@@ -65,7 +78,7 @@ async function CollectionData() {
     console.error('Error fetching requests:', requestsError);
   }
 
-  return <KoleksikuView collections={collections || []} requests={requests} />;
+  return <KoleksikuView collections={collections} requests={requests} />;
 }
 
 export default function KoleksikuPage() {

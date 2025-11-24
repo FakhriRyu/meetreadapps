@@ -7,8 +7,12 @@ import type { Book } from "@/types/enums";
 
 import { formatDate, formatNumber } from "@/lib/intl-format";
 
+type CollectionBook = Book & {
+  averageRating?: number;
+};
+
 type CollectionListProps = {
-  collections: Book[];
+  collections: CollectionBook[];
   onEdit: (book: Book) => void;
   onDelete: (book: Book) => void;
   deletingId?: number | null;
@@ -68,7 +72,17 @@ export function CollectionList({ collections, onEdit, onDelete, deletingId }: Co
             <div className="flex flex-1 flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between gap-2">
-                  <p className="text-base font-semibold text-slate-900">{book.title}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-base font-semibold text-slate-900">{book.title}</p>
+                    {book.averageRating ? (
+                      <div className="flex items-center gap-1 text-[10px] font-bold text-slate-900">
+                        <svg className="h-3 w-3 text-amber-400 fill-amber-400" viewBox="0 0 24 24">
+                          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                        </svg>
+                        {book.averageRating.toFixed(1)}
+                      </div>
+                    ) : null}
+                  </div>
                   <span className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_META[book.status].badgeClass}`}>
                     {STATUS_META[book.status].label}
                   </span>

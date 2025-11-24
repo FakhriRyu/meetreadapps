@@ -19,9 +19,9 @@ async function BooksData() {
     return null;
   }
 
-  const { data: books, error } = await supabaseServer
+  const { data: booksData, error } = await supabaseServer
     .from('Book')
-    .select('id, title, author, category, coverImageUrl, publishedYear, totalCopies, availableCopies')
+    .select('id, title, author, category, coverImageUrl, publishedYear, totalCopies, availableCopies, reviews:Review(rating)')
     .or('ownerId.is.null,lendable.eq.true')
     .order('createdAt', { ascending: false });
 
@@ -30,7 +30,20 @@ async function BooksData() {
     return <HomeView books={[]} sessionUser={sessionUser} />;
   }
 
-  return <HomeView books={books || []} sessionUser={sessionUser} />;
+  const books = (booksData || []).map((book: any) => {
+    const reviews = book.reviews || [];
+    const averageRating =
+      reviews.length > 0
+        ? reviews.reduce((acc: number, r: { rating: number }) => acc + r.rating, 0) / reviews.length
+        : undefined;
+
+    return {
+      ...book,
+      averageRating,
+    };
+  });
+
+  return <HomeView books={books} sessionUser={sessionUser} />;
 }
 
 export default function BerandaPage() {
