@@ -23,8 +23,12 @@ type RequestWithRelations = BorrowRequest & {
   };
 };
 
+type CollectionBook = Book & {
+  averageRating?: number;
+};
+
 type KoleksikuViewProps = {
-  collections: Book[];
+  collections: CollectionBook[];
   requests: RequestWithRelations[];
 };
 
@@ -85,21 +89,21 @@ function deriveOptimisticState({
       .map((req) =>
         req.id === targetRequest.id
           ? {
-              ...req,
-              status: BorrowRequestStatus.APPROVED,
-              book: { ...req.book, status: BookStatus.BORROWED, dueDate },
-            }
+            ...req,
+            status: BorrowRequestStatus.APPROVED,
+            book: { ...req.book, status: BookStatus.BORROWED, dueDate },
+          }
           : req,
       );
     const updatedItems = items.map((book) =>
       book.id === targetRequest.book.id
         ? {
-            ...book,
-            status: BookStatus.BORROWED,
-            borrowerId: targetRequest.requesterId,
-            dueDate,
-            availableCopies: Math.max(0, book.availableCopies - 1),
-          }
+          ...book,
+          status: BookStatus.BORROWED,
+          borrowerId: targetRequest.requesterId,
+          dueDate,
+          availableCopies: Math.max(0, book.availableCopies - 1),
+        }
         : book,
     );
     return {
@@ -315,18 +319,18 @@ export function KoleksikuView({ collections, requests }: KoleksikuViewProps) {
 
   const initialData: CollectionPayload | undefined = editingItem
     ? {
-        title: editingItem.title,
-        author: editingItem.author,
-        category: editingItem.category,
-        description: editingItem.description,
-        coverImageUrl: editingItem.coverImageUrl,
-        isbn: editingItem.isbn ?? null,
-        publishedYear: editingItem.publishedYear ?? null,
-        lendable: editingItem.lendable,
-        totalCopies: editingItem.totalCopies,
-        availableCopies: editingItem.availableCopies,
-        status: editingItem.status,
-      }
+      title: editingItem.title,
+      author: editingItem.author,
+      category: editingItem.category,
+      description: editingItem.description,
+      coverImageUrl: editingItem.coverImageUrl,
+      isbn: editingItem.isbn ?? null,
+      publishedYear: editingItem.publishedYear ?? null,
+      lendable: editingItem.lendable,
+      totalCopies: editingItem.totalCopies,
+      availableCopies: editingItem.availableCopies,
+      status: editingItem.status,
+    }
     : undefined;
 
   const handleActionSubmit = async (event: React.FormEvent<HTMLFormElement>) => {

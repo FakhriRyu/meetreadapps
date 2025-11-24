@@ -32,7 +32,7 @@ async function BooksData(props: PinjamPageProps) {
   // Build query
   let booksQuery = supabaseServer
     .from('Book')
-    .select('*', { count: 'exact' })
+    .select('*, reviews:Review(rating)', { count: 'exact' })
     .neq('status', 'UNAVAILABLE');
 
   // Add search filter if query exists
@@ -41,13 +41,26 @@ async function BooksData(props: PinjamPageProps) {
   }
 
   // Execute query with pagination
-  const { data: books, error, count } = await booksQuery
+  const { data: booksData, error, count } = await booksQuery
     .order('createdAt', { ascending: false })
     .range((page - 1) * pageSize, page * pageSize - 1);
 
   if (error) {
     console.error('Error fetching books:', error);
   }
+
+  const books = (booksData || []).map((book: any) => {
+    const reviews = book.reviews || [];
+    const averageRating =
+      reviews.length > 0
+        ? reviews.reduce((acc: number, r: { rating: number }) => acc + r.rating, 0) / reviews.length
+        : undefined;
+
+    return {
+      ...book,
+      averageRating,
+    };
+  });
 
   const totalCount = count ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
@@ -66,7 +79,7 @@ async function BooksData(props: PinjamPageProps) {
 
   return (
     <PinjamView
-      books={books || []}
+      books={books}
       sessionUser={sessionUser}
       pageInfo={{
         totalCount,

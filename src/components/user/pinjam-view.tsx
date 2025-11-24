@@ -22,8 +22,12 @@ type PageInfo = {
   query: string;
 };
 
+type PinjamBook = Book & {
+  averageRating?: number;
+};
+
 type PinjamViewProps = {
-  books: Book[];
+  books: PinjamBook[];
   sessionUser: SessionUser | null;
   pageInfo: PageInfo;
 };
@@ -229,7 +233,17 @@ export function PinjamView({ books, sessionUser, pageInfo }: PinjamViewProps) {
                 </div>
                 <div className="flex flex-col justify-between gap-3">
                   <div>
-                    <h4 className="text-base font-semibold text-slate-900">{book.title}</h4>
+                    <div className="flex items-start justify-between">
+                      <h4 className="text-base font-semibold text-slate-900">{book.title}</h4>
+                      {book.averageRating ? (
+                        <div className="flex items-center gap-1 text-[10px] font-bold text-slate-900">
+                          <svg className="h-3 w-3 text-amber-400 fill-amber-400" viewBox="0 0 24 24">
+                            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                          </svg>
+                          {book.averageRating.toFixed(1)}
+                        </div>
+                      ) : null}
+                    </div>
                     <p className="text-xs text-slate-500">{book.author}</p>
                     <p className="text-xs text-slate-500">{book.category ?? "Umum"}</p>
                   </div>
@@ -349,11 +363,10 @@ function PageButton({
     <button
       type="button"
       onClick={() => onClick(page)}
-      className={`rounded-full border px-3 py-1 transition ${
-        active
-          ? "border-indigo-400 bg-indigo-500 text-white shadow-sm shadow-indigo-200"
-          : "border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-indigo-600"
-      }`}
+      className={`rounded-full border px-3 py-1 transition ${active
+        ? "border-indigo-400 bg-indigo-500 text-white shadow-sm shadow-indigo-200"
+        : "border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-indigo-600"
+        }`}
     >
       {page}
     </button>

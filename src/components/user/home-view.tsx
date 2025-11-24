@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { Book } from "@/types/enums";
+import { StarRating } from "@/components/ui/star-rating";
 
 type SessionUser = {
   id: number;
@@ -17,7 +18,10 @@ type SessionUser = {
 type HomeBook = Pick<
   Book,
   "id" | "title" | "author" | "category" | "coverImageUrl" | "publishedYear" | "totalCopies" | "availableCopies"
->;
+> & {
+  averageRating?: number;
+};
+
 
 type HomeViewProps = {
   books: HomeBook[];
@@ -183,8 +187,8 @@ export function HomeView({ books, sessionUser }: HomeViewProps) {
                   type="button"
                   onClick={() => setActiveCategory(category)}
                   className={`mx-2 whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition ${isActive
-                      ? "bg-indigo-500 text-white shadow-sm shadow-indigo-200"
-                      : "border border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-indigo-600"
+                    ? "bg-indigo-500 text-white shadow-sm shadow-indigo-200"
+                    : "border border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-indigo-600"
                     }`}
                 >
                   {category}
@@ -224,6 +228,14 @@ export function HomeView({ books, sessionUser }: HomeViewProps) {
                           Tidak ada sampul
                         </div>
                       )}
+                      {book.averageRating ? (
+                        <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-lg bg-white/90 px-2 py-1 text-[10px] font-bold text-slate-900 backdrop-blur-sm">
+                          <svg className="h-3 w-3 text-amber-400 fill-amber-400" viewBox="0 0 24 24">
+                            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                          </svg>
+                          {book.averageRating.toFixed(1)}
+                        </div>
+                      ) : null}
                     </div>
                     <p className="mt-3 line-clamp-1 text-sm font-semibold text-slate-900">{book.title}</p>
                     <p className="line-clamp-1 text-xs text-slate-500">{book.category ?? "Umum"}</p>
@@ -251,8 +263,8 @@ export function HomeView({ books, sessionUser }: HomeViewProps) {
                     onClick={() => setActiveAuthor(null)}
                     aria-pressed={resolvedAuthor === null}
                     className={`mx-2 flex h-20 min-w-[7rem] items-center justify-center rounded-2xl px-4 text-center text-sm font-semibold transition ${resolvedAuthor === null
-                        ? "bg-indigo-500 text-white shadow-sm shadow-indigo-200"
-                        : "border border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-indigo-600"
+                      ? "bg-indigo-500 text-white shadow-sm shadow-indigo-200"
+                      : "border border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-indigo-600"
                       }`}
                   >
                     Semua Penulis
@@ -266,8 +278,8 @@ export function HomeView({ books, sessionUser }: HomeViewProps) {
                         onClick={() => setActiveAuthor(isActive ? null : author)}
                         aria-pressed={isActive}
                         className={`mx-2 flex h-20 min-w-[7rem] items-center justify-center rounded-2xl px-4 text-center text-sm font-semibold transition ${isActive
-                            ? "bg-indigo-500 text-white shadow-sm shadow-indigo-200"
-                            : "border border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-indigo-600"
+                          ? "bg-indigo-500 text-white shadow-sm shadow-indigo-200"
+                          : "border border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-indigo-600"
                           }`}
                       >
                         {author}
@@ -305,7 +317,17 @@ export function HomeView({ books, sessionUser }: HomeViewProps) {
                     </div>
                     <div className="flex flex-1 flex-col justify-between">
                       <div className="space-y-1">
-                        <p className="text-sm font-semibold text-slate-900">{book.title}</p>
+                        <div className="flex items-start justify-between">
+                          <p className="text-sm font-semibold text-slate-900 line-clamp-1">{book.title}</p>
+                          {book.averageRating ? (
+                            <div className="flex items-center gap-1 text-[10px] font-bold text-slate-900">
+                              <svg className="h-3 w-3 text-amber-400 fill-amber-400" viewBox="0 0 24 24">
+                                <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                              </svg>
+                              {book.averageRating.toFixed(1)}
+                            </div>
+                          ) : null}
+                        </div>
                         <p className="text-xs text-slate-500">{book.author}</p>
                       </div>
                       <div className="flex flex-wrap gap-3 text-xs text-slate-500">
@@ -362,6 +384,14 @@ export function HomeView({ books, sessionUser }: HomeViewProps) {
                           Tidak ada sampul
                         </div>
                       )}
+                      {book.averageRating ? (
+                        <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-lg bg-white/90 px-2 py-1 text-[10px] font-bold text-slate-900 backdrop-blur-sm">
+                          <svg className="h-3 w-3 text-amber-400 fill-amber-400" viewBox="0 0 24 24">
+                            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                          </svg>
+                          {book.averageRating.toFixed(1)}
+                        </div>
+                      ) : null}
                     </div>
                     <p className="mt-3 line-clamp-1 text-sm font-semibold text-slate-900">{book.title}</p>
                     <p className="line-clamp-1 text-xs text-slate-500">{book.category ?? "Umum"}</p>
@@ -404,6 +434,14 @@ export function HomeView({ books, sessionUser }: HomeViewProps) {
                           Tidak ada sampul
                         </div>
                       )}
+                      {book.averageRating ? (
+                        <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-lg bg-white/90 px-2 py-1 text-[10px] font-bold text-slate-900 backdrop-blur-sm">
+                          <svg className="h-3 w-3 text-amber-400 fill-amber-400" viewBox="0 0 24 24">
+                            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                          </svg>
+                          {book.averageRating.toFixed(1)}
+                        </div>
+                      ) : null}
                     </div>
                     <p className="mt-3 line-clamp-1 text-sm font-semibold text-slate-900">{book.title}</p>
                     <p className="line-clamp-1 text-xs text-slate-500">{book.category ?? "Umum"}</p>

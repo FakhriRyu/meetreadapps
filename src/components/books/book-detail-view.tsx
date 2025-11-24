@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 
 import { formatDate, formatNumber } from "@/lib/intl-format";
 import { openWhatsApp } from "@/lib/whatsapp";
+import { ReviewList } from "@/components/reviews/review-list";
+import { ReviewForm } from "@/components/reviews/review-form";
 
 type DetailBook = {
   id: number;
@@ -39,14 +41,31 @@ type SessionUser = {
 type BookDetailViewProps = {
   book: DetailBook;
   sessionUser: SessionUser | null;
+  reviews: any[];
+  totalReviews: number;
 };
 
-export function BookDetailView({ book, sessionUser }: BookDetailViewProps) {
+export function BookDetailView({ book, sessionUser, reviews, totalReviews }: BookDetailViewProps) {
   const router = useRouter();
   const isAuthenticated = Boolean(sessionUser);
   const [isSubmitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [isConfirmOpen, setConfirmOpen] = useState(false);
+  const [isReviewModalOpen, setReviewModalOpen] = useState(false);
+
+  const [editingReview, setEditingReview] = useState<any | null>(null);
+
+  const averageRating = useMemo(() => {
+    if (!reviews || reviews.length === 0) return 0;
+    const total = reviews.reduce((acc, review) => acc + review.rating, 0);
+    return total / reviews.length;
+  }, [reviews]);
+
+  const userHasReviewed = useMemo(() => {
+    if (!sessionUser || !reviews) return false;
+    return reviews.some((review) => review.user.id === sessionUser.id);
+  }, [sessionUser, reviews]);
+
   const copiesSummary = useMemo(() => {
     const borrowed = book.totalCopies - book.availableCopies;
     return {
@@ -103,6 +122,20 @@ export function BookDetailView({ book, sessionUser }: BookDetailViewProps) {
 
     setFeedback(null);
     setConfirmOpen(true);
+  };
+
+  const handleReviewClick = () => {
+    if (!isAuthenticated) {
+      router.push(`/login?from=books/${book.id}`);
+      return;
+    }
+    setEditingReview(null);
+    setReviewModalOpen(true);
+  };
+
+  const handleEditReview = (review: any) => {
+    setEditingReview(review);
+    setReviewModalOpen(true);
   };
 
   const handleBorrow = async () => {
@@ -209,6 +242,17 @@ export function BookDetailView({ book, sessionUser }: BookDetailViewProps) {
               <div>
                 <h1 className="text-3xl font-semibold leading-tight text-slate-900">{book.title}</h1>
                 <p className="mt-1 text-sm text-slate-500">oleh {book.author}</p>
+                {reviews.length > 0 && (
+                  <div className="mt-2 flex items-center justify-center gap-2 sm:justify-start">
+                    <div className="flex items-center gap-1">
+                      <svg className="h-5 w-5 text-amber-400 fill-amber-400" viewBox="0 0 24 24">
+                        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                      </svg>
+                      <span className="font-bold text-slate-900">{averageRating.toFixed(1)}</span>
+                    </div>
+                    <span className="text-sm text-slate-500">({reviews.length} ulasan)</span>
+                  </div>
+                )}
               </div>
               <div className="flex flex-wrap gap-3 text-sm text-slate-600">
                 <DetailBadge label="Kategori" value={book.category} />
@@ -282,6 +326,27 @@ export function BookDetailView({ book, sessionUser }: BookDetailViewProps) {
               {book.description || "Belum ada deskripsi untuk buku ini. Hubungi admin untuk menambahkan informasi lebih lanjut."}
             </p>
           </section>
+
+          <section className="space-y-6 border-t border-slate-100 px-6 py-8">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-slate-900">Ulasan Pembaca</h2>
+            </div>
+            <ReviewList
+              reviews={reviews}
+              sessionUser={sessionUser}
+              onEdit={handleEditReview}
+            />
+            {totalReviews > 3 && (
+              <div className="mt-4 text-center">
+                <button
+                  onClick={() => router.push(`/books/${book.id}/reviews`)}
+                  className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 hover:underline"
+                >
+                  Lihat semua {totalReviews} ulasan
+                </button>
+              </div>
+            )}
+          </section>
         </div>
 
         <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 h-40 bg-gradient-to-t from-[#f5f7ff] via-[#f5f7ff]/80 to-transparent" />
@@ -292,21 +357,61 @@ export function BookDetailView({ book, sessionUser }: BookDetailViewProps) {
               {feedback}
             </div>
           )}
-          <button
-            type="button"
-            onClick={handleBorrowClick}
-            disabled={
-              isSubmitting ||
-              !book.lendable ||
-              book.status !== "AVAILABLE" ||
-              !book.ownerPhone
-            }
-            className="w-full rounded-full bg-gradient-to-r from-indigo-500 to-sky-500 px-6 py-4 text-sm font-semibold uppercase tracking-widest text-white shadow-lg shadow-indigo-200 transition hover:from-indigo-400 hover:to-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isSubmitting ? "Mengirim..." : book.ownerPhone ? "Ajukan Pinjam" : "Pemilik belum menambahkan WhatsApp"}
-          </button>
+          <div className="flex gap-3">
+            {!userHasReviewed && (
+              <button
+                type="button"
+                onClick={handleReviewClick}
+                className="flex-1 rounded-full border border-indigo-200 bg-white px-6 py-4 text-sm font-semibold uppercase tracking-widest text-indigo-600 shadow-lg shadow-indigo-100 transition hover:border-indigo-300 hover:bg-indigo-50"
+              >
+                Tulis Review
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={handleBorrowClick}
+              disabled={
+                isSubmitting ||
+                !book.lendable ||
+                book.status !== "AVAILABLE" ||
+                !book.ownerPhone
+              }
+              className="flex-[2] rounded-full bg-gradient-to-r from-indigo-500 to-sky-500 px-6 py-4 text-sm font-semibold uppercase tracking-widest text-white shadow-lg shadow-indigo-200 transition hover:from-indigo-400 hover:to-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isSubmitting ? "Mengirim..." : book.ownerPhone ? "Ajukan Pinjam" : "Pemilik belum menambahkan WhatsApp"}
+            </button>
+          </div>
         </div>
       </main>
+
+      {isReviewModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl shadow-indigo-100">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-slate-900">
+                {editingReview ? "Edit Review" : "Tulis Review"}
+              </h3>
+              <button
+                onClick={() => {
+                  setReviewModalOpen(false);
+                  setEditingReview(null);
+                }}
+                className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+              >
+                ✕
+              </button>
+            </div>
+            <ReviewForm
+              bookId={book.id}
+              onSuccess={() => {
+                setReviewModalOpen(false);
+                setEditingReview(null);
+              }}
+              initialData={editingReview}
+            />
+          </div>
+        </div>
+      )}
 
       {isConfirmOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4 backdrop-blur-sm">
