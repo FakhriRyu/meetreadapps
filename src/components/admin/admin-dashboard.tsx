@@ -6,13 +6,15 @@ import type { Book } from "@/types/enums";
 import { BookAdminPanel } from "@/components/books/book-admin-panel";
 
 import { ManagedUser, UserManagementPanel } from "./user-management-panel";
+import { ReviewManagementPanel } from "./review-management-panel";
 
-type SectionKey = "books" | "users";
+type SectionKey = "books" | "users" | "reviews";
 
 type AdminDashboardProps = {
   adminName: string;
   initialBooks: Book[];
   initialUsers: ManagedUser[];
+  initialReviews: any[];
 };
 
 const sections: Array<{
@@ -21,44 +23,61 @@ const sections: Array<{
   description: string;
   icon: ReactElement;
 }> = [
-  {
-    id: "books",
-    label: "Kelola Buku",
-    description: "Tambahkan, perbarui, dan pantau stok koleksi perpustakaan.",
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        className="h-4 w-4"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.6"
-      >
-        <path d="M5 4h10a2 2 0 0 1 2 2v14l-3.5-2-3.5 2-3.5-2-3.5 2V6a2 2 0 0 1 2-2Z" />
-      </svg>
-    ),
-  },
-  {
-    id: "users",
-    label: "Kelola Pengguna",
-    description: "Lihat dan ubah data akun pengguna serta peran aksesnya.",
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        className="h-4 w-4"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.6"
-      >
-        <path d="M8 7a4 4 0 1 0 8 0 4 4 0 0 0-8 0" />
-        <path d="M5.5 21a6.5 6.5 0 0 1 13 0" />
-      </svg>
-    ),
-  },
-];
+    {
+      id: "books",
+      label: "Kelola Buku",
+      description: "Tambahkan, perbarui, dan pantau stok koleksi perpustakaan.",
+      icon: (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          className="h-4 w-4"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.6"
+        >
+          <path d="M5 4h10a2 2 0 0 1 2 2v14l-3.5-2-3.5 2-3.5-2-3.5 2V6a2 2 0 0 1 2-2Z" />
+        </svg>
+      ),
+    },
+    {
+      id: "users",
+      label: "Kelola Pengguna",
+      description: "Lihat dan ubah data akun pengguna serta peran aksesnya.",
+      icon: (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          className="h-4 w-4"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.6"
+        >
+          <path d="M8 7a4 4 0 1 0 8 0 4 4 0 0 0-8 0" />
+          <path d="M5.5 21a6.5 6.5 0 0 1 13 0" />
+        </svg>
+      ),
+    },
+    {
+      id: "reviews",
+      label: "Kelola Review",
+      description: "Pantau dan moderasi ulasan yang diberikan oleh pengguna.",
+      icon: (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          className="h-4 w-4"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.6"
+        >
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+        </svg>
+      ),
+    },
+  ];
 
-export function AdminDashboard({ adminName, initialBooks, initialUsers }: AdminDashboardProps) {
+export function AdminDashboard({ adminName, initialBooks, initialUsers, initialReviews }: AdminDashboardProps) {
   const [activeSection, setActiveSection] = useState<SectionKey>("books");
 
   const current = useMemo(
@@ -94,17 +113,15 @@ export function AdminDashboard({ adminName, initialBooks, initialUsers }: AdminD
                 key={section.id}
                 type="button"
                 onClick={() => setActiveSection(section.id)}
-                className={`flex items-center justify-between rounded-2xl border px-4 py-3 text-left transition ${
-                  isActive
-                    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                    : "border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-indigo-600"
-                }`}
+                className={`flex items-center justify-between rounded-2xl border px-4 py-3 text-left transition ${isActive
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                  : "border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-indigo-600"
+                  }`}
               >
                 <span className="flex items-center gap-3 text-sm font-semibold">
                   <span
-                    className={`flex h-7 w-7 items-center justify-center rounded-full border ${
-                      isActive ? "border-emerald-200 bg-emerald-100" : "border-slate-200 bg-slate-100"
-                    }`}
+                    className={`flex h-7 w-7 items-center justify-center rounded-full border ${isActive ? "border-emerald-200 bg-emerald-100" : "border-slate-200 bg-slate-100"
+                      }`}
                   >
                     {section.icon}
                   </span>
@@ -154,7 +171,11 @@ export function AdminDashboard({ adminName, initialBooks, initialUsers }: AdminD
             {current.label}
           </span>
           <h1 className="text-3xl font-bold sm:text-4xl">
-            {current.id === "books" ? "Dashboard Koleksi" : "Manajemen Pengguna"}
+            {current.id === "books"
+              ? "Dashboard Koleksi"
+              : current.id === "users"
+                ? "Manajemen Pengguna"
+                : "Moderasi Review"}
           </h1>
           <p className="max-w-2xl text-sm text-slate-500">{current.description}</p>
         </header>
@@ -162,8 +183,10 @@ export function AdminDashboard({ adminName, initialBooks, initialUsers }: AdminD
         <section className="mt-6">
           {activeSection === "books" ? (
             <BookAdminPanel initialBooks={initialBooks} />
-          ) : (
+          ) : activeSection === "users" ? (
             <UserManagementPanel initialUsers={initialUsers} />
+          ) : (
+            <ReviewManagementPanel initialReviews={initialReviews} />
           )}
         </section>
       </div>

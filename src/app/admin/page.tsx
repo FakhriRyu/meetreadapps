@@ -7,13 +7,15 @@ export default async function AdminPage() {
   const supabase = getSupabaseServer();
   const sessionUser = await getSessionUser();
 
-  const [booksResult, usersResult] = await Promise.all([
+  const [booksResult, usersResult, reviewsResult] = await Promise.all([
     supabase.from('Book').select('*').order('createdAt', { ascending: false }),
     supabase.from('User').select('id, name, email, role, createdAt, updatedAt').order('createdAt', { ascending: false }),
+    supabase.from('Review').select('*, user:User(id, name, profileImage), book:Book(title, coverImage)').order('createdAt', { ascending: false }),
   ]);
 
   const books = booksResult.data || [];
   const users = usersResult.data || [];
+  const reviews = reviewsResult.data || [];
 
   const managedUsers = users.map((user: any) => ({
     ...user,
@@ -26,6 +28,7 @@ export default async function AdminPage() {
       adminName={sessionUser?.name ?? "Admin"}
       initialBooks={books}
       initialUsers={managedUsers}
+      initialReviews={reviews}
     />
   );
 }

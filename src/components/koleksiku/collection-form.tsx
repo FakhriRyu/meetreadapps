@@ -246,7 +246,7 @@ export function CollectionForm({ onSubmit, onClose, isSubmitting, initialData, s
               }
             }}
             className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-            placeholder="Fiksi, Bisnis, dll"
+            placeholder="Sejarah"
             autoComplete="off"
           />
           {showCategoryDropdown && filteredCategories.length > 0 && (
@@ -260,8 +260,8 @@ export function CollectionForm({ onSubmit, onClose, isSubmitting, initialData, s
                   type="button"
                   onClick={() => handleCategorySelect(category)}
                   className={`w-full px-4 py-2.5 text-left text-sm transition ${index === selectedCategoryIndex
-                      ? "bg-indigo-50 text-indigo-700"
-                      : "text-slate-700 hover:bg-slate-50"
+                    ? "bg-indigo-50 text-indigo-700"
+                    : "text-slate-700 hover:bg-slate-50"
                     } ${index === 0 ? "rounded-t-2xl" : ""} ${index === filteredCategories.length - 1 ? "rounded-b-2xl" : ""
                     }`}
                 >

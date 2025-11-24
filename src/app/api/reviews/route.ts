@@ -144,3 +144,36 @@ export async function PUT(request: NextRequest) {
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
+
+export async function DELETE(request: NextRequest) {
+    try {
+        const sessionUser = await getSessionUser();
+        if (!sessionUser || sessionUser.role !== "ADMIN") {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+        }
+
+        const { searchParams } = new URL(request.url);
+        const reviewId = searchParams.get("id");
+
+        if (!reviewId) {
+            return NextResponse.json({ error: "Missing review ID" }, { status: 400 });
+        }
+
+        const supabase = getSupabaseServer();
+
+        const { error } = await supabase
+            .from("Review")
+            .delete()
+            .eq("id", reviewId);
+
+        if (error) {
+            console.error("Error deleting review:", error);
+            return NextResponse.json({ error: "Gagal menghapus review." }, { status: 500 });
+        }
+
+        return NextResponse.json({ message: "Review berhasil dihapus." });
+    } catch (error) {
+        console.error("Error in DELETE review:", error);
+        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    }
+}
