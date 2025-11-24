@@ -164,7 +164,7 @@ export async function DELETE(request: NextRequest) {
         const { error } = await supabase
             .from("Review")
             .delete()
-            .eq("id", reviewId);
+            .eq("id", Number(reviewId));
 
         if (error) {
             console.error("Error deleting review:", error);
