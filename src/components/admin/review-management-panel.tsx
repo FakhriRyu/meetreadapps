@@ -16,7 +16,7 @@ type Review = {
     };
     book?: {
         title: string;
-        coverImage: string;
+        coverImageUrl: string;
     };
 };
 
@@ -116,7 +116,13 @@ export function ReviewManagementPanel({ initialReviews }: ReviewManagementPanelP
                             {review.book && (
                                 <div className="flex items-center gap-2 mt-2 pt-2 border-t border-slate-100">
                                     <div className="relative h-8 w-6 flex-shrink-0 overflow-hidden rounded bg-slate-100">
-                                        <Image src={review.book.coverImage} alt={review.book.title} fill className="object-cover" />
+                                        {review.book.coverImageUrl ? (
+                                            <Image src={review.book.coverImageUrl} alt={review.book.title} fill className="object-cover" />
+                                        ) : (
+                                            <div className="flex h-full w-full items-center justify-center text-[10px] font-bold text-slate-400">
+                                                {review.book.title.charAt(0)}
+                                            </div>
+                                        )}
                                     </div>
                                     <p className="text-xs font-medium text-slate-700 line-clamp-1">{review.book.title}</p>
                                 </div>

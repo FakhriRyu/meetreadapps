@@ -77,7 +77,8 @@ export async function GET(request: NextRequest) {
       rating,
       comment,
       createdAt,
-      user:User(id, name, profileImage)
+      user:User(id, name, profileImage),
+      book:Book(title, coverImageUrl)
     `)
         .eq("bookId", Number(bookId))
         .order("createdAt", { ascending: false });

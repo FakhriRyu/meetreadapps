@@ -12,11 +12,11 @@ export default async function AdminPage() {
   const [booksResult, usersResult, reviewsResult] = await Promise.all([
     supabase.from('Book').select('*').order('createdAt', { ascending: false }),
     supabase.from('User').select('id, name, email, role, createdAt, updatedAt').order('createdAt', { ascending: false }),
-    supabase.from('Review').select('*, user:User(id, name, profileImage), book:Book(title, coverImage)').order('createdAt', { ascending: false }),
+    supabase.from('Review').select('*, user:User!Review_userId_fkey(id, name, profileImage), book:Book!Review_bookId_fkey(title, coverImageUrl)').order('createdAt', { ascending: false }),
   ]);
 
   if (reviewsResult.error) {
-    console.error("Error fetching reviews:", reviewsResult.error);
+    console.error("Error fetching reviews:", JSON.stringify(reviewsResult.error, null, 2));
   }
 
   const books = booksResult.data || [];
