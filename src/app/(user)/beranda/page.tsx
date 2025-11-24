@@ -40,6 +40,7 @@ async function BooksData() {
     return {
       ...book,
       averageRating,
+      reviewCount: reviews.length,
     };
   });
 

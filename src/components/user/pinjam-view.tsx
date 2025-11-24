@@ -205,9 +205,9 @@ export function PinjamView({ books, sessionUser, pageInfo }: PinjamViewProps) {
           </span>
         </header>
 
-        <div className="space-y-3">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
           {books.length === 0 ? (
-            <div className="rounded-3xl border border-slate-200 bg-white p-5 text-center text-sm text-slate-500 shadow-sm shadow-slate-100">
+            <div className="col-span-full rounded-3xl border border-slate-200 bg-white p-5 text-center text-sm text-slate-500 shadow-sm shadow-slate-100">
               Tidak ditemukan buku sesuai pencarian ini.
             </div>
           ) : (
@@ -216,41 +216,54 @@ export function PinjamView({ books, sessionUser, pageInfo }: PinjamViewProps) {
                 key={`book-${book.id}`}
                 href={`/books/${book.id}`}
                 prefetch={false}
-                className="group grid gap-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-100 transition hover:-translate-y-1 hover:border-indigo-200 hover:shadow-md grid-cols-[5rem_1fr]"
+                className="group flex flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-100 transition hover:-translate-y-1 hover:border-indigo-200 hover:shadow-md"
               >
-                <div className="relative h-28 w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
+                <div className="relative aspect-[2/3] w-full overflow-hidden rounded-2xl bg-slate-100">
                   {book.coverImageUrl ? (
                     <Image
                       src={book.coverImageUrl}
                       alt={book.title}
                       fill
-                      sizes="120px"
+                      sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 20vw"
                       className="object-cover transition duration-300 group-hover:scale-105"
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">Tanpa Sampul</div>
-                  )}
-                </div>
-                <div className="flex flex-col justify-between gap-3">
-                  <div>
-                    <div className="flex items-start justify-between">
-                      <h4 className="text-base font-semibold text-slate-900">{book.title}</h4>
-                      {book.averageRating ? (
-                        <div className="flex items-center gap-1 text-[10px] font-bold text-slate-900">
-                          <svg className="h-3 w-3 text-amber-400 fill-amber-400" viewBox="0 0 24 24">
-                            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                          </svg>
-                          {book.averageRating.toFixed(1)}
-                        </div>
-                      ) : null}
+                    <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">
+                      Tanpa Sampul
                     </div>
-                    <p className="text-xs text-slate-500">{book.author}</p>
-                    <p className="text-xs text-slate-500">{book.category ?? "Umum"}</p>
+                  )}
+                  {book.averageRating ? (
+                    <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-[10px] font-bold text-slate-900 shadow-sm backdrop-blur-sm">
+                      <svg
+                        className="h-3 w-3 text-amber-400 fill-amber-400"
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                      </svg>
+                      {book.averageRating.toFixed(1)}
+                    </div>
+                  ) : null}
+                </div>
+                <div className="flex flex-1 flex-col justify-between pt-4">
+                  <div className="space-y-2">
+                    <div>
+                      <p className="text-xs text-slate-500 line-clamp-1">{book.author}</p>
+                      <h4 className="text-sm font-semibold text-slate-900 line-clamp-2" title={book.title}>
+                        {book.title}
+                      </h4>
+                    </div>
+                    <p className="text-xs font-medium text-indigo-500">{book.category ?? "Umum"}</p>
                   </div>
-                  <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-                    <span className={`inline-flex items-center rounded-full px-3 py-1 font-semibold ${STATUS_META[book.status].badgeClass}`}>
-                      {STATUS_META[book.status].label}
-                    </span>
+
+                  <div className="mt-4 space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${STATUS_META[book.status].badgeClass}`}
+                      >
+                        {STATUS_META[book.status].label}
+                      </span>
+                    </div>
+
                     <button
                       type="button"
                       onClick={(event) => {
@@ -262,7 +275,7 @@ export function PinjamView({ books, sessionUser, pageInfo }: PinjamViewProps) {
                         requestingId === book.id ||
                         confirmingBook?.id === book.id
                       }
-                      className="inline-flex items-center rounded-full bg-indigo-500 px-4 py-2 font-semibold text-white transition hover:bg-indigo-600 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
+                      className="w-full rounded-xl bg-indigo-500 py-2 text-xs font-semibold text-white transition hover:bg-indigo-600 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
                     >
                       {requestingId === book.id ? "Mengirim..." : "Ajukan"}
                     </button>

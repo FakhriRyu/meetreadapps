@@ -20,6 +20,7 @@ type HomeBook = Pick<
   "id" | "title" | "author" | "category" | "coverImageUrl" | "publishedYear" | "totalCopies" | "availableCopies"
 > & {
   averageRating?: number;
+  reviewCount?: number;
 };
 
 
@@ -94,19 +95,71 @@ export function HomeView({ books, sessionUser }: HomeViewProps) {
     return baseFilteredBooks.filter((book) => book.author.trim().toLowerCase() === normalizedAuthor);
   }, [baseFilteredBooks, resolvedAuthor]);
 
-  const freshArrivals = useMemo(() => filteredBooks.slice(0, 6), [filteredBooks]);
-
-  const topReads = useMemo(() => {
-    if (filteredBooks.length === 0) {
-      return [];
-    }
-    const scored = [...filteredBooks].sort((a, b) => {
-      const scoreA = a.totalCopies - a.availableCopies;
-      const scoreB = b.totalCopies - b.availableCopies;
-      return scoreB - scoreA;
+  const freshArrivals = useMemo(() => {
+    const sorted = [...filteredBooks].sort((a, b) => {
+      const countA = a.reviewCount ?? 0;
+      const countB = b.reviewCount ?? 0;
+      return countB - countA;
     });
-    return scored.slice(0, 5);
+    return sorted.slice(0, 6);
   }, [filteredBooks]);
+
+
+  const categoryRecommendations = useMemo(() => {
+    const categoryMap = new Map<string, HomeBook[]>();
+
+    // Group books by category
+    books.forEach((book) => {
+      const category = book.category?.trim() || "Umum";
+      if (!categoryMap.has(category)) {
+        categoryMap.set(category, []);
+      }
+      categoryMap.get(category)!.push(book);
+    });
+
+    // Get top categories by book count, limit to 5 categories
+    const topCategories = Array.from(categoryMap.entries())
+      .sort((a, b) => b[1].length - a[1].length)
+      .slice(0, 5)
+      .map(([category, categoryBooks]) => {
+        // Get up to 5 books from this category
+        const recommendedBooks = categoryBooks.slice(0, 5);
+
+        // Define captions for common categories
+        const captions: Record<string, string> = {
+          "Romance": "Kisah cinta yang menghangatkan hati",
+          "Romantis": "Kisah cinta yang menghangatkan hati",
+          "Fiction": "Dunia imajinasi tanpa batas",
+          "Fiksi": "Dunia imajinasi tanpa batas",
+          "Non-Fiction": "Pengetahuan dan wawasan baru",
+          "Non-Fiksi": "Pengetahuan dan wawasan baru",
+          "Mystery": "Misteri yang menantang pikiran",
+          "Misteri": "Misteri yang menantang pikiran",
+          "Fantasy": "Petualangan di dunia fantasi",
+          "Fantasi": "Petualangan di dunia fantasi",
+          "Thriller": "Ketegangan yang memacu adrenalin",
+          "Horror": "Cerita yang menguji keberanian",
+          "Horor": "Cerita yang menguji keberanian",
+          "Biography": "Kisah inspiratif tokoh dunia",
+          "Biografi": "Kisah inspiratif tokoh dunia",
+          "Self-Help": "Panduan pengembangan diri",
+          "Science": "Eksplorasi ilmu pengetahuan",
+          "Sains": "Eksplorasi ilmu pengetahuan",
+          "History": "Perjalanan masa lalu",
+          "Sejarah": "Perjalanan masa lalu",
+          "Poetry": "Keindahan kata dan makna",
+          "Puisi": "Keindahan kata dan makna",
+        };
+
+        return {
+          category,
+          books: recommendedBooks,
+          caption: captions[category] || `Koleksi ${category} pilihan`,
+        };
+      });
+
+    return topCategories;
+  }, [books]);
 
   const avatarInitials = useMemo(() => {
     const source = sessionUser?.name ?? sessionUser?.email ?? "MeetRead";
@@ -291,169 +344,59 @@ export function HomeView({ books, sessionUser }: HomeViewProps) {
             </div>
           </div>
 
-          <div className="space-y-4">
-            <SectionHeading label="Rekomendasi" caption="Berdasarkan peminjaman terbaru" />
-            <div className="space-y-4">
-              {topReads.length === 0 ? (
-                <div className="rounded-3xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-500 shadow-sm shadow-slate-100">
-                  Buku yang kamu cari belum ditemukan. Yuk telusuri kategori lain!
-                </div>
-              ) : (
-                topReads.map((book) => (
-                  <Link
-                    key={`top-${book.id}`}
-                    href={`/books/${book.id}`}
-                    prefetch={false}
-                    className="flex gap-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-100 transition hover:-translate-y-1 hover:border-indigo-200 hover:shadow-md"
-                  >
-                    <div className="relative h-20 w-16 flex-shrink-0 overflow-hidden rounded-2xl bg-slate-100">
-                      {book.coverImageUrl ? (
-                        <Image src={book.coverImageUrl} alt={book.title} fill sizes="80px" className="object-cover" />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">
-                          Tidak ada sampul
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex flex-1 flex-col justify-between">
-                      <div className="space-y-1">
-                        <div className="flex items-start justify-between">
-                          <p className="text-sm font-semibold text-slate-900 line-clamp-1">{book.title}</p>
-                          {book.averageRating ? (
-                            <div className="flex items-center gap-1 text-[10px] font-bold text-slate-900">
-                              <svg className="h-3 w-3 text-amber-400 fill-amber-400" viewBox="0 0 24 24">
-                                <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                              </svg>
-                              {book.averageRating.toFixed(1)}
-                            </div>
-                          ) : null}
-                        </div>
-                        <p className="text-xs text-slate-500">{book.author}</p>
-                      </div>
-                      <div className="flex flex-wrap gap-3 text-xs text-slate-500">
-                        <span>
-                          Rilis:{" "}
-                          <strong className="text-slate-700">{book.publishedYear ? book.publishedYear : "Tidak diketahui"}</strong>
-                        </span>
-                        <span>
-                          Stok:{" "}
-                          <strong className="text-slate-700">
-                            {book.availableCopies}/{book.totalCopies}
-                          </strong>
-                        </span>
-                        <span>
-                          Kategori: <strong className="text-slate-700">{book.category ?? "Umum"}</strong>
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex h-full items-center">
-                      <ArrowIcon className="h-4 w-4 text-indigo-400" />
-                    </div>
-                  </Link>
-                ))
-              )}
-            </div>
-          </div>
 
-          <div className="space-y-4">
-            <SectionHeading label="Rekomendasi Romantis" caption="Kisah cinta yang menghangatkan hati" />
-            <div className="-mx-2 flex gap-5 overflow-x-auto pb-2">
-              {books.filter(b => ["romance", "romantis"].includes((b.category || "").toLowerCase())).slice(0, 3).length === 0 ? (
-                <div className="mx-2 w-full rounded-3xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-500 shadow-sm shadow-slate-100">
-                  Belum ada buku romantis saat ini.
-                </div>
-              ) : (
-                books.filter(b => ["romance", "romantis"].includes((b.category || "").toLowerCase())).slice(0, 3).map((book) => (
-                  <Link
-                    key={`romance-${book.id}`}
-                    href={`/books/${book.id}`}
-                    prefetch={false}
-                    className="group relative mx-2 w-40 flex-shrink-0 overflow-hidden rounded-3xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-100 transition hover:-translate-y-1 hover:border-indigo-200 hover:shadow-md"
-                  >
-                    <div className="relative h-44 w-full overflow-hidden rounded-2xl bg-slate-100">
-                      {book.coverImageUrl ? (
-                        <Image
-                          src={book.coverImageUrl}
-                          alt={book.title}
-                          fill
-                          sizes="160px"
-                          className="object-cover transition duration-300 group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">
-                          Tidak ada sampul
-                        </div>
-                      )}
-                      {book.averageRating ? (
-                        <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-lg bg-white/90 px-2 py-1 text-[10px] font-bold text-slate-900 backdrop-blur-sm">
-                          <svg className="h-3 w-3 text-amber-400 fill-amber-400" viewBox="0 0 24 24">
-                            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                          </svg>
-                          {book.averageRating.toFixed(1)}
-                        </div>
-                      ) : null}
-                    </div>
-                    <p className="mt-3 line-clamp-1 text-sm font-semibold text-slate-900">{book.title}</p>
-                    <p className="line-clamp-1 text-xs text-slate-500">{book.category ?? "Umum"}</p>
-                    <span className="mt-3 inline-flex items-center text-xs font-medium text-indigo-500">
-                      Telusuri
-                      <ArrowIcon className="ml-1 h-3 w-3" />
-                    </span>
-                  </Link>
-                ))
-              )}
-            </div>
-          </div>
 
-          <div className="space-y-4">
-            <SectionHeading label="Rekomendasi Fiksi" caption="Dunia imajinasi tanpa batas" />
-            <div className="-mx-2 flex gap-5 overflow-x-auto pb-2">
-              {books.filter(b => ["fiction", "fiksi"].includes((b.category || "").toLowerCase())).slice(0, 3).length === 0 ? (
-                <div className="mx-2 w-full rounded-3xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-500 shadow-sm shadow-slate-100">
-                  Belum ada buku fiksi saat ini.
-                </div>
-              ) : (
-                books.filter(b => ["fiction", "fiksi"].includes((b.category || "").toLowerCase())).slice(0, 3).map((book) => (
-                  <Link
-                    key={`fiction-${book.id}`}
-                    href={`/books/${book.id}`}
-                    prefetch={false}
-                    className="group relative mx-2 w-40 flex-shrink-0 overflow-hidden rounded-3xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-100 transition hover:-translate-y-1 hover:border-indigo-200 hover:shadow-md"
-                  >
-                    <div className="relative h-44 w-full overflow-hidden rounded-2xl bg-slate-100">
-                      {book.coverImageUrl ? (
-                        <Image
-                          src={book.coverImageUrl}
-                          alt={book.title}
-                          fill
-                          sizes="160px"
-                          className="object-cover transition duration-300 group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">
-                          Tidak ada sampul
-                        </div>
-                      )}
-                      {book.averageRating ? (
-                        <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-lg bg-white/90 px-2 py-1 text-[10px] font-bold text-slate-900 backdrop-blur-sm">
-                          <svg className="h-3 w-3 text-amber-400 fill-amber-400" viewBox="0 0 24 24">
-                            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                          </svg>
-                          {book.averageRating.toFixed(1)}
-                        </div>
-                      ) : null}
-                    </div>
-                    <p className="mt-3 line-clamp-1 text-sm font-semibold text-slate-900">{book.title}</p>
-                    <p className="line-clamp-1 text-xs text-slate-500">{book.category ?? "Umum"}</p>
-                    <span className="mt-3 inline-flex items-center text-xs font-medium text-indigo-500">
-                      Telusuri
-                      <ArrowIcon className="ml-1 h-3 w-3" />
-                    </span>
-                  </Link>
-                ))
-              )}
+          {categoryRecommendations.map((recommendation) => (
+            <div key={`category-${recommendation.category}`} className="space-y-4">
+              <SectionHeading label={`Rekomendasi ${recommendation.category}`} caption={recommendation.caption} />
+              <div className="-mx-2 flex gap-5 overflow-x-auto pb-2">
+                {recommendation.books.length === 0 ? (
+                  <div className="mx-2 w-full rounded-3xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-500 shadow-sm shadow-slate-100">
+                    Belum ada buku {recommendation.category.toLowerCase()} saat ini.
+                  </div>
+                ) : (
+                  recommendation.books.map((book) => (
+                    <Link
+                      key={`${recommendation.category}-${book.id}`}
+                      href={`/books/${book.id}`}
+                      prefetch={false}
+                      className="group relative mx-2 w-40 flex-shrink-0 overflow-hidden rounded-3xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-100 transition hover:-translate-y-1 hover:border-indigo-200 hover:shadow-md"
+                    >
+                      <div className="relative h-44 w-full overflow-hidden rounded-2xl bg-slate-100">
+                        {book.coverImageUrl ? (
+                          <Image
+                            src={book.coverImageUrl}
+                            alt={book.title}
+                            fill
+                            sizes="160px"
+                            className="object-cover transition duration-300 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">
+                            Tidak ada sampul
+                          </div>
+                        )}
+                        {book.averageRating ? (
+                          <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-lg bg-white/90 px-2 py-1 text-[10px] font-bold text-slate-900 backdrop-blur-sm">
+                            <svg className="h-3 w-3 text-amber-400 fill-amber-400" viewBox="0 0 24 24">
+                              <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                            </svg>
+                            {book.averageRating.toFixed(1)}
+                          </div>
+                        ) : null}
+                      </div>
+                      <p className="mt-3 line-clamp-1 text-sm font-semibold text-slate-900">{book.title}</p>
+                      <p className="line-clamp-1 text-xs text-slate-500">{book.category ?? "Umum"}</p>
+                      <span className="mt-3 inline-flex items-center text-xs font-medium text-indigo-500">
+                        Telusuri
+                        <ArrowIcon className="ml-1 h-3 w-3" />
+                      </span>
+                    </Link>
+                  ))
+                )}
+              </div>
             </div>
-          </div>
+          ))}
         </section>
       </main>
     </div>
