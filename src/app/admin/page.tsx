@@ -12,7 +12,7 @@ export default async function AdminPage() {
   const [booksResult, usersResult, reviewsResult] = await Promise.all([
     supabase.from('Book').select('*').order('createdAt', { ascending: false }),
     supabase.from('User').select('id, name, email, role, createdAt, updatedAt').order('createdAt', { ascending: false }),
-    supabase.from('Review').select('*, user:User(id, name, profileImage), book:Book(title, coverImage)').order('createdAt', { ascending: false }),
+    supabase.from('Review').select('*, user:User!Review_userId_fkey(id, name, profileImage), book:Book!Review_bookId_fkey(title, coverImage)').order('createdAt', { ascending: false }),
   ]);
 
   if (reviewsResult.error) {
