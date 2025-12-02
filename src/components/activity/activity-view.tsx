@@ -8,7 +8,7 @@ import { formatDate } from "@/lib/intl-format";
 type RequestWithRelations = BorrowRequest & {
     book: Pick<
         Book,
-        "id" | "title" | "status" | "dueDate" | "availableCopies" | "totalCopies" | "lendable" | "ownerId"
+        "id" | "title" | "status" | "dueDate" | "availableCopies" | "totalCopies" | "ownerId"
     > & {
         owner?: {
             name: string;
@@ -155,9 +155,9 @@ export function ActivityView({ incomingRequests, outgoingRequests, activeLoans }
             }
             payload.dueDate = actionDueDate;
         }
-        if (actionMessage.trim().length > 0) {
-            payload.message = actionMessage.trim();
-        }
+        // if (actionMessage.trim().length > 0) {
+        //     payload.message = actionMessage.trim();
+        // }
 
         const endpoint = `/api/borrow/requests/${targetRequest.id}/${type}`;
         setActionLoading(true);
@@ -249,11 +249,11 @@ export function ActivityView({ incomingRequests, outgoingRequests, activeLoans }
                                                         <span className="text-slate-500">Diajukan</span>
                                                         <span className="font-medium text-slate-800">{formatDate(request.createdAt)}</span>
                                                     </div>
-                                                    {request.message && (
+                                                    {/* {request.message && (
                                                         <div className="mt-2 rounded-xl bg-slate-50 p-3 text-xs text-slate-600">
                                                             "{request.message}"
                                                         </div>
-                                                    )}
+                                                    )} */}
                                                 </div>
 
                                                 <div className="mt-4 flex gap-2">
@@ -483,12 +483,12 @@ export function ActivityView({ incomingRequests, outgoingRequests, activeLoans }
                                     <span className="text-slate-500">Diajukan Tanggal</span>
                                     <span className="text-slate-900">{formatDate(detailRequest.createdAt)}</span>
                                 </div>
-                                {detailRequest.ownerDecisionAt && (
+                                {/* {detailRequest.ownerDecisionAt && (
                                     <div className="flex justify-between text-sm">
                                         <span className="text-slate-500">Direspon Tanggal</span>
                                         <span className="text-slate-900">{formatDate(detailRequest.ownerDecisionAt)}</span>
                                     </div>
-                                )}
+                                )} */}
                                 {detailRequest.book.dueDate && detailRequest.status === BorrowRequestStatus.APPROVED && (
                                     <div className="flex justify-between text-sm">
                                         <span className="text-slate-500">Tenggat Waktu</span>
@@ -497,7 +497,7 @@ export function ActivityView({ incomingRequests, outgoingRequests, activeLoans }
                                 )}
                             </div>
 
-                            {(detailRequest.message || detailRequest.ownerMessage) && (
+                            {/* {(detailRequest.message || detailRequest.ownerMessage) && (
                                 <div className="border-t border-slate-100 pt-3 space-y-2">
                                     {detailRequest.message && (
                                         <div className="rounded-xl bg-slate-50 p-3 text-xs text-slate-600">
@@ -512,7 +512,7 @@ export function ActivityView({ incomingRequests, outgoingRequests, activeLoans }
                                         </div>
                                     )}
                                 </div>
-                            )}
+                            )} */}
                         </div>
                     </div>
                 </div>

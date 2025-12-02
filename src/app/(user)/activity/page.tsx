@@ -31,7 +31,6 @@ async function ActivityData() {
         dueDate,
         availableCopies,
         totalCopies,
-        lendable,
         ownerId
       ),
       requester:User!BorrowRequest_requesterId_fkey(
@@ -61,7 +60,6 @@ async function ActivityData() {
                 dueDate,
                 availableCopies,
                 totalCopies,
-                lendable,
                 ownerId,
                 owner:User!Book_ownerId_fkey(
                     name,
