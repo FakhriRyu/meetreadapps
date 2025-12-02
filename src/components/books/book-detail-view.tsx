@@ -24,6 +24,7 @@ type DetailBook = {
   status: "AVAILABLE" | "PENDING" | "RESERVED" | "BORROWED" | "UNAVAILABLE";
   ownerName: string;
   ownerPhone: string;
+  ownerProfileImage: string | null;
   borrowerName: string;
   dueDate: string | null;
   lastRequesterName: string;
@@ -264,14 +265,15 @@ export function BookDetailView({ book, sessionUser, reviews, totalReviews }: Boo
         </button>
 
         <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-100 animate-slideUp">
-          <div className="flex flex-col items-center gap-6 px-6 pb-10 pt-8 text-center sm:flex-row sm:items-start sm:text-left">
-            <div className="relative h-48 w-32 flex-shrink-0 overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 transition-transform duration-300 hover:scale-105" style={{ animationDelay: '0ms' }}>
+          <div className="flex flex-col items-center gap-6 px-6 pb-10 pt-8 text-center">
+            {/* Cover Image with Rating Overlay */}
+            <div className="relative h-64 w-44 flex-shrink-0 overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-md transition-transform duration-300 hover:scale-105" style={{ animationDelay: '0ms' }}>
               {book.coverImageUrl ? (
                 <Image
                   src={book.coverImageUrl}
                   alt={book.title}
                   fill
-                  sizes="160px"
+                  sizes="176px"
                   className="object-cover"
                 />
               ) : (
@@ -279,87 +281,47 @@ export function BookDetailView({ book, sessionUser, reviews, totalReviews }: Boo
                   Tidak ada sampul
                 </div>
               )}
-            </div>
-            <div className="space-y-4 animate-slideUp" style={{ animationDelay: '100ms' }}>
-              <div>
-                <h1 className="text-3xl font-semibold leading-tight text-slate-900">{book.title}</h1>
-                <p className="mt-1 text-sm text-slate-500">oleh {book.author}</p>
-                {reviews.length > 0 && (
-                  <div className="mt-2 flex items-center justify-center gap-2 sm:justify-start">
-                    <div className="flex items-center gap-1">
-                      <svg className="h-5 w-5 text-amber-400 fill-amber-400" viewBox="0 0 24 24">
-                        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                      </svg>
-                      <span className="font-bold text-slate-900">{averageRating.toFixed(1)}</span>
-                    </div>
-                    <span className="text-sm text-slate-500">({reviews.length} ulasan)</span>
-                  </div>
-                )}
-              </div>
-              <div className="flex flex-wrap gap-3 text-sm text-slate-600 animate-slideUp" style={{ animationDelay: '200ms' }}>
-                <DetailBadge label="Kategori" value={book.category} />
-                {book.publishedYear ? (
-                  <DetailBadge label="Terbit" value={book.publishedYear.toString()} />
-                ) : null}
-                <DetailBadge label="Total Eksemplar" value={formatNumber(book.totalCopies)} />
-                <DetailBadge
-                  label="Tersedia"
-                  value={`${formatNumber(book.availableCopies)} buku`}
-                  variant={book.availableCopies > 0 ? "success" : "danger"}
-                />
-                <DetailBadge label="Status" value={statusMeta[book.status].label} />
-              </div>
-              {statusMeta[book.status].helpText && (
-                <p className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-xs text-slate-600">
-                  {statusMeta[book.status].helpText}
-                </p>
+
+              {/* Rating Overlay */}
+              {reviews.length > 0 && (
+                <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-lg bg-black/60 px-2 py-1 text-xs font-medium text-white backdrop-blur-sm">
+                  <svg className="h-3.5 w-3.5 text-amber-400 fill-amber-400" viewBox="0 0 24 24">
+                    <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                  </svg>
+                  <span>{averageRating.toFixed(1)}</span>
+                </div>
               )}
             </div>
-          </div>
 
-          <div className="grid gap-6 border-t border-slate-100 px-6 py-8 sm:grid-cols-2 animate-slideUp" style={{ animationDelay: '250ms' }}>
-            <section className="rounded-2xl border border-slate-200 bg-slate-50 p-5 transition-all duration-300 hover:shadow-md hover:border-indigo-200">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-                Ketersediaan
-              </h2>
-              <p className="mt-3 text-2xl font-semibold text-slate-900">
-                {formatNumber(book.availableCopies)} / {formatNumber(book.totalCopies)}
-              </p>
-              <p className="mt-1 text-xs text-slate-500">
-                {formatNumber(copiesSummary.borrowed)} buku sedang dipinjam
-              </p>
-              <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-slate-200">
-                <div
-                  className="h-full bg-gradient-to-r from-emerald-400 to-sky-400 transition-all duration-500"
-                  style={{ width: `${copiesSummary.availablePercent}%` }}
-                />
+            {/* Title & Author */}
+            <div className="space-y-2 animate-slideUp" style={{ animationDelay: '100ms' }}>
+              <h1 className="text-2xl font-bold leading-tight text-slate-900 sm:text-3xl">{book.title}</h1>
+              <p className="text-base text-slate-500">oleh {book.author}</p>
+            </div>
+
+            {/* Owner Profile */}
+            <div className="animate-slideUp" style={{ animationDelay: '200ms' }}>
+              <div className="flex items-center gap-3 rounded-full border border-slate-100 bg-slate-50 px-4 py-2 pr-6 transition-colors hover:bg-slate-100">
+                <div className="relative h-8 w-8 overflow-hidden rounded-full bg-indigo-100">
+                  {book.ownerProfileImage ? (
+                    <Image
+                      src={book.ownerProfileImage}
+                      alt={book.ownerName}
+                      fill
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-xs font-bold text-indigo-600">
+                      {book.ownerName.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                <div className="text-left">
+                  <p className="text-xs text-slate-500">Pemilik Buku</p>
+                  <p className="text-sm font-semibold text-slate-900">{book.ownerName}</p>
+                </div>
               </div>
-            </section>
-
-            <section className="rounded-2xl border border-slate-200 bg-slate-50 p-5 transition-all duration-300 hover:shadow-md hover:border-indigo-200">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-                Informasi
-              </h2>
-              <ul className="mt-3 space-y-2 text-sm text-slate-600">
-                {book.ownerName && (
-                  <li>
-                    <span className="text-slate-500">Pemilik:</span> {book.ownerName}
-                  </li>
-                )}
-                {!borrowerInfo && book.status === "BORROWED" && (
-                  <li>
-                    <span className="text-slate-500">Peminjam:</span>{" "}
-                    <span className="text-slate-600">Belum dicatat.</span>
-                  </li>
-                )}
-                {borrowerInfo && (
-                  <li>
-                    <span className="text-slate-500">Peminjam:</span>{" "}
-                    {borrowerInfo.due ? `${borrowerInfo.name} (hingga ${borrowerInfo.due})` : borrowerInfo.name}
-                  </li>
-                )}
-              </ul>
-            </section>
+            </div>
           </div>
 
           <section className="space-y-4 border-t border-slate-100 px-6 py-8 animate-slideUp" style={{ animationDelay: '300ms' }}>
@@ -490,41 +452,5 @@ export function BookDetailView({ book, sessionUser, reviews, totalReviews }: Boo
         </div>
       )}
     </div>
-  );
-}
-
-type DetailBadgeProps = {
-  label: string;
-  value: string;
-  variant?: "default" | "success" | "danger";
-};
-
-function DetailBadge({ label, value, variant = "default" }: DetailBadgeProps) {
-  const baseClass =
-    "flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-widest";
-
-  const styles = {
-    default: "border-slate-200 bg-slate-100 text-slate-600",
-    success: "border-emerald-200 bg-emerald-50 text-emerald-600",
-    danger: "border-rose-200 bg-rose-50 text-rose-600",
-  } as const;
-
-  const labelColor = {
-    default: "text-slate-500",
-    success: "text-emerald-600",
-    danger: "text-rose-600",
-  } as const;
-
-  const valueColor = {
-    default: "text-slate-800",
-    success: "text-emerald-800",
-    danger: "text-rose-700",
-  } as const;
-
-  return (
-    <span className={`${baseClass} ${styles[variant]}`}>
-      <span className={labelColor[variant]}>{label}:</span>
-      <span className={valueColor[variant]}>{value}</span>
-    </span>
   );
 }

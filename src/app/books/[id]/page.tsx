@@ -33,7 +33,7 @@ export default async function BookDetailPage(props: BookDetailPageProps) {
       lendable,
       status,
       dueDate,
-      owner:User!Book_ownerId_fkey(id, name, phoneNumber),
+      owner:User!Book_ownerId_fkey(id, name, phoneNumber, profileImage),
       borrower:User!Book_borrowerId_fkey(id, name)
     `)
     .eq('id', bookId)
@@ -101,6 +101,7 @@ export default async function BookDetailPage(props: BookDetailPageProps) {
         status: book.status,
         ownerName: book.owner?.name ?? "",
         ownerPhone: book.owner?.phoneNumber ?? "",
+        ownerProfileImage: book.owner?.profileImage ?? null,
         borrowerName: book.borrower?.name ?? "",
         dueDate: book.dueDate ?? null,
         lastRequesterName: lastRequest?.requester?.name ?? "",
