@@ -311,10 +311,6 @@ export function HomeView({ books, sessionUser }: HomeViewProps) {
                     </div>
                     <p className="mt-3 line-clamp-1 text-sm font-semibold text-slate-900">{book.title}</p>
                     <p className="line-clamp-1 text-xs text-slate-500">{book.category ?? "Umum"}</p>
-                    <span className="mt-3 inline-flex items-center text-xs font-medium text-indigo-500">
-                      Telusuri
-                      <ArrowIcon className="ml-1 h-3 w-3" />
-                    </span>
                   </Link>
                 ))
               )}
@@ -406,10 +402,6 @@ export function HomeView({ books, sessionUser }: HomeViewProps) {
                       </div>
                       <p className="mt-3 line-clamp-1 text-sm font-semibold text-slate-900">{book.title}</p>
                       <p className="line-clamp-1 text-xs text-slate-500">{book.category ?? "Umum"}</p>
-                      <span className="mt-3 inline-flex items-center text-xs font-medium text-indigo-500">
-                        Telusuri
-                        <ArrowIcon className="ml-1 h-3 w-3" />
-                      </span>
                     </Link>
                   ))
                 )}

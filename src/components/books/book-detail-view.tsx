@@ -205,6 +205,48 @@ export function BookDetailView({ book, sessionUser, reviews, totalReviews }: Boo
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#f5f7ff] text-slate-900">
+      <style jsx>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes slideUp {
+          from { 
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to { 
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        @keyframes scaleIn {
+          from { 
+            opacity: 0;
+            transform: scale(0.95);
+          }
+          to { 
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+        @keyframes backdropFade {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 400ms ease-out forwards;
+        }
+        .animate-slideUp {
+          animation: slideUp 400ms ease-out forwards;
+        }
+        .animate-scaleIn {
+          animation: scaleIn 300ms ease-out forwards;
+        }
+        .animate-backdropFade {
+          animation: backdropFade 200ms ease-out forwards;
+        }
+      `}</style>
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -left-24 top-16 h-72 w-72 rounded-full bg-indigo-200/40 blur-3xl" />
         <div className="absolute right-0 top-1/3 h-80 w-80 rounded-full bg-sky-200/35 blur-3xl" />
@@ -221,9 +263,9 @@ export function BookDetailView({ book, sessionUser, reviews, totalReviews }: Boo
           ←
         </button>
 
-        <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-100">
+        <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-100 animate-slideUp">
           <div className="flex flex-col items-center gap-6 px-6 pb-10 pt-8 text-center sm:flex-row sm:items-start sm:text-left">
-            <div className="relative h-48 w-32 flex-shrink-0 overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
+            <div className="relative h-48 w-32 flex-shrink-0 overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 transition-transform duration-300 hover:scale-105" style={{ animationDelay: '0ms' }}>
               {book.coverImageUrl ? (
                 <Image
                   src={book.coverImageUrl}
@@ -238,7 +280,7 @@ export function BookDetailView({ book, sessionUser, reviews, totalReviews }: Boo
                 </div>
               )}
             </div>
-            <div className="space-y-4">
+            <div className="space-y-4 animate-slideUp" style={{ animationDelay: '100ms' }}>
               <div>
                 <h1 className="text-3xl font-semibold leading-tight text-slate-900">{book.title}</h1>
                 <p className="mt-1 text-sm text-slate-500">oleh {book.author}</p>
@@ -254,7 +296,7 @@ export function BookDetailView({ book, sessionUser, reviews, totalReviews }: Boo
                   </div>
                 )}
               </div>
-              <div className="flex flex-wrap gap-3 text-sm text-slate-600">
+              <div className="flex flex-wrap gap-3 text-sm text-slate-600 animate-slideUp" style={{ animationDelay: '200ms' }}>
                 <DetailBadge label="Kategori" value={book.category} />
                 {book.publishedYear ? (
                   <DetailBadge label="Terbit" value={book.publishedYear.toString()} />
@@ -275,8 +317,8 @@ export function BookDetailView({ book, sessionUser, reviews, totalReviews }: Boo
             </div>
           </div>
 
-          <div className="grid gap-6 border-t border-slate-100 px-6 py-8 sm:grid-cols-2">
-            <section className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+          <div className="grid gap-6 border-t border-slate-100 px-6 py-8 sm:grid-cols-2 animate-slideUp" style={{ animationDelay: '250ms' }}>
+            <section className="rounded-2xl border border-slate-200 bg-slate-50 p-5 transition-all duration-300 hover:shadow-md hover:border-indigo-200">
               <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
                 Ketersediaan
               </h2>
@@ -288,13 +330,13 @@ export function BookDetailView({ book, sessionUser, reviews, totalReviews }: Boo
               </p>
               <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-slate-200">
                 <div
-                  className="h-full bg-gradient-to-r from-emerald-400 to-sky-400"
+                  className="h-full bg-gradient-to-r from-emerald-400 to-sky-400 transition-all duration-500"
                   style={{ width: `${copiesSummary.availablePercent}%` }}
                 />
               </div>
             </section>
 
-            <section className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+            <section className="rounded-2xl border border-slate-200 bg-slate-50 p-5 transition-all duration-300 hover:shadow-md hover:border-indigo-200">
               <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
                 Informasi
               </h2>
@@ -320,14 +362,14 @@ export function BookDetailView({ book, sessionUser, reviews, totalReviews }: Boo
             </section>
           </div>
 
-          <section className="space-y-4 border-t border-slate-100 px-6 py-8">
+          <section className="space-y-4 border-t border-slate-100 px-6 py-8 animate-slideUp" style={{ animationDelay: '300ms' }}>
             <h2 className="text-lg font-semibold text-slate-900">Sinopsis</h2>
             <p className="text-sm leading-relaxed text-slate-600">
               {book.description || "Belum ada deskripsi untuk buku ini. Hubungi admin untuk menambahkan informasi lebih lanjut."}
             </p>
           </section>
 
-          <section className="space-y-6 border-t border-slate-100 px-6 py-8">
+          <section className="space-y-6 border-t border-slate-100 px-6 py-8 animate-slideUp" style={{ animationDelay: '350ms' }}>
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-slate-900">Ulasan Pembaca</h2>
             </div>
@@ -340,7 +382,7 @@ export function BookDetailView({ book, sessionUser, reviews, totalReviews }: Boo
               <div className="mt-4 text-center">
                 <button
                   onClick={() => router.push(`/books/${book.id}/reviews`)}
-                  className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 hover:underline"
+                  className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 hover:underline transition-all duration-200 hover:scale-105"
                 >
                   Lihat semua {totalReviews} ulasan
                 </button>
@@ -362,7 +404,7 @@ export function BookDetailView({ book, sessionUser, reviews, totalReviews }: Boo
               <button
                 type="button"
                 onClick={handleReviewClick}
-                className="flex-1 rounded-full border border-indigo-200 bg-white px-6 py-4 text-sm font-semibold uppercase tracking-widest text-indigo-600 shadow-lg shadow-indigo-100 transition hover:border-indigo-300 hover:bg-indigo-50"
+                className="flex-1 rounded-full border border-indigo-200 bg-white px-6 py-4 text-sm font-semibold uppercase tracking-widest text-indigo-600 shadow-lg shadow-indigo-100 transition-all duration-200 hover:border-indigo-300 hover:bg-indigo-50 hover:scale-105 active:scale-95"
               >
                 Tulis Review
               </button>
@@ -376,7 +418,7 @@ export function BookDetailView({ book, sessionUser, reviews, totalReviews }: Boo
                 book.status !== "AVAILABLE" ||
                 !book.ownerPhone
               }
-              className="flex-[2] rounded-full bg-gradient-to-r from-indigo-500 to-sky-500 px-6 py-4 text-sm font-semibold uppercase tracking-widest text-white shadow-lg shadow-indigo-200 transition hover:from-indigo-400 hover:to-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex-[2] rounded-full bg-gradient-to-r from-indigo-500 to-sky-500 px-6 py-4 text-sm font-semibold uppercase tracking-widest text-white shadow-lg shadow-indigo-200 transition-all duration-200 hover:from-indigo-400 hover:to-sky-400 hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:scale-100"
             >
               {isSubmitting ? "Mengirim..." : book.ownerPhone ? "Ajukan Pinjam" : "Pemilik belum menambahkan WhatsApp"}
             </button>
@@ -385,8 +427,8 @@ export function BookDetailView({ book, sessionUser, reviews, totalReviews }: Boo
       </main>
 
       {isReviewModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl shadow-indigo-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4 backdrop-blur-sm animate-backdropFade">
+          <div className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl shadow-indigo-100 animate-scaleIn">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-slate-900">
                 {editingReview ? "Edit Review" : "Tulis Review"}
@@ -396,7 +438,7 @@ export function BookDetailView({ book, sessionUser, reviews, totalReviews }: Boo
                   setReviewModalOpen(false);
                   setEditingReview(null);
                 }}
-                className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-all duration-200 hover:rotate-90"
               >
                 ✕
               </button>
@@ -414,8 +456,8 @@ export function BookDetailView({ book, sessionUser, reviews, totalReviews }: Boo
       )}
 
       {isConfirmOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 text-slate-900 shadow-2xl shadow-indigo-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4 backdrop-blur-sm animate-backdropFade">
+          <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 text-slate-900 shadow-2xl shadow-indigo-100 animate-scaleIn">
             <h3 className="text-lg font-semibold">Konfirmasi Pengajuan</h3>
             <p className="mt-2 text-sm text-slate-600">
               Kamu akan diarahkan ke WhatsApp untuk melanjutkan percakapan dengan pemilik buku. Jika setuju, status buku
@@ -428,7 +470,7 @@ export function BookDetailView({ book, sessionUser, reviews, totalReviews }: Boo
               <button
                 type="button"
                 onClick={() => setConfirmOpen(false)}
-                className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-slate-600 transition hover:border-indigo-200 hover:text-indigo-600"
+                className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-slate-600 transition-all duration-200 hover:border-indigo-200 hover:text-indigo-600 hover:scale-105 active:scale-95"
               >
                 Tidak
               </button>
@@ -439,7 +481,7 @@ export function BookDetailView({ book, sessionUser, reviews, totalReviews }: Boo
                   void handleBorrow();
                 }}
                 disabled={isSubmitting}
-                className="rounded-full bg-gradient-to-r from-indigo-500 to-sky-500 px-5 py-2 text-xs font-semibold uppercase tracking-widest text-white shadow-lg shadow-indigo-200 transition hover:from-indigo-400 hover:to-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-full bg-gradient-to-r from-indigo-500 to-sky-500 px-5 py-2 text-xs font-semibold uppercase tracking-widest text-white shadow-lg shadow-indigo-200 transition-all duration-200 hover:from-indigo-400 hover:to-sky-400 hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:scale-100"
               >
                 {isSubmitting ? "Mengirim..." : "Lanjut ke WhatsApp"}
               </button>

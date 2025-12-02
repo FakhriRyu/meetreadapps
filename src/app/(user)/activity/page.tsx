@@ -31,7 +31,8 @@ async function ActivityData() {
         dueDate,
         availableCopies,
         totalCopies,
-        ownerId
+        ownerId,
+        coverImageUrl
       ),
       requester:User!BorrowRequest_requesterId_fkey(
         id,
@@ -61,6 +62,7 @@ async function ActivityData() {
                 availableCopies,
                 totalCopies,
                 ownerId,
+                coverImageUrl,
                 owner:User!Book_ownerId_fkey(
                     name,
                     phoneNumber
