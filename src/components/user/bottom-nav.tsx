@@ -14,6 +14,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/beranda", label: "Beranda", icon: <HomeIcon /> },
   { href: "/pinjam", label: "Pinjam", icon: <BorrowIcon /> },
   { href: "/koleksiku", label: "Koleksiku", icon: <CollectionIcon /> },
+  { href: "/activity", label: "Aktivitas", icon: <ActivityIcon /> },
   { href: "/profil", label: "Profil", icon: <ProfileIcon /> },
 ];
 
@@ -21,7 +22,7 @@ export function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-50 mx-auto mb-4 flex w-full max-w-md items-center justify-between rounded-full border border-slate-200 bg-white/95 px-4 py-2 shadow-lg shadow-slate-200 backdrop-blur">
+    <nav className="fixed inset-x-0 bottom-0 z-50 mx-auto mb-4 flex w-full max-w-md items-center justify-around rounded-full border border-slate-200 bg-white/95 px-2 py-2 shadow-lg shadow-slate-200 backdrop-blur">
       {NAV_ITEMS.map((item) => {
         const isActive = pathname === item.href;
         return (
@@ -29,21 +30,19 @@ export function BottomNav() {
             key={item.href}
             href={item.href}
             prefetch={true}
-            className={`flex flex-1 flex-col items-center gap-1 rounded-full px-3 py-2 text-xs font-medium transition ${
-              isActive ? "text-indigo-600" : "text-slate-500"
-            }`}
+            className={`flex flex-col items-center gap-0.5 rounded-full px-1.5 py-1.5 text-[10px] font-medium transition ${isActive ? "text-indigo-600" : "text-slate-500"
+              }`}
             aria-current={isActive ? "page" : undefined}
           >
             <span
-              className={`flex h-9 w-9 items-center justify-center rounded-full border ${
-                isActive
-                  ? "border-indigo-200 bg-indigo-100 text-indigo-600 shadow-sm shadow-indigo-100"
-                  : "border-slate-200 bg-slate-100 text-slate-500"
-              }`}
+              className={`flex h-8 w-8 items-center justify-center rounded-full border ${isActive
+                ? "border-indigo-200 bg-indigo-100 text-indigo-600 shadow-sm shadow-indigo-100"
+                : "border-slate-200 bg-slate-100 text-slate-500"
+                }`}
             >
               {item.icon}
             </span>
-            {item.label}
+            <span className="truncate max-w-[60px] text-center">{item.label}</span>
           </Link>
         );
       })}
@@ -77,6 +76,14 @@ function CollectionIcon() {
       <path d="M17 4v16" strokeLinecap="round" />
       <path d="M10 8h4" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M10 12h4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function ActivityIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <path d="M22 12h-4l-3 9L9 3l-3 9H2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }

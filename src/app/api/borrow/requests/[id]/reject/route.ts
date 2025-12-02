@@ -88,6 +88,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         status: BorrowRequestStatus.REJECTED,
         ownerDecisionAt: nowIso,
         ownerMessage,
+        updatedAt: nowIso,
       })
       .eq('id', borrowRequest.id);
 

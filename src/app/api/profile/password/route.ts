@@ -55,7 +55,10 @@ export async function PUT(request: Request) {
     const newHash = await hashPassword(data.newPassword);
     const { error: updateError } = await supabase
       .from('User')
-      .update({ passwordHash: newHash })
+      .update({
+        passwordHash: newHash,
+        updatedAt: new Date().toISOString(),
+      })
       .eq('id', sessionUser.id);
 
     if (updateError) {

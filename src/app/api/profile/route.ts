@@ -66,6 +66,9 @@ export async function PUT(request: Request) {
       updateData.profileImage = trimmed.length > 0 ? trimmed : null;
     }
 
+    // @ts-ignore
+    updateData.updatedAt = new Date().toISOString();
+
     const supabase = getSupabaseServer();
     const { data: updated, error } = await supabase
       .from('User')

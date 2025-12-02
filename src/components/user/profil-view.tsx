@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
+
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 
 import { formatDate } from "@/lib/intl-format";
@@ -20,20 +20,7 @@ type ProfilViewProps = {
   sessionUser: SessionUser | null;
 };
 
-type RequestSummaryEntry = {
-  id: number;
-  status: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED" | "RETURNED";
-  ownerMessage: string | null;
-  ownerDecisionAt: string | null;
-  createdAt: string;
-  book: {
-    id: number;
-    title: string;
-    coverImageUrl: string | null;
-    ownerName: string;
-    dueDate: string | null;
-  };
-};
+
 
 type StatusState =
   | { type: "success"; message: string }
@@ -75,8 +62,7 @@ export function ProfilView({ sessionUser }: ProfilViewProps) {
   });
   const [passwordStatus, setPasswordStatus] = useState<StatusState>(null);
   const [savingPassword, setSavingPassword] = useState(false);
-  const [requestSummary, setRequestSummary] = useState<RequestSummaryEntry[]>([]);
-  const [isRequestLoading, setRequestLoading] = useState(false);
+
 
   useEffect(() => {
     setProfileData({
@@ -102,39 +88,7 @@ export function ProfilView({ sessionUser }: ProfilViewProps) {
     sessionUser?.joinedAt,
   ]);
 
-  useEffect(() => {
-    if (!sessionUser) {
-      setRequestSummary([]);
-      return;
-    }
 
-    const controller = new AbortController();
-
-    const fetchSummary = async () => {
-      try {
-        setRequestLoading(true);
-        const response = await fetch("/api/borrow/requests/me?limit=5", {
-          credentials: "include",
-          signal: controller.signal,
-        });
-        if (!response.ok) {
-          throw new Error("Gagal memuat permintaan.");
-        }
-        const data = (await response.json()) as { data?: RequestSummaryEntry[] };
-        const entries = data.data ?? [];
-        setRequestSummary(entries);
-      } catch (error) {
-        if (!(error instanceof DOMException && error.name === "AbortError")) {
-          // ignore fetch failure but keep UI fallback
-        }
-      } finally {
-        setRequestLoading(false);
-      }
-    };
-
-    fetchSummary();
-    return () => controller.abort();
-  }, [sessionUser, sessionUser?.id]);
 
   const isAuthenticated = Boolean(sessionUser);
 
@@ -168,10 +122,10 @@ export function ProfilView({ sessionUser }: ProfilViewProps) {
 
   const handleBasicChange =
     (field: keyof typeof basicForm) =>
-    (event: ChangeEvent<HTMLInputElement>) => {
-      const { value } = event.target;
-      setBasicForm((prev) => ({ ...prev, [field]: value }));
-    };
+      (event: ChangeEvent<HTMLInputElement>) => {
+        const { value } = event.target;
+        setBasicForm((prev) => ({ ...prev, [field]: value }));
+      };
 
   const handleBasicSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -241,10 +195,10 @@ export function ProfilView({ sessionUser }: ProfilViewProps) {
 
   const handlePasswordChange =
     (field: keyof typeof passwordForm) =>
-    (event: ChangeEvent<HTMLInputElement>) => {
-      const { value } = event.target;
-      setPasswordForm((prev) => ({ ...prev, [field]: value }));
-    };
+      (event: ChangeEvent<HTMLInputElement>) => {
+        const { value } = event.target;
+        setPasswordForm((prev) => ({ ...prev, [field]: value }));
+      };
 
   const handlePasswordSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -341,57 +295,7 @@ export function ProfilView({ sessionUser }: ProfilViewProps) {
               </div>
             </section>
 
-            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-100">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs uppercase tracking-widest text-slate-500">Permintaan Terbaru</p>
-                  <h2 className="text-lg font-semibold text-slate-900">Status Pemantauan</h2>
-                </div>
-                <Link
-                  href="/permintaan"
-                  className="rounded-full border border-slate-200 px-4 py-1 text-xs font-semibold text-indigo-500 transition hover:border-indigo-200 hover:bg-indigo-50"
-                >
-                  Lihat semua →
-                </Link>
-              </div>
-              {isRequestLoading ? (
-                <div className="mt-4 grid gap-3">
-                  {[0, 1, 2].map((item) => (
-                    <div key={`summary-skeleton-${item}`} className="animate-pulse rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                      <div className="h-4 w-1/3 rounded-full bg-slate-200" />
-                      <div className="mt-3 h-3 w-2/3 rounded-full bg-slate-200" />
-                      <div className="mt-2 h-3 w-1/2 rounded-full bg-slate-100" />
-                    </div>
-                  ))}
-                </div>
-              ) : requestSummary.length === 0 ? (
-                <p className="mt-4 text-sm text-slate-500">
-                  Belum ada permintaan. Ajukan peminjaman untuk melihat statusnya di sini.
-                </p>
-              ) : (
-                <div className="mt-4 space-y-3">
-                  {requestSummary.slice(0, 3).map((request) => {
-                    const meta = getStatusMeta(request.status);
-                    return (
-                      <div
-                        key={`summary-${request.id}`}
-                        className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between"
-                      >
-                        <div>
-                          <p className="text-base font-semibold text-slate-900">{request.book.title}</p>
-                          <p className="text-xs text-slate-500">
-                            {meta.label} • {formatDateLabel(request)}
-                          </p>
-                        </div>
-                        <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${meta.badgeClass}`}>
-                          {meta.label}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </section>
+
 
             <div className="grid gap-6 lg:grid-cols-2">
               <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-100">
@@ -530,43 +434,7 @@ export function ProfilView({ sessionUser }: ProfilViewProps) {
   );
 }
 
-const REQUEST_STATUS_META: Record<
-  RequestSummaryEntry["status"],
-  { label: string; badgeClass: string; defaultMessage: string }
-> = {
-  PENDING: {
-    label: "Menunggu Konfirmasi",
-    badgeClass: "bg-amber-100 text-amber-700 border border-amber-200",
-    defaultMessage: "Permintaanmu masih diproses oleh pemilik.",
-  },
-  APPROVED: {
-    label: "Disetujui",
-    badgeClass: "bg-emerald-100 text-emerald-700 border border-emerald-200",
-    defaultMessage: "Pemilik menyetujui permintaanmu. Segera hubungi untuk penjemputan.",
-  },
-  REJECTED: {
-    label: "Ditolak",
-    badgeClass: "bg-rose-100 text-rose-700 border border-rose-200",
-    defaultMessage: "Permintaanmu tidak dapat diproses.",
-  },
-  CANCELLED: {
-    label: "Dibatalkan",
-    badgeClass: "bg-slate-100 text-slate-600 border border-slate-200",
-    defaultMessage: "Permintaan dibatalkan oleh sistem atau pemilik.",
-  },
-  RETURNED: {
-    label: "Selesai",
-    badgeClass: "bg-sky-100 text-sky-700 border border-sky-200",
-    defaultMessage: "Peminjaman sudah selesai. Terima kasih!",
-  },
-};
 
-const getStatusMeta = (status: RequestSummaryEntry["status"]) => REQUEST_STATUS_META[status];
-
-const formatDateLabel = (request: RequestSummaryEntry) => {
-  const reference = request.ownerDecisionAt ?? request.createdAt;
-  return formatDate(reference, { month: "short" });
-};
 
 function StatusMessage({ status }: { status: StatusState }) {
   if (!status) return null;

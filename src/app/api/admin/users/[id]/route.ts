@@ -47,6 +47,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     if (data.email) updatePayload.email = data.email.toLowerCase();
     if (data.role) updatePayload.role = data.role;
     if (passwordHash) updatePayload.passwordHash = passwordHash;
+    updatePayload.updatedAt = new Date().toISOString();
 
     const { data: updated, error } = await supabase
       .from('User')

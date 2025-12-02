@@ -123,10 +123,12 @@ export async function POST(request: Request) {
         status: BorrowRequestStatus.PENDING,
         message: data.message ?? null,
         whatsappUrl,
+        updatedAt: new Date().toISOString(),
       });
 
     if (requestError) {
-      return NextResponse.json({ error: "Gagal membuat permintaan peminjaman." }, { status: 500 });
+      console.error("Error creating borrow request:", requestError);
+      return NextResponse.json({ error: `Gagal membuat permintaan peminjaman: ${requestError.message}` }, { status: 500 });
     }
 
     const updatedAt = new Date().toISOString();
@@ -136,7 +138,8 @@ export async function POST(request: Request) {
       .eq('id', book.id);
 
     if (updateBookError) {
-      return NextResponse.json({ error: "Gagal memperbarui status buku." }, { status: 500 });
+      console.error("Error updating book status:", updateBookError);
+      return NextResponse.json({ error: `Gagal memperbarui status buku: ${updateBookError.message}` }, { status: 500 });
     }
 
     return NextResponse.json({

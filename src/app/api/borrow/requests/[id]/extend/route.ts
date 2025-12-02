@@ -103,6 +103,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       .update({
         ownerMessage: message,
         ownerDecisionAt: nowIso,
+        updatedAt: nowIso,
       })
       .eq('id', borrowRequest.id);
 

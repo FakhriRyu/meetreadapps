@@ -41,44 +41,11 @@ async function CollectionData() {
     };
   });
 
-  // Fetch requests with joins
-  const { data: requestsData, error: requestsError } = await supabaseServer
-    .from('BorrowRequest')
-    .select(`
-      *,
-      book:Book!BorrowRequest_bookId_fkey(
-        id,
-        title,
-        status,
-        dueDate,
-        availableCopies,
-        totalCopies,
-        lendable,
-        ownerId
-      ),
-      requester:User!BorrowRequest_requesterId_fkey(
-        id,
-        name,
-        email,
-        phoneNumber
-      )
-    `)
-    .in('status', ['PENDING', 'APPROVED'])
-    .order('createdAt', { ascending: false });
-
-  // Filter requests to only include books owned by current user
-  const requests = (requestsData || []).filter(
-    (req: any) => req.book?.ownerId === sessionUser.id
-  );
-
   if (collectionsError) {
     console.error('Error fetching collections:', collectionsError);
   }
-  if (requestsError) {
-    console.error('Error fetching requests:', requestsError);
-  }
 
-  return <KoleksikuView collections={collections} requests={requests} />;
+  return <KoleksikuView collections={collections} />;
 }
 
 export default function KoleksikuPage() {

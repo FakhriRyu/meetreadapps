@@ -115,6 +115,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         status: BorrowRequestStatus.APPROVED,
         ownerDecisionAt: nowIso,
         ownerMessage,
+        updatedAt: nowIso,
       })
       .eq('id', borrowRequest.id);
 
@@ -143,6 +144,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         status: BorrowRequestStatus.CANCELLED,
         ownerDecisionAt: nowIso,
         ownerMessage: "Permintaan dibatalkan karena buku sudah dipinjam.",
+        updatedAt: nowIso,
       })
       .eq('bookId', borrowRequest.book.id)
       .eq('status', BorrowRequestStatus.PENDING)
