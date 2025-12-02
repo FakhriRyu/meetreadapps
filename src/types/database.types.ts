@@ -1,6 +1,3 @@
-// Database types generated from the schema used in Supabase
-// This should match the Supabase database structure
-
 export type Json =
   | string
   | number
@@ -10,8 +7,75 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "13.0.5"
+  }
   public: {
     Tables: {
+      _prisma_migrations: {
+        Row: {
+          applied_steps_count: number
+          checksum: string
+          finished_at: string | null
+          id: string
+          logs: string | null
+          migration_name: string
+          rolled_back_at: string | null
+          started_at: string
+        }
+        Insert: {
+          applied_steps_count?: number
+          checksum: string
+          finished_at?: string | null
+          id: string
+          logs?: string | null
+          migration_name: string
+          rolled_back_at?: string | null
+          started_at?: string
+        }
+        Update: {
+          applied_steps_count?: number
+          checksum?: string
+          finished_at?: string | null
+          id?: string
+          logs?: string | null
+          migration_name?: string
+          rolled_back_at?: string | null
+          started_at?: string
+        }
+        Relationships: []
+      }
+      AppSuggestion: {
+        Row: {
+          createdAt: string
+          id: number
+          suggestion: string
+          userId: number
+        }
+        Insert: {
+          createdAt?: string
+          id?: number
+          suggestion: string
+          userId: number
+        }
+        Update: {
+          createdAt?: string
+          id?: number
+          suggestion?: string
+          userId?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "AppSuggestion_userId_fkey"
+            columns: ["userId"]
+            isOneToOne: false
+            referencedRelation: "User"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       Book: {
         Row: {
           author: string
@@ -24,10 +88,8 @@ export type Database = {
           dueDate: string | null
           id: number
           isbn: string | null
-          lendable: boolean
           ownerId: number | null
           publishedYear: number | null
-          source: string
           status: Database["public"]["Enums"]["BookStatus"]
           title: string
           totalCopies: number
@@ -44,14 +106,12 @@ export type Database = {
           dueDate?: string | null
           id?: number
           isbn?: string | null
-          lendable?: boolean
           ownerId?: number | null
           publishedYear?: number | null
-          source?: string
           status?: Database["public"]["Enums"]["BookStatus"]
           title: string
           totalCopies: number
-          updatedAt?: string
+          updatedAt: string
         }
         Update: {
           author?: string
@@ -64,10 +124,8 @@ export type Database = {
           dueDate?: string | null
           id?: number
           isbn?: string | null
-          lendable?: boolean
           ownerId?: number | null
           publishedYear?: number | null
-          source?: string
           status?: Database["public"]["Enums"]["BookStatus"]
           title?: string
           totalCopies?: number
@@ -87,13 +145,14 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "User"
             referencedColumns: ["id"]
-          },
+          }
         ]
       }
       BorrowNotification: {
         Row: {
           createdAt: string
           id: number
+          isRead: boolean
           message: string | null
           requestId: number
           type: Database["public"]["Enums"]["NotificationType"]
@@ -101,6 +160,7 @@ export type Database = {
         Insert: {
           createdAt?: string
           id?: number
+          isRead?: boolean
           message?: string | null
           requestId: number
           type: Database["public"]["Enums"]["NotificationType"]
@@ -108,6 +168,7 @@ export type Database = {
         Update: {
           createdAt?: string
           id?: number
+          isRead?: boolean
           message?: string | null
           requestId?: number
           type?: Database["public"]["Enums"]["NotificationType"]
@@ -119,45 +180,39 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "BorrowRequest"
             referencedColumns: ["id"]
-          },
+          }
         ]
       }
       BorrowRequest: {
         Row: {
           bookId: number
           createdAt: string
+          endDate: string
           id: number
-          message: string | null
-          ownerDecisionAt: string | null
-          ownerMessage: string | null
           requesterId: number
+          startDate: string
           status: Database["public"]["Enums"]["BorrowRequestStatus"]
           updatedAt: string
-          whatsappUrl: string | null
         }
         Insert: {
           bookId: number
           createdAt?: string
+          endDate: string
           id?: number
-          message?: string | null
-          ownerDecisionAt?: string | null
-          ownerMessage?: string | null
           requesterId: number
+          startDate: string
           status?: Database["public"]["Enums"]["BorrowRequestStatus"]
-          updatedAt?: string
-          whatsappUrl?: string | null
+          updatedAt: string
         }
         Update: {
           bookId?: number
           createdAt?: string
+          endDate?: string
           id?: number
-          message?: string | null
-          ownerDecisionAt?: string | null
-          ownerMessage?: string | null
           requesterId?: number
+          startDate?: string
           status?: Database["public"]["Enums"]["BorrowRequestStatus"]
           updatedAt?: string
-          whatsappUrl?: string | null
         }
         Relationships: [
           {
@@ -173,7 +228,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "User"
             referencedColumns: ["id"]
-          },
+          }
         ]
       }
       Review: {
@@ -215,7 +270,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "User"
             referencedColumns: ["id"]
-          },
+          }
         ]
       }
       User: {
@@ -224,7 +279,7 @@ export type Database = {
           email: string
           id: number
           name: string
-          passwordHash: string
+          password: string
           phoneNumber: string | null
           profileImage: string | null
           role: Database["public"]["Enums"]["UserRole"]
@@ -235,18 +290,18 @@ export type Database = {
           email: string
           id?: number
           name: string
-          passwordHash: string
+          password: string
           phoneNumber?: string | null
           profileImage?: string | null
           role?: Database["public"]["Enums"]["UserRole"]
-          updatedAt?: string
+          updatedAt: string
         }
         Update: {
           createdAt?: string
           email?: string
           id?: number
           name?: string
-          passwordHash?: string
+          password?: string
           phoneNumber?: string | null
           profileImage?: string | null
           role?: Database["public"]["Enums"]["UserRole"]
@@ -262,9 +317,24 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      BookStatus: "AVAILABLE" | "PENDING" | "RESERVED" | "BORROWED" | "UNAVAILABLE"
-      BorrowRequestStatus: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED" | "RETURNED"
-      NotificationType: "APPROVED" | "REJECTED" | "CANCELLED" | "EXTENDED" | "RETURNED"
+      BookStatus:
+      | "AVAILABLE"
+      | "PENDING"
+      | "RESERVED"
+      | "BORROWED"
+      | "UNAVAILABLE"
+      BorrowRequestStatus:
+      | "PENDING"
+      | "APPROVED"
+      | "REJECTED"
+      | "CANCELLED"
+      | "RETURNED"
+      NotificationType:
+      | "APPROVED"
+      | "REJECTED"
+      | "CANCELLED"
+      | "EXTENDED"
+      | "RETURNED"
       UserRole: "USER" | "ADMIN"
     }
     CompositeTypes: {
@@ -359,9 +429,7 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
   | keyof PublicSchema["CompositeTypes"]
   | { schema: keyof Database },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof Database
-  }
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
   ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
   : never = never,
 > = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
@@ -369,3 +437,32 @@ export type CompositeTypes<
   : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
   ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
   : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      BookStatus: [
+        "AVAILABLE",
+        "PENDING",
+        "RESERVED",
+        "BORROWED",
+        "UNAVAILABLE",
+      ],
+      BorrowRequestStatus: [
+        "PENDING",
+        "APPROVED",
+        "REJECTED",
+        "CANCELLED",
+        "RETURNED",
+      ],
+      NotificationType: [
+        "APPROVED",
+        "REJECTED",
+        "CANCELLED",
+        "EXTENDED",
+        "RETURNED",
+      ],
+      UserRole: ["USER", "ADMIN"],
+    },
+  },
+} as const

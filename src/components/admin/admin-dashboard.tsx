@@ -7,14 +7,16 @@ import { BookAdminPanel } from "@/components/books/book-admin-panel";
 
 import { ManagedUser, UserManagementPanel } from "./user-management-panel";
 import { ReviewManagementPanel } from "./review-management-panel";
+import { SuggestionManagementPanel } from "./suggestion-management-panel";
 
-type SectionKey = "books" | "users" | "reviews";
+type SectionKey = "books" | "users" | "reviews" | "suggestions";
 
 type AdminDashboardProps = {
   adminName: string;
   initialBooks: Book[];
   initialUsers: ManagedUser[];
   initialReviews: any[];
+  initialSuggestions: any[];
 };
 
 const sections: Array<{
@@ -75,9 +77,26 @@ const sections: Array<{
         </svg>
       ),
     },
+    {
+      id: "suggestions",
+      label: "Saran Aplikasi",
+      description: "Daftar masukan dan saran pengembangan dari pengguna.",
+      icon: (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          className="h-4 w-4"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.6"
+        >
+          <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+        </svg>
+      ),
+    },
   ];
 
-export function AdminDashboard({ adminName, initialBooks, initialUsers, initialReviews }: AdminDashboardProps) {
+export function AdminDashboard({ adminName, initialBooks, initialUsers, initialReviews, initialSuggestions }: AdminDashboardProps) {
   const [activeSection, setActiveSection] = useState<SectionKey>("books");
 
   const current = useMemo(
@@ -175,7 +194,9 @@ export function AdminDashboard({ adminName, initialBooks, initialUsers, initialR
               ? "Dashboard Koleksi"
               : current.id === "users"
                 ? "Manajemen Pengguna"
-                : "Moderasi Review"}
+                : current.id === "reviews"
+                  ? "Moderasi Review"
+                  : "Saran Aplikasi"}
           </h1>
           <p className="max-w-2xl text-sm text-slate-500">{current.description}</p>
         </header>
@@ -185,8 +206,10 @@ export function AdminDashboard({ adminName, initialBooks, initialUsers, initialR
             <BookAdminPanel initialBooks={initialBooks} />
           ) : activeSection === "users" ? (
             <UserManagementPanel initialUsers={initialUsers} />
-          ) : (
+          ) : activeSection === "reviews" ? (
             <ReviewManagementPanel initialReviews={initialReviews} />
+          ) : (
+            <SuggestionManagementPanel initialSuggestions={initialSuggestions} />
           )}
         </section>
       </div>

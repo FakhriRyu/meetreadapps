@@ -1,10 +1,10 @@
 "use client";
 
 import Image from "next/image";
-
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
-
 import { formatDate } from "@/lib/intl-format";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { User, Shield, MessageSquare, LogOut, ChevronRight, Moon } from "lucide-react";
 
 type SessionUser = {
   id: number;
@@ -20,8 +20,6 @@ type ProfilViewProps = {
   sessionUser: SessionUser | null;
 };
 
-
-
 type StatusState =
   | { type: "success"; message: string }
   | { type: "error"; message: string }
@@ -31,6 +29,11 @@ const PROFILE_PLACEHOLDER_AVATAR = "https://api.dicebear.com/7.x/initials/png";
 
 export function ProfilView({ sessionUser }: ProfilViewProps) {
   const [isLoggingOut, setLoggingOut] = useState(false);
+
+  // Sheet States
+  const [isBasicOpen, setBasicOpen] = useState(false);
+  const [isPasswordOpen, setPasswordOpen] = useState(false);
+  const [isSuggestionOpen, setSuggestionOpen] = useState(false);
 
   const [profileData, setProfileData] = useState<{
     name: string;
@@ -63,6 +66,9 @@ export function ProfilView({ sessionUser }: ProfilViewProps) {
   const [passwordStatus, setPasswordStatus] = useState<StatusState>(null);
   const [savingPassword, setSavingPassword] = useState(false);
 
+  const [suggestion, setSuggestion] = useState("");
+  const [suggestionStatus, setSuggestionStatus] = useState<StatusState>(null);
+  const [sendingSuggestion, setSendingSuggestion] = useState(false);
 
   useEffect(() => {
     setProfileData({
@@ -78,17 +84,7 @@ export function ProfilView({ sessionUser }: ProfilViewProps) {
       phoneNumber: sessionUser?.phoneNumber ?? "",
       profileImage: sessionUser?.profileImage ?? "",
     });
-  }, [
-    sessionUser,
-    sessionUser?.id,
-    sessionUser?.name,
-    sessionUser?.email,
-    sessionUser?.phoneNumber,
-    sessionUser?.profileImage,
-    sessionUser?.joinedAt,
-  ]);
-
-
+  }, [sessionUser]);
 
   const isAuthenticated = Boolean(sessionUser);
 
@@ -96,17 +92,9 @@ export function ProfilView({ sessionUser }: ProfilViewProps) {
     if (profileData.profileImage) {
       return profileData.profileImage;
     }
-
     const seed = profileData.name || "MeetRead";
     return `${PROFILE_PLACEHOLDER_AVATAR}?seed=${encodeURIComponent(seed)}`;
   }, [profileData.name, profileData.profileImage]);
-
-  const formatJoinDate = useMemo(() => {
-    if (!profileData.joinedAt) {
-      return "-";
-    }
-    return formatDate(profileData.joinedAt);
-  }, [profileData.joinedAt]);
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -120,12 +108,10 @@ export function ProfilView({ sessionUser }: ProfilViewProps) {
     }
   };
 
-  const handleBasicChange =
-    (field: keyof typeof basicForm) =>
-      (event: ChangeEvent<HTMLInputElement>) => {
-        const { value } = event.target;
-        setBasicForm((prev) => ({ ...prev, [field]: value }));
-      };
+  const handleBasicChange = (field: keyof typeof basicForm) => (event: ChangeEvent<HTMLInputElement>) => {
+    const { value } = event.target;
+    setBasicForm((prev) => ({ ...prev, [field]: value }));
+  };
 
   const handleBasicSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -137,18 +123,10 @@ export function ProfilView({ sessionUser }: ProfilViewProps) {
     }
 
     const payload: Record<string, string> = {};
-    if (basicForm.name.trim() !== profileData.name) {
-      payload.name = basicForm.name.trim();
-    }
-    if (basicForm.email.trim().toLowerCase() !== profileData.email.toLowerCase()) {
-      payload.email = basicForm.email.trim();
-    }
-    if ((basicForm.phoneNumber ?? "").trim() !== (profileData.phoneNumber ?? "")) {
-      payload.phoneNumber = basicForm.phoneNumber.trim();
-    }
-    if ((basicForm.profileImage ?? "").trim() !== (profileData.profileImage ?? "")) {
-      payload.profileImage = basicForm.profileImage.trim();
-    }
+    if (basicForm.name.trim() !== profileData.name) payload.name = basicForm.name.trim();
+    if (basicForm.email.trim().toLowerCase() !== profileData.email.toLowerCase()) payload.email = basicForm.email.trim();
+    if ((basicForm.phoneNumber ?? "").trim() !== (profileData.phoneNumber ?? "")) payload.phoneNumber = basicForm.phoneNumber.trim();
+    if ((basicForm.profileImage ?? "").trim() !== (profileData.profileImage ?? "")) payload.profileImage = basicForm.profileImage.trim();
 
     if (Object.keys(payload).length === 0) {
       setBasicStatus({ type: "error", message: "Tidak ada perubahan yang perlu disimpan." });
@@ -165,9 +143,7 @@ export function ProfilView({ sessionUser }: ProfilViewProps) {
       });
 
       const result = await response.json();
-      if (!response.ok) {
-        throw new Error(result.error ?? "Gagal memperbarui profil.");
-      }
+      if (!response.ok) throw new Error(result.error ?? "Gagal memperbarui profil.");
 
       setProfileData({
         name: result.data.name,
@@ -183,22 +159,18 @@ export function ProfilView({ sessionUser }: ProfilViewProps) {
         profileImage: result.data.profileImage ?? "",
       });
       setBasicStatus({ type: "success", message: "Profil berhasil diperbarui." });
+      setTimeout(() => setBasicOpen(false), 1500);
     } catch (error) {
-      setBasicStatus({
-        type: "error",
-        message: error instanceof Error ? error.message : "Terjadi kesalahan.",
-      });
+      setBasicStatus({ type: "error", message: error instanceof Error ? error.message : "Terjadi kesalahan." });
     } finally {
       setSavingBasic(false);
     }
   };
 
-  const handlePasswordChange =
-    (field: keyof typeof passwordForm) =>
-      (event: ChangeEvent<HTMLInputElement>) => {
-        const { value } = event.target;
-        setPasswordForm((prev) => ({ ...prev, [field]: value }));
-      };
+  const handlePasswordChange = (field: keyof typeof passwordForm) => (event: ChangeEvent<HTMLInputElement>) => {
+    const { value } = event.target;
+    setPasswordForm((prev) => ({ ...prev, [field]: value }));
+  };
 
   const handlePasswordSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -218,234 +190,222 @@ export function ProfilView({ sessionUser }: ProfilViewProps) {
         body: JSON.stringify(passwordForm),
       });
       const result = await response.json();
-      if (!response.ok) {
-        throw new Error(result.error ?? "Gagal memperbarui kata sandi.");
-      }
+      if (!response.ok) throw new Error(result.error ?? "Gagal memperbarui kata sandi.");
 
-      setPasswordForm({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      });
+      setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
       setPasswordStatus({ type: "success", message: "Kata sandi berhasil diperbarui." });
+      setTimeout(() => setPasswordOpen(false), 1500);
     } catch (error) {
-      setPasswordStatus({
-        type: "error",
-        message: error instanceof Error ? error.message : "Terjadi kesalahan.",
-      });
+      setPasswordStatus({ type: "error", message: error instanceof Error ? error.message : "Terjadi kesalahan." });
     } finally {
       setSavingPassword(false);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-[#f5f7ff] px-6 pb-24 pt-10 text-slate-900">
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-10">
-        {!isAuthenticated ? (
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-100">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-3">
-                <div className="relative h-12 w-12 overflow-hidden rounded-full border border-slate-200 bg-indigo-100">
-                  <Image
-                    src={`${PROFILE_PLACEHOLDER_AVATAR}?seed=MeetRead`}
-                    alt="MeetRead Guest"
-                    fill
-                    sizes="48px"
-                    className="object-cover"
-                  />
-                </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-slate-900">Selamat Datang di MeetRead</h2>
-                  <p className="text-xs text-slate-500">Masuk untuk melihat profil lengkapmu</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => window.location.assign("/login?from=profil")}
-                className="rounded-full bg-indigo-500 px-5 py-2 text-sm font-semibold text-white shadow-sm shadow-indigo-200 transition hover:bg-indigo-600"
-              >
-                Masuk / Daftar
-              </button>
-            </div>
-            <p className="mt-4 text-sm text-slate-500">
-              Akses riwayat peminjaman, simpan buku favorit, dan dapatkan rekomendasi yang lebih personal dengan
-              masuk ke akun MeetRead.
-            </p>
+  const handleSuggestionSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSuggestionStatus(null);
+
+    if (!sessionUser) {
+      setSuggestionStatus({ type: "error", message: "Anda harus masuk terlebih dahulu." });
+      return;
+    }
+
+    setSendingSuggestion(true);
+    try {
+      const response = await fetch("/api/suggestions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ suggestion }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error ?? "Gagal mengirim saran.");
+
+      setSuggestion("");
+      setSuggestionStatus({ type: "success", message: "Terima kasih atas saran Anda!" });
+      setTimeout(() => setSuggestionOpen(false), 1500);
+    } catch (error) {
+      setSuggestionStatus({ type: "error", message: error instanceof Error ? error.message : "Terjadi kesalahan." });
+    } finally {
+      setSendingSuggestion(false);
+    }
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-white px-6 pb-24 pt-10 text-slate-900">
+        <div className="mx-auto flex w-full max-w-md flex-col items-center gap-6 text-center">
+          <div className="relative h-24 w-24 overflow-hidden rounded-full border-4 border-indigo-50 bg-indigo-100">
+            <Image
+              src={`${PROFILE_PLACEHOLDER_AVATAR}?seed=MeetRead`}
+              alt="MeetRead Guest"
+              fill
+              className="object-cover"
+            />
           </div>
-        ) : (
-          <>
-            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-100">
-              <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:gap-6">
-                <div className="relative h-20 w-20 overflow-hidden rounded-full border border-slate-200 bg-slate-100 shadow-sm shadow-slate-200">
-                  <Image src={avatarSrc} alt={profileData.name || "Foto Profil"} fill sizes="80px" className="object-cover" />
-                </div>
-                <div className="flex-1 space-y-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="text-xl font-semibold text-slate-900">{profileData.name || "Pengguna MeetRead"}</h2>
-                    <span className="rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-indigo-600">
-                      {sessionUser?.role ?? "USER"}
-                    </span>
-                  </div>
-                  <p className="text-sm text-slate-500">{profileData.email}</p>
-                  <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500">
-                    <span>Member sejak {formatJoinDate}</span>
-                    {profileData.phoneNumber ? <span>• {profileData.phoneNumber}</span> : null}
-                  </div>
-                </div>
-              </div>
-            </section>
-
-
-
-            <div className="grid gap-6 lg:grid-cols-2">
-              <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-100">
-                <header className="space-y-1">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-indigo-400">Data Akun Dasar</p>
-                  <h3 className="text-lg font-semibold text-slate-900">Perbarui Informasi Profil</h3>
-                  <p className="text-sm text-slate-500">Sesuaikan nama, email, nomor telepon, dan foto profilmu.</p>
-                </header>
-
-                <form className="mt-5 space-y-4" onSubmit={handleBasicSubmit}>
-                  <label className="block text-sm text-slate-600">
-                    Nama Lengkap
-                    <input
-                      value={basicForm.name}
-                      onChange={handleBasicChange("name")}
-                      placeholder="Tuliskan nama lengkapmu"
-                      className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 placeholder-slate-400 focus:border-indigo-200 focus:outline-none"
-                      required
-                      minLength={2}
-                    />
-                  </label>
-                  <label className="block text-sm text-slate-600">
-                    Email
-                    <input
-                      type="email"
-                      value={basicForm.email}
-                      onChange={handleBasicChange("email")}
-                      placeholder="contoh@mail.com"
-                      className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 placeholder-slate-400 focus:border-indigo-200 focus:outline-none"
-                      required
-                    />
-                  </label>
-                  <label className="block text-sm text-slate-600">
-                    Nomor Telepon
-                    <input
-                      value={basicForm.phoneNumber}
-                      onChange={handleBasicChange("phoneNumber")}
-                      placeholder="contoh: +62 812 3456 7890"
-                      className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 placeholder-slate-400 focus:border-indigo-200 focus:outline-none"
-                    />
-                  </label>
-                  <label className="block text-sm text-slate-600">
-                    URL Foto Profil
-                    <input
-                      value={basicForm.profileImage}
-                      onChange={handleBasicChange("profileImage")}
-                      placeholder="https://contoh.com/avatar.jpg"
-                      className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 placeholder-slate-400 focus:border-indigo-200 focus:outline-none"
-                    />
-                  </label>
-
-                  {basicStatus && <StatusMessage status={basicStatus} />}
-
-                  <button
-                    type="submit"
-                    disabled={savingBasic}
-                    className="w-full rounded-full bg-indigo-500 px-6 py-3 text-sm font-semibold text-white shadow-sm shadow-indigo-200 transition hover:bg-indigo-600 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
-                  >
-                    {savingBasic ? "Menyimpan..." : "Simpan Perubahan"}
-                  </button>
-                </form>
-              </section>
-
-              <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-100">
-                <header className="space-y-1">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-rose-400">Pengaturan Akun</p>
-                  <h3 className="text-lg font-semibold text-slate-900">Keamanan & Akses</h3>
-                  <p className="text-sm text-slate-500">Ganti kata sandi akun dan kelola sesi masukmu.</p>
-                </header>
-
-                <form className="mt-5 space-y-4" onSubmit={handlePasswordSubmit}>
-                  <label className="block text-sm text-slate-600">
-                    Kata Sandi Saat Ini
-                    <input
-                      type="password"
-                      value={passwordForm.currentPassword}
-                      onChange={handlePasswordChange("currentPassword")}
-                      placeholder="Masukkan kata sandi sekarang"
-                      className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 placeholder-slate-400 focus:border-indigo-200 focus:outline-none"
-                      required
-                      minLength={8}
-                    />
-                  </label>
-                  <label className="block text-sm text-slate-600">
-                    Kata Sandi Baru
-                    <input
-                      type="password"
-                      value={passwordForm.newPassword}
-                      onChange={handlePasswordChange("newPassword")}
-                      placeholder="Minimal 8 karakter"
-                      className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 placeholder-slate-400 focus:border-indigo-200 focus:outline-none"
-                      required
-                      minLength={8}
-                    />
-                  </label>
-                  <label className="block text-sm text-slate-600">
-                    Konfirmasi Kata Sandi Baru
-                    <input
-                      type="password"
-                      value={passwordForm.confirmPassword}
-                      onChange={handlePasswordChange("confirmPassword")}
-                      placeholder="Ulangi kata sandi baru"
-                      className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 placeholder-slate-400 focus:border-indigo-200 focus:outline-none"
-                      required
-                      minLength={8}
-                    />
-                  </label>
-
-                  {passwordStatus && <StatusMessage status={passwordStatus} />}
-
-                  <button
-                    type="submit"
-                    disabled={savingPassword}
-                    className="w-full rounded-full border border-slate-200 px-6 py-3 text-sm font-semibold text-slate-600 transition hover:border-indigo-200 hover:text-indigo-600 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
-                  >
-                    {savingPassword ? "Memproses..." : "Perbarui Kata Sandi"}
-                  </button>
-                </form>
-
-                <div className="mt-6 border-t border-slate-200 pt-5">
-                  <button
-                    type="button"
-                    disabled={isLoggingOut}
-                    onClick={handleLogout}
-                    className="flex w-full items-center justify-center gap-3 rounded-full border border-rose-200 px-6 py-3 text-sm font-semibold text-rose-600 transition hover:border-rose-300 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {isLoggingOut ? "Keluar..." : "Keluar Akun"}
-                  </button>
-                </div>
-              </section>
-            </div>
-          </>
-        )}
+          <div className="space-y-2">
+            <h2 className="text-2xl font-bold text-slate-900">Selamat Datang</h2>
+            <p className="text-slate-500">Masuk untuk mengelola profil dan melihat aktivitasmu.</p>
+          </div>
+          <button
+            onClick={() => window.location.assign("/login?from=profil")}
+            className="w-full rounded-full bg-indigo-600 px-6 py-3.5 font-semibold text-white shadow-lg shadow-indigo-200 transition hover:bg-indigo-700 active:scale-95"
+          >
+            Masuk / Daftar
+          </button>
+        </div>
       </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-white px-6 pb-24 pt-10 text-slate-900">
+      <div className="mx-auto w-full max-w-md space-y-8">
+        {/* Header */}
+        <div className="flex flex-col items-center text-center">
+          <div className="relative mb-4 h-28 w-28 overflow-hidden rounded-full border-4 border-indigo-50 bg-slate-100 shadow-inner">
+            <Image src={avatarSrc} alt={profileData.name} fill className="object-cover" />
+          </div>
+          <h1 className="text-2xl font-bold text-slate-900">{profileData.name}</h1>
+          <p className="text-slate-500">{profileData.email}</p>
+        </div>
+
+        {/* Menu List */}
+        <div className="space-y-1">
+          {/* Dark Mode (Static for now as requested "tidak perlu darkmode" but keeping UI consistent if needed later or just static) */}
+          {/* User requested "tidak perlu darkmode", so I will skip the toggle but maybe keep the item if it was in the design reference? 
+              The reference had it. But user said "tidak perlu darkmode". I will omit it to be safe and follow "tidak perlu".
+          */}
+
+          <MenuItem
+            icon={User}
+            label="Data Akun Dasar"
+            onClick={() => setBasicOpen(true)}
+          />
+          <MenuItem
+            icon={Shield}
+            label="Keamanan & Akses"
+            onClick={() => setPasswordOpen(true)}
+          />
+          <MenuItem
+            icon={MessageSquare}
+            label="Saran Aplikasi"
+            onClick={() => setSuggestionOpen(true)}
+          />
+
+          <div className="my-4 h-px bg-slate-100" />
+
+          <button
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+            className="flex w-full items-center gap-4 rounded-2xl px-4 py-4 text-left transition active:bg-slate-50"
+          >
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-50 text-rose-500">
+              <LogOut size={20} />
+            </div>
+            <span className="flex-1 font-medium text-rose-600">
+              {isLoggingOut ? "Keluar..." : "Keluar Akun"}
+            </span>
+          </button>
+        </div>
+      </div>
+
+      {/* Bottom Sheets */}
+
+      {/* Basic Data Sheet */}
+      <BottomSheet isOpen={isBasicOpen} onClose={() => setBasicOpen(false)} title="Data Akun Dasar">
+        <form onSubmit={handleBasicSubmit} className="space-y-5">
+          <p className="text-sm text-slate-500">Perbarui informasi dasar profilmu di sini.</p>
+          <div className="space-y-4">
+            <InputGroup label="Nama Lengkap" value={basicForm.name} onChange={handleBasicChange("name")} placeholder="Nama Lengkap" />
+            <InputGroup label="Email" value={basicForm.email} onChange={handleBasicChange("email")} type="email" placeholder="Email" />
+            <InputGroup label="Nomor Telepon" value={basicForm.phoneNumber} onChange={handleBasicChange("phoneNumber")} placeholder="+62..." />
+            <InputGroup label="URL Foto Profil" value={basicForm.profileImage} onChange={handleBasicChange("profileImage")} placeholder="https://..." />
+          </div>
+          {basicStatus && <StatusMessage status={basicStatus} />}
+          <Button loading={savingBasic}>Simpan Perubahan</Button>
+        </form>
+      </BottomSheet>
+
+      {/* Password Sheet */}
+      <BottomSheet isOpen={isPasswordOpen} onClose={() => setPasswordOpen(false)} title="Keamanan & Akses">
+        <form onSubmit={handlePasswordSubmit} className="space-y-5">
+          <p className="text-sm text-slate-500">Kelola kata sandi untuk menjaga keamanan akunmu.</p>
+          <div className="space-y-4">
+            <InputGroup label="Kata Sandi Saat Ini" value={passwordForm.currentPassword} onChange={handlePasswordChange("currentPassword")} type="password" placeholder="••••••••" required />
+            <InputGroup label="Kata Sandi Baru" value={passwordForm.newPassword} onChange={handlePasswordChange("newPassword")} type="password" placeholder="••••••••" required />
+            <InputGroup label="Konfirmasi Kata Sandi" value={passwordForm.confirmPassword} onChange={handlePasswordChange("confirmPassword")} type="password" placeholder="••••••••" required />
+          </div>
+          {passwordStatus && <StatusMessage status={passwordStatus} />}
+          <Button loading={savingPassword}>Perbarui Kata Sandi</Button>
+        </form>
+      </BottomSheet>
+
+      {/* Suggestion Sheet */}
+      <BottomSheet isOpen={isSuggestionOpen} onClose={() => setSuggestionOpen(false)} title="Saran Aplikasi">
+        <form onSubmit={handleSuggestionSubmit} className="space-y-5">
+          <p className="text-sm text-slate-500">Masukanmu sangat berharga untuk pengembangan aplikasi ini.</p>
+          <div>
+            <textarea
+              value={suggestion}
+              onChange={(e) => setSuggestion(e.target.value)}
+              placeholder="Tuliskan saran atau masukanmu di sini..."
+              className="h-32 w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              required
+            />
+          </div>
+          {suggestionStatus && <StatusMessage status={suggestionStatus} />}
+          <Button loading={sendingSuggestion}>Kirim Saran</Button>
+        </form>
+      </BottomSheet>
     </div>
   );
 }
 
+function MenuItem({ icon: Icon, label, onClick }: { icon: any; label: string; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex w-full items-center gap-4 rounded-2xl px-4 py-4 text-left transition active:bg-slate-50"
+    >
+      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-50 text-slate-600">
+        <Icon size={20} />
+      </div>
+      <span className="flex-1 font-medium text-slate-900">{label}</span>
+      <ChevronRight size={20} className="text-slate-300" />
+    </button>
+  );
+}
 
+function InputGroup({ label, ...props }: { label: string } & React.InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <label className="block space-y-1.5">
+      <span className="text-xs font-medium text-slate-500">{label}</span>
+      <input
+        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+        {...props}
+      />
+    </label>
+  );
+}
+
+function Button({ children, loading }: { children: React.ReactNode; loading?: boolean }) {
+  return (
+    <button
+      type="submit"
+      disabled={loading}
+      className="w-full rounded-xl bg-indigo-600 py-3.5 text-sm font-semibold text-white shadow-lg shadow-indigo-200 transition hover:bg-indigo-700 active:scale-95 disabled:cursor-not-allowed disabled:opacity-70"
+    >
+      {loading ? "Memproses..." : children}
+    </button>
+  );
+}
 
 function StatusMessage({ status }: { status: StatusState }) {
   if (!status) return null;
-
-  const styles =
-    status.type === "success"
-      ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
-      : "border border-rose-200 bg-rose-50 text-rose-600";
-
+  const isSuccess = status.type === "success";
   return (
-    <div className={`rounded-2xl px-4 py-3 text-sm ${styles}`}>
+    <div className={`rounded-xl px-4 py-3 text-sm ${isSuccess ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-600"}`}>
       {status.message}
     </div>
   );
