@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import type { Book } from "@/types/enums";
 import { StarRating } from "@/components/ui/star-rating";
 
@@ -36,6 +36,23 @@ export function HomeView({ books, sessionUser }: HomeViewProps) {
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>(DEFAULT_CATEGORY);
   const [activeAuthor, setActiveAuthor] = useState<string | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      try {
+        const response = await fetch("/api/notifications/count");
+        const result = await response.json();
+        if (response.ok) {
+          setUnreadCount(result.count);
+        }
+      } catch (error) {
+        console.error("Failed to fetch notification count", error);
+      }
+    };
+
+    fetchUnreadCount();
+  }, []);
 
   const categories = useMemo(() => {
     const unique = new Set<string>();
@@ -196,7 +213,9 @@ export function HomeView({ books, sessionUser }: HomeViewProps) {
               aria-label="Notifikasi"
             >
               <BellIcon />
-              <span className="absolute right-2 top-2 block h-1.5 w-1.5 rounded-full bg-rose-400" />
+              {unreadCount > 0 && (
+                <span className="absolute right-3 top-3 block h-2 w-2 rounded-full bg-rose-500 ring-2 ring-white" />
+              )}
             </Link>
             <Link
               href="/profil"

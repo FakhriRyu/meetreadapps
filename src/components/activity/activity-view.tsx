@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { BookStatus, BorrowRequestStatus, NotificationType, type Book, type BorrowRequest } from "@/types/enums";
+
+import { BookStatus, BorrowRequestStatus, type Book, type BorrowRequest } from "@/types/enums";
 import { formatDate } from "@/lib/intl-format";
 
 type RequestWithRelations = BorrowRequest & {
@@ -12,6 +12,7 @@ type RequestWithRelations = BorrowRequest & {
     > & {
         owner?: {
             name: string;
+            phoneNumber?: string | null;
         } | null;
     };
     requester: {
@@ -22,26 +23,13 @@ type RequestWithRelations = BorrowRequest & {
     };
 };
 
-type NotificationEntry = {
-    id: number;
-    status: BorrowRequestStatus;
-    type: NotificationType;
-    message: string | null;
-    createdAt: string;
-    book: {
-        id: number;
-        title: string;
-    };
-};
-
 type ActivityViewProps = {
     incomingRequests: RequestWithRelations[];
     outgoingRequests: RequestWithRelations[];
-    notifications: NotificationEntry[];
-    activeLoans: RequestWithRelations[]; // Placeholder for now
+    activeLoans: RequestWithRelations[];
 };
 
-type Tab = "peminjaman" | "persetujuan" | "pengembalian" | "notifikasi";
+type Tab = "peminjaman" | "persetujuan" | "pengembalian";
 
 const INCOMING_STATUS_META: Record<
     Extract<BorrowRequestStatus, "PENDING" | "APPROVED">,
@@ -90,40 +78,9 @@ const OUTGOING_STATUS_META: Record<
     },
 };
 
-const NOTIFICATION_STATUS_META: Record<
-    Extract<NotificationType, "APPROVED" | "REJECTED" | "CANCELLED" | "RETURNED" | "EXTENDED">,
-    { title: string; accent: string; defaultMessage: string }
-> = {
-    APPROVED: {
-        title: "Permintaan disetujui",
-        accent: "from-emerald-50 via-emerald-50 to-white border-emerald-200",
-        defaultMessage: "Pemilik menyetujui permintaanmu. Hubungi mereka untuk penjemputan.",
-    },
-    REJECTED: {
-        title: "Permintaan ditolak",
-        accent: "from-rose-50 via-rose-50 to-white border-rose-200",
-        defaultMessage: "Permintaanmu tidak dapat diproses oleh pemilik.",
-    },
-    CANCELLED: {
-        title: "Permintaan dibatalkan",
-        accent: "from-slate-50 via-slate-50 to-white border-slate-200",
-        defaultMessage: "Permintaan dibatalkan oleh sistem atau pemilik.",
-    },
-    RETURNED: {
-        title: "Peminjaman selesai",
-        accent: "from-sky-50 via-sky-50 to-white border-sky-200",
-        defaultMessage: "Terima kasih sudah mengembalikan buku tepat waktu.",
-    },
-    EXTENDED: {
-        title: "Jatuh tempo diperpanjang",
-        accent: "from-indigo-50 via-indigo-50 to-white border-indigo-200",
-        defaultMessage: "Pemilik memperpanjang durasi peminjaman. Perhatikan tanggal baru.",
-    },
-};
-
 const formatDateInput = (value: Date) => value.toISOString().split("T")[0];
 
-export function ActivityView({ incomingRequests, outgoingRequests, notifications }: ActivityViewProps) {
+export function ActivityView({ incomingRequests, outgoingRequests, activeLoans }: ActivityViewProps) {
     const [activeTab, setActiveTab] = useState<Tab>("persetujuan");
     const [loanRequests, setLoanRequests] = useState<RequestWithRelations[]>(incomingRequests);
 
@@ -136,6 +93,31 @@ export function ActivityView({ incomingRequests, outgoingRequests, notifications
 
     // Detail Modal State
     const [detailRequest, setDetailRequest] = useState<RequestWithRelations | null>(null);
+
+    // Return Modal State
+    const [returnRequest, setReturnRequest] = useState<RequestWithRelations | null>(null);
+
+    const handleReturnRequest = (request: RequestWithRelations) => {
+        setReturnRequest(request);
+    };
+
+    const handleConfirmReturn = () => {
+        if (!returnRequest || !returnRequest.book.owner?.phoneNumber) return;
+
+        const phoneNumber = returnRequest.book.owner.phoneNumber.replace(/\D/g, "");
+        // Ensure phone number starts with country code (assuming ID +62)
+        const formattedPhone = phoneNumber.startsWith("0")
+            ? "62" + phoneNumber.slice(1)
+            : phoneNumber.startsWith("62")
+                ? phoneNumber
+                : "62" + phoneNumber;
+
+        const message = `Halo, saya ingin mengembalikan buku "${returnRequest.book.title}". Kapan dan di mana kita bisa bertemu?`;
+        const whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
+
+        window.open(whatsappUrl, "_blank");
+        setReturnRequest(null);
+    };
 
     const openActionModal = (type: "approve" | "reject" | "complete" | "extend", request: RequestWithRelations) => {
         setActionState({ type, request });
@@ -211,7 +193,7 @@ export function ActivityView({ incomingRequests, outgoingRequests, notifications
                 </header>
 
                 <div className="flex rounded-full bg-white p-1 shadow-sm shadow-slate-200 overflow-x-auto">
-                    {(["peminjaman", "persetujuan", "pengembalian", "notifikasi"] as const).map((tab) => (
+                    {(["peminjaman", "persetujuan", "pengembalian"] as const).map((tab) => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
@@ -343,65 +325,62 @@ export function ActivityView({ incomingRequests, outgoingRequests, notifications
                     )}
 
                     {activeTab === "pengembalian" && (
-                        <div className="rounded-3xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-500 shadow-sm shadow-slate-100">
-                            Fitur pengembalian buku akan segera hadir.
-                        </div>
-                    )}
-
-                    {activeTab === "notifikasi" && (
                         <>
-                            {notifications.length === 0 ? (
+                            {activeLoans.length === 0 ? (
                                 <div className="rounded-3xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-500 shadow-sm shadow-slate-100">
-                                    Belum ada notifikasi.
+                                    Tidak ada buku yang sedang kamu pinjam saat ini.
                                 </div>
                             ) : (
-                                notifications.map((notification) => {
-                                    if (!(notification.type in NOTIFICATION_STATUS_META)) {
-                                        return null;
-                                    }
-                                    const meta = NOTIFICATION_STATUS_META[notification.type as keyof typeof NOTIFICATION_STATUS_META];
-
-                                    // Determine which tab to switch to based on notification type or context
-                                    // For now, we'll assume most notifications are about outgoing requests (Peminjaman)
-                                    // except if we are the owner (which would be incoming requests/Persetujuan)
-                                    // But since notifications are for the current user:
-                                    // - If I requested a book (outgoing), notifications are APPROVED/REJECTED/etc. -> Go to Peminjaman
-                                    // - If someone requested my book (incoming), I get a notification? (Not implemented yet in this view, but assuming)
-                                    // Based on current logic, these are mostly for outgoing requests.
-                                    const targetTab: Tab = "peminjaman";
-
-                                    return (
-                                        <div
-                                            key={notification.id}
-                                            className={`rounded-3xl border bg-gradient-to-br ${meta.accent} p-5 text-slate-800 shadow-sm shadow-slate-100`}
-                                        >
-                                            <p className="text-sm text-slate-500">{formatDate(notification.createdAt)}</p>
-                                            <p className="mt-1 text-base font-semibold text-slate-900">
-                                                Permintaan &quot;{notification.book.title}&quot; {meta.title.toLowerCase()}.
-                                            </p>
-                                            <p className="mt-1 text-sm text-slate-600">
-                                                {notification.message?.trim().length ? notification.message : meta.defaultMessage}
-                                            </p>
-                                            <div className="mt-4 flex gap-3">
-                                                <Link
-                                                    href={`/books/${notification.book.id}`}
-                                                    className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-widest text-indigo-500 transition hover:border-indigo-200 hover:bg-indigo-50"
-                                                >
-                                                    Lihat Buku
-                                                </Link>
+                                activeLoans.map((request) => (
+                                    <div
+                                        key={request.id}
+                                        className="rounded-3xl border border-slate-200 bg-white p-5 text-sm text-slate-600 shadow-sm shadow-slate-100"
+                                    >
+                                        <div className="flex flex-col gap-3">
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <p className="text-base font-semibold text-slate-900">{request.book.title}</p>
+                                                    <p className="text-xs text-slate-500">
+                                                        Milik {request.book.owner?.name ?? "Pemilik"}
+                                                    </p>
+                                                </div>
                                                 <button
-                                                    onClick={() => setActiveTab(targetTab)}
-                                                    className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-widest text-slate-500 transition hover:border-indigo-200 hover:bg-indigo-50"
+                                                    onClick={() => setDetailRequest(request)}
+                                                    className="rounded-full p-2 text-slate-400 hover:bg-slate-50 hover:text-indigo-500 transition"
+                                                    title="Lihat Detail"
                                                 >
-                                                    Lihat Timeline
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+
+                                            <div className="mt-2 grid gap-2 text-xs">
+                                                <div className="flex justify-between">
+                                                    <span className="text-slate-500">Tenggat Waktu</span>
+                                                    <span className="font-medium text-slate-800">
+                                                        {request.book.dueDate ? formatDate(request.book.dueDate) : "-"}
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <div className="mt-4">
+                                                <button
+                                                    onClick={() => handleReturnRequest(request)}
+                                                    className="w-full rounded-full bg-indigo-500 px-4 py-2 text-xs font-semibold text-white shadow-sm shadow-indigo-200 transition hover:bg-indigo-600"
+                                                >
+                                                    Ajukan Pengembalian
                                                 </button>
                                             </div>
                                         </div>
-                                    );
-                                })
+                                    </div>
+                                ))
                             )}
                         </>
                     )}
+
+
                 </section>
             </div>
 
@@ -534,6 +513,35 @@ export function ActivityView({ incomingRequests, outgoingRequests, notifications
                                     )}
                                 </div>
                             )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Return Confirmation Modal */}
+            {returnRequest && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 px-4 backdrop-blur-sm">
+                    <div className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white p-6 shadow-xl">
+                        <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                            Ajukan Pengembalian
+                        </h3>
+                        <p className="text-sm text-slate-600 mb-6">
+                            Kamu akan diarahkan ke WhatsApp untuk menghubungi pemilik buku <strong>{returnRequest.book.owner?.name}</strong> dan mengatur pengembalian.
+                        </p>
+
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setReturnRequest(null)}
+                                className="flex-1 rounded-full border border-slate-200 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                onClick={handleConfirmReturn}
+                                className="flex-1 rounded-full bg-green-500 py-2 text-sm font-medium text-white hover:bg-green-600 shadow-sm shadow-green-200"
+                            >
+                                Lanjut ke WhatsApp
+                            </button>
                         </div>
                     </div>
                 </div>

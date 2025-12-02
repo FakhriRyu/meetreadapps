@@ -64,7 +64,8 @@ async function ActivityData() {
                 lendable,
                 ownerId,
                 owner:User!Book_ownerId_fkey(
-                    name
+                    name,
+                    phoneNumber
                 )
             ),
             requester:User!BorrowRequest_requesterId_fkey(
@@ -79,39 +80,10 @@ async function ActivityData() {
 
     const outgoingRequests = outgoingRequestsData || [];
 
-    // Fetch notifications
-    const { data: notificationsData, error: notificationError } = await supabaseServer
-        .from('BorrowNotification')
-        .select(`
-            *,
-            request:BorrowRequest!BorrowNotification_requestId_fkey(
-                status,
-                requesterId,
-                book:Book!BorrowRequest_bookId_fkey(
-                    id,
-                    title
-                )
-            )
-        `)
-        .order('createdAt', { ascending: false })
-        .limit(30);
-
-    // Filter notifications for current user only
-    const userNotifications = (notificationsData || []).filter(
-        (notif: any) => notif.request?.requesterId === sessionUser.id
+    // Filter active loans (APPROVED status)
+    const activeLoans = outgoingRequests.filter(
+        (req) => req.status === 'APPROVED'
     );
-
-    const notifications = userNotifications.map((notification: any) => ({
-        id: notification.id,
-        status: notification.request.status,
-        type: notification.type,
-        message: notification.message ?? null,
-        createdAt: notification.createdAt,
-        book: {
-            id: notification.request.book.id,
-            title: notification.request.book.title,
-        },
-    }));
 
     if (incomingError) {
         console.error('Error fetching incoming requests:', incomingError);
@@ -119,16 +91,12 @@ async function ActivityData() {
     if (outgoingError) {
         console.error('Error fetching outgoing requests:', outgoingError);
     }
-    if (notificationError) {
-        console.error('Error fetching notifications:', notificationError);
-    }
 
     return (
         <ActivityView
             incomingRequests={incomingRequests}
             outgoingRequests={outgoingRequests}
-            notifications={notifications}
-            activeLoans={[]}
+            activeLoans={activeLoans}
         />
     );
 }
