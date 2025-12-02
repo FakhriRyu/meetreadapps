@@ -2,21 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ReactElement } from "react";
-
-type NavItem = {
-  href: string;
-  label: string;
-  icon: ReactElement;
-};
-
-const NAV_ITEMS: NavItem[] = [
-  { href: "/beranda", label: "Beranda", icon: <HomeIcon /> },
-  { href: "/pinjam", label: "Pinjam", icon: <BorrowIcon /> },
-  { href: "/koleksiku", label: "Koleksiku", icon: <CollectionIcon /> },
-  { href: "/activity", label: "Aktivitas", icon: <ActivityIcon /> },
-  { href: "/profil", label: "Profil", icon: <ProfileIcon /> },
-];
+import { motion } from "framer-motion";
+import { NAV_ITEMS } from "@/lib/nav-items";
 
 export function BottomNav() {
   const pathname = usePathname();
@@ -25,29 +12,53 @@ export function BottomNav() {
     <nav className="fixed inset-x-0 bottom-0 z-50 mx-auto mb-4 flex w-full max-w-md items-center justify-around rounded-full border border-slate-200 bg-white/95 px-2 py-2 shadow-lg shadow-slate-200 backdrop-blur">
       {NAV_ITEMS.map((item) => {
         const isActive = pathname === item.href;
+        const Icon = getIcon(item.label);
+
         return (
           <Link
             key={item.href}
             href={item.href}
             prefetch={true}
-            className={`flex flex-col items-center gap-0.5 rounded-full px-1.5 py-1.5 text-[10px] font-medium transition ${isActive ? "text-indigo-600" : "text-slate-500"
+            className={`relative flex flex-col items-center gap-0.5 rounded-full px-1.5 py-1.5 text-[10px] font-medium transition-colors ${isActive ? "text-indigo-600" : "text-slate-500"
               }`}
             aria-current={isActive ? "page" : undefined}
           >
-            <span
-              className={`flex h-8 w-8 items-center justify-center rounded-full border ${isActive
-                ? "border-indigo-200 bg-indigo-100 text-indigo-600 shadow-sm shadow-indigo-100"
-                : "border-slate-200 bg-slate-100 text-slate-500"
-                }`}
-            >
-              {item.icon}
+            {isActive && (
+              <motion.span
+                layoutId="active-nav-bg"
+                className="absolute inset-0 rounded-full bg-indigo-50"
+                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+              />
+            )}
+
+            <span className="relative z-10 flex h-8 w-8 items-center justify-center">
+              <motion.div
+                animate={{ scale: isActive ? 1.1 : 1 }}
+                whileTap={{ scale: 0.9 }}
+                transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                className={`flex h-8 w-8 items-center justify-center rounded-full ${isActive ? "text-indigo-600" : "text-slate-500"
+                  }`}
+              >
+                <Icon />
+              </motion.div>
             </span>
-            <span className="truncate max-w-[60px] text-center">{item.label}</span>
+            <span className="relative z-10 truncate max-w-[60px] text-center">{item.label}</span>
           </Link>
         );
       })}
     </nav>
   );
+}
+
+function getIcon(label: string) {
+  switch (label) {
+    case "Beranda": return HomeIcon;
+    case "Pinjam": return BorrowIcon;
+    case "Koleksiku": return CollectionIcon;
+    case "Aktivitas": return ActivityIcon;
+    case "Profil": return ProfileIcon;
+    default: return HomeIcon;
+  }
 }
 
 function HomeIcon() {

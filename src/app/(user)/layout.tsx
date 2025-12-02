@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
 import { BottomNav } from "@/components/user/bottom-nav";
+import { PageTransition } from "@/components/ui/page-transition";
 import { getSessionUser } from "@/lib/session";
 
 export default async function UserLayout({ children }: { children: ReactNode }) {
@@ -18,7 +19,9 @@ export default async function UserLayout({ children }: { children: ReactNode }) 
         <div className="absolute right-0 top-1/3 h-60 w-60 rounded-full bg-sky-200/35 blur-3xl" />
         <div className="absolute -bottom-20 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-emerald-200/30 blur-3xl" />
       </div>
-      <main className="relative mx-auto min-h-screen w-full max-w-6xl pb-24">{children}</main>
+      <main className="relative mx-auto min-h-screen w-full max-w-6xl pb-24">
+        <PageTransition>{children}</PageTransition>
+      </main>
       <BottomNav />
     </div>
   );
