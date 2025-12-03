@@ -55,8 +55,9 @@ async function CollectionData({ page }: { page: number }) {
   return <KoleksikuView collections={collections} currentPage={page} totalPages={totalPages} />;
 }
 
-export default function KoleksikuPage({ searchParams }: { searchParams: { page?: string } }) {
-  const page = Number(searchParams?.page) || 1;
+export default async function KoleksikuPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
+  const resolvedSearchParams = await searchParams;
+  const page = Number(resolvedSearchParams?.page) || 1;
 
   return (
     <Suspense fallback={<KoleksikuLoading />}>
