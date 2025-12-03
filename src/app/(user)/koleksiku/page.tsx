@@ -14,19 +14,24 @@ export const metadata = {
   description: "Kelola koleksi buku dan permintaan peminjamanmu",
 };
 
-async function CollectionData() {
+async function CollectionData({ page }: { page: number }) {
   const sessionUser = await getSessionUser();
 
   if (!sessionUser) {
     redirect("/login?from=koleksiku");
   }
 
-  // Fetch collections
-  const { data: collectionsData, error: collectionsError } = await supabaseServer
+  const ITEMS_PER_PAGE = 10;
+  const from = (page - 1) * ITEMS_PER_PAGE;
+  const to = from + ITEMS_PER_PAGE - 1;
+
+  // Fetch collections with pagination
+  const { data: collectionsData, error: collectionsError, count } = await supabaseServer
     .from('Book')
-    .select('*, reviews:Review(rating)')
+    .select('*, reviews:Review(rating)', { count: 'exact' })
     .eq('ownerId', sessionUser.id)
-    .order('createdAt', { ascending: false });
+    .order('createdAt', { ascending: false })
+    .range(from, to);
 
   const collections = (collectionsData || []).map((book: any) => {
     const reviews = book.reviews || [];
@@ -45,13 +50,17 @@ async function CollectionData() {
     console.error('Error fetching collections:', collectionsError);
   }
 
-  return <KoleksikuView collections={collections} />;
+  const totalPages = count ? Math.ceil(count / ITEMS_PER_PAGE) : 1;
+
+  return <KoleksikuView collections={collections} currentPage={page} totalPages={totalPages} />;
 }
 
-export default function KoleksikuPage() {
+export default function KoleksikuPage({ searchParams }: { searchParams: { page?: string } }) {
+  const page = Number(searchParams?.page) || 1;
+
   return (
     <Suspense fallback={<KoleksikuLoading />}>
-      <CollectionData />
+      <CollectionData page={page} />
     </Suspense>
   );
 }

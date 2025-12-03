@@ -55,6 +55,14 @@ export function CollectionForm({ onSubmit, onClose, isSubmitting, initialData, s
   const [selectedCategoryIndex, setSelectedCategoryIndex] = useState(-1);
   const categoryInputRef = useRef<HTMLInputElement>(null);
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Author Autocomplete State
+  const [availableAuthors, setAvailableAuthors] = useState<string[]>([]);
+  const [showAuthorDropdown, setShowAuthorDropdown] = useState(false);
+  const [filteredAuthors, setFilteredAuthors] = useState<string[]>([]);
+  const [selectedAuthorIndex, setSelectedAuthorIndex] = useState(-1);
+  const authorInputRef = useRef<HTMLInputElement>(null);
+  const authorDropdownRef = useRef<HTMLDivElement>(null);
   const isEditing = Boolean(initialData);
   const optionalNumericFields = useMemo(() => new Set<keyof CollectionPayload>(["publishedYear"]), []);
   const currentYear = useMemo(() => new Date().getFullYear() + 1, []);
@@ -71,19 +79,29 @@ export function CollectionForm({ onSubmit, onClose, isSubmitting, initialData, s
   );
 
   // Fetch available categories on mount
+  // Fetch available categories and authors on mount
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch("/api/categories");
-        if (response.ok) {
-          const result = await response.json();
+        const [categoriesRes, authorsRes] = await Promise.all([
+          fetch("/api/categories"),
+          fetch("/api/authors"),
+        ]);
+
+        if (categoriesRes.ok) {
+          const result = await categoriesRes.json();
           setAvailableCategories(result.data || []);
         }
+
+        if (authorsRes.ok) {
+          const result = await authorsRes.json();
+          setAvailableAuthors(result.data || []);
+        }
       } catch (error) {
-        console.error("Failed to fetch categories:", error);
+        console.error("Failed to fetch data:", error);
       }
     };
-    void fetchCategories();
+    void fetchData();
   }, []);
 
   // Handle click outside to close dropdown
@@ -97,12 +115,22 @@ export function CollectionForm({ onSubmit, onClose, isSubmitting, initialData, s
       ) {
         setShowCategoryDropdown(false);
       }
+
+      if (
+        authorDropdownRef.current &&
+        !authorDropdownRef.current.contains(event.target as Node) &&
+        authorInputRef.current &&
+        !authorInputRef.current.contains(event.target as Node)
+      ) {
+        setShowAuthorDropdown(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Filter categories based on input
   // Filter categories based on input
   useEffect(() => {
     const categoryValue = formState.category?.toLowerCase() || "";
@@ -116,6 +144,20 @@ export function CollectionForm({ onSubmit, onClose, isSubmitting, initialData, s
       setFilteredCategories([]);
     }
   }, [formState.category, availableCategories]);
+
+  // Filter authors based on input
+  useEffect(() => {
+    const authorValue = formState.author?.toLowerCase() || "";
+    if (authorValue.length > 0) {
+      const filtered = availableAuthors.filter((auth) =>
+        auth.toLowerCase().includes(authorValue)
+      );
+      setFilteredAuthors(filtered);
+      setSelectedAuthorIndex(-1);
+    } else {
+      setFilteredAuthors([]);
+    }
+  }, [formState.author, availableAuthors]);
 
   const handleChange =
     (field: keyof CollectionPayload) => (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -178,6 +220,50 @@ export function CollectionForm({ onSubmit, onClose, isSubmitting, initialData, s
     }
   };
 
+  const handleAuthorChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    setFormState((prev) => ({ ...prev, author: value }));
+    setShowAuthorDropdown(true);
+  };
+
+  const handleAuthorSelect = (author: string) => {
+    setFormState((prev) => ({ ...prev, author }));
+    setShowAuthorDropdown(false);
+    setSelectedAuthorIndex(-1);
+  };
+
+  const handleAuthorKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showAuthorDropdown || filteredAuthors.length === 0) {
+      if (event.key === "ArrowDown" && filteredAuthors.length > 0) {
+        setShowAuthorDropdown(true);
+      }
+      return;
+    }
+
+    switch (event.key) {
+      case "ArrowDown":
+        event.preventDefault();
+        setSelectedAuthorIndex((prev) =>
+          prev < filteredAuthors.length - 1 ? prev + 1 : prev
+        );
+        break;
+      case "ArrowUp":
+        event.preventDefault();
+        setSelectedAuthorIndex((prev) => (prev > 0 ? prev - 1 : -1));
+        break;
+      case "Enter":
+        event.preventDefault();
+        if (selectedAuthorIndex >= 0 && selectedAuthorIndex < filteredAuthors.length) {
+          handleAuthorSelect(filteredAuthors[selectedAuthorIndex]);
+        }
+        break;
+      case "Escape":
+        setShowAuthorDropdown(false);
+        setSelectedAuthorIndex(-1);
+        break;
+    }
+  };
+
   const handleCheckbox = (event: React.ChangeEvent<HTMLInputElement>) => {
     setFormState((prev) => ({ ...prev, lendable: event.target.checked }));
   };
@@ -221,15 +307,44 @@ export function CollectionForm({ onSubmit, onClose, isSubmitting, initialData, s
             placeholder="Misal: Laskar Pelangi"
           />
         </label>
-        <label className="text-sm font-medium text-slate-700">
+        <label className="relative text-sm font-medium text-slate-700">
           Penulis
           <input
+            ref={authorInputRef}
             value={formState.author}
-            onChange={handleChange("author")}
+            onChange={handleAuthorChange}
+            onKeyDown={handleAuthorKeyDown}
+            onFocus={() => {
+              if (filteredAuthors.length > 0) {
+                setShowAuthorDropdown(true);
+              }
+            }}
             required
             className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
             placeholder="Misal: Andrea Hirata"
+            autoComplete="off"
           />
+          {showAuthorDropdown && filteredAuthors.length > 0 && (
+            <div
+              ref={authorDropdownRef}
+              className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-2xl border border-slate-200 bg-white shadow-lg shadow-slate-200"
+            >
+              {filteredAuthors.map((author, index) => (
+                <button
+                  key={author}
+                  type="button"
+                  onClick={() => handleAuthorSelect(author)}
+                  className={`w-full px-4 py-2.5 text-left text-sm transition ${index === selectedAuthorIndex
+                    ? "bg-indigo-50 text-indigo-700"
+                    : "text-slate-700 hover:bg-slate-50"
+                    } ${index === 0 ? "rounded-t-2xl" : ""} ${index === filteredAuthors.length - 1 ? "rounded-b-2xl" : ""
+                    }`}
+                >
+                  {author}
+                </button>
+              ))}
+            </div>
+          )}
         </label>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">

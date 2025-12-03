@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { type Book } from "@/types/enums";
 
@@ -14,9 +15,12 @@ type CollectionBook = Book & {
 
 type KoleksikuViewProps = {
   collections: CollectionBook[];
+  currentPage: number;
+  totalPages: number;
 };
 
-export function KoleksikuView({ collections }: KoleksikuViewProps) {
+export function KoleksikuView({ collections, currentPage, totalPages }: KoleksikuViewProps) {
+  const router = useRouter();
   const [items, setItems] = useState<Book[]>(collections);
   const [isModalOpen, setModalOpen] = useState(false);
   const [isSubmitting, setSubmitting] = useState(false);
@@ -135,6 +139,28 @@ export function KoleksikuView({ collections }: KoleksikuViewProps) {
         <section className="space-y-4">
           <CollectionList collections={items} onEdit={openEditModal} onDelete={handleDelete} deletingId={deletingId} />
         </section>
+
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 pb-8">
+            <button
+              onClick={() => router.push(`/koleksiku?page=${currentPage - 1}`)}
+              disabled={currentPage <= 1}
+              className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Sebelumnya
+            </button>
+            <span className="text-sm font-medium text-slate-600">
+              Halaman {currentPage} dari {totalPages}
+            </span>
+            <button
+              onClick={() => router.push(`/koleksiku?page=${currentPage + 1}`)}
+              disabled={currentPage >= totalPages}
+              className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Selanjutnya
+            </button>
+          </div>
+        )}
       </div>
 
       {isModalOpen && (
