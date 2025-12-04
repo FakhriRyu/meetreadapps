@@ -1,7 +1,7 @@
 // @ts-nocheck - Temporary: Supabase returns ISO strings while types expect Date
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { type Book } from "@/types/enums";
@@ -119,6 +119,21 @@ export function KoleksikuView({ collections, currentPage, totalPages }: Koleksik
     }
     : undefined;
 
+  const paginationPages = useMemo(() => {
+    const windowSize = 3;
+    const start = Math.max(1, currentPage - windowSize);
+    const end = Math.min(totalPages, currentPage + windowSize);
+    const pages: number[] = [];
+    for (let i = start; i <= end; i += 1) {
+      pages.push(i);
+    }
+    return pages;
+  }, [currentPage, totalPages]);
+
+  const handlePageChange = (page: number) => {
+    router.push(`/koleksiku?page=${page}`);
+  };
+
   return (
     <div className="min-h-screen bg-[#f5f7ff] px-6 pb-28 pt-10 text-slate-900">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-10">
@@ -141,25 +156,43 @@ export function KoleksikuView({ collections, currentPage, totalPages }: Koleksik
         </section>
 
         {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-2 pb-8">
+          <nav className="flex flex-wrap items-center justify-center gap-2 pt-2 text-xs font-semibold text-slate-600">
             <button
-              onClick={() => router.push(`/koleksiku?page=${currentPage - 1}`)}
+              type="button"
+              onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage <= 1}
-              className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded-full border border-slate-200 bg-white px-3 py-1 transition hover:border-indigo-200 hover:text-indigo-600 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
             >
               Sebelumnya
             </button>
-            <span className="text-sm font-medium text-slate-600">
-              Halaman {currentPage} dari {totalPages}
-            </span>
+
+            {paginationPages[0] > 1 && (
+              <>
+                <PageButton page={1} active={currentPage === 1} onClick={handlePageChange} />
+                {paginationPages[0] > 2 && <span className="px-1 text-slate-400">…</span>}
+              </>
+            )}
+
+            {paginationPages.map((page) => (
+              <PageButton key={`page-${page}`} page={page} active={currentPage === page} onClick={handlePageChange} />
+            ))}
+
+            {paginationPages[paginationPages.length - 1] < totalPages && (
+              <>
+                {paginationPages[paginationPages.length - 1] < totalPages - 1 && <span className="px-1 text-slate-400">…</span>}
+                <PageButton page={totalPages} active={currentPage === totalPages} onClick={handlePageChange} />
+              </>
+            )}
+
             <button
-              onClick={() => router.push(`/koleksiku?page=${currentPage + 1}`)}
+              type="button"
+              onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage >= totalPages}
-              className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded-full border border-slate-200 bg-white px-3 py-1 transition hover:border-indigo-200 hover:text-indigo-600 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
             >
               Selanjutnya
             </button>
-          </div>
+          </nav>
         )}
       </div>
 
@@ -198,5 +231,28 @@ export function KoleksikuView({ collections, currentPage, totalPages }: Koleksik
         </div>
       )}
     </div>
+  );
+}
+
+function PageButton({
+  page,
+  active,
+  onClick,
+}: {
+  page: number;
+  active: boolean;
+  onClick: (page: number) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onClick(page)}
+      className={`rounded-full border px-3 py-1 transition ${active
+        ? "border-indigo-400 bg-indigo-500 text-white shadow-sm shadow-indigo-200"
+        : "border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-indigo-600"
+        }`}
+    >
+      {page}
+    </button>
   );
 }
