@@ -26,6 +26,19 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 import { JoinButton } from "@/components/silent-reading/join-button";
 
+// Safe date formatter to prevent crashes
+const safeFormatDate = (dateString: string | undefined | null, formatStr: string) => {
+    if (!dateString) return '-';
+    try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return '-';
+        return format(date, formatStr, { locale: idLocale });
+    } catch (e) {
+        console.error("Date formatting error:", e);
+        return '-';
+    }
+};
+
 async function EventDetails({ id }: { id: string }) {
     const sessionUser = await getSessionUser();
     const supabase = getSupabaseServer();
@@ -91,7 +104,7 @@ async function EventDetails({ id }: { id: string }) {
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="h-16 w-16">
                                 <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
                                 <circle cx="9" cy="9" r="2" />
-                                <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                                <path d="m21 15-3.086-3.086a2 0 0 0-2.828 0L6 21" />
                             </svg>
                         </div>
                     )}
@@ -102,7 +115,7 @@ async function EventDetails({ id }: { id: string }) {
                             {event.isActive ? 'Sedang Berlangsung' : 'Selesai'}
                         </span>
                         <span className="text-sm text-slate-500">
-                            {format(new Date(event.startDate), 'EEEE, d MMMM yyyy', { locale: idLocale })}
+                            {safeFormatDate(event.startDate, 'EEEE, d MMMM yyyy')}
                         </span>
                     </div>
                     <h1 className="text-2xl font-bold text-slate-900">{event.title}</h1>
@@ -145,7 +158,7 @@ async function EventDetails({ id }: { id: string }) {
                             <div className="mb-3 flex items-center gap-3">
                                 <div className="h-8 w-8 overflow-hidden rounded-full bg-slate-200">
                                     {(review.user as any)?.profileImage ? (
-                                        <Image src={(review.user as any).profileImage} alt={(review.user as any).name} width={32} height={32} className="h-full w-full object-cover" />
+                                        <Image src={(review.user as any).profileImage} alt={(review.user as any).name || 'User'} width={32} height={32} className="h-full w-full object-cover" />
                                     ) : (
                                         <div className="flex h-full w-full items-center justify-center bg-indigo-100 text-xs font-bold text-indigo-600">
                                             {(review.user as any)?.name?.substring(0, 2).toUpperCase() || 'U'}
@@ -154,7 +167,7 @@ async function EventDetails({ id }: { id: string }) {
                                 </div>
                                 <div>
                                     <p className="text-sm font-semibold text-slate-900">{(review.user as any)?.name || 'Pengguna'}</p>
-                                    <p className="text-xs text-slate-500">{review.createdAt ? format(new Date(review.createdAt), 'd MMM HH:mm', { locale: idLocale }) : '-'}</p>
+                                    <p className="text-xs text-slate-500">{safeFormatDate(review.createdAt, 'd MMM HH:mm')}</p>
                                 </div>
                             </div>
 
@@ -165,7 +178,7 @@ async function EventDetails({ id }: { id: string }) {
                                         <div className="h-16 w-12 flex-shrink-0 overflow-hidden rounded-md bg-slate-200 relative">
                                             <Image
                                                 src={(review.book as any).coverImageUrl || '/placeholder.png'}
-                                                alt={(review.book as any).title}
+                                                alt={(review.book as any).title || 'Buku'}
                                                 fill
                                                 className="object-cover"
                                             />
@@ -183,7 +196,7 @@ async function EventDetails({ id }: { id: string }) {
                                     <>
                                         <div className="h-16 w-12 flex-shrink-0 overflow-hidden rounded-md bg-slate-200 relative">
                                             {(review.manualData as any)?.coverUrl && (
-                                                <img src={(review.manualData as any).coverUrl} alt={(review.manualData as any).title} className="h-full w-full object-cover" />
+                                                <img src={(review.manualData as any).coverUrl} alt={(review.manualData as any).title || 'Buku'} className="h-full w-full object-cover" />
                                             )}
                                             {!(review.manualData as any)?.coverUrl && (
                                                 <div className="flex h-full w-full items-center justify-center text-xl">📚</div>
