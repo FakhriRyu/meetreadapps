@@ -9,11 +9,12 @@ import { BookOpen, Palette, PenTool, Sparkles } from "lucide-react";
 
 type SessionUser = {
   id: number;
-  name: string;
+  name: string | null;
   email: string;
   role: "USER" | "ADMIN";
   joinedAt?: Date | string;
   profileImage?: string | null;
+  phoneNumber?: string | null;
 };
 
 type HomeBook = Pick<
