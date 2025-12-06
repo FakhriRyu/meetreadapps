@@ -9,17 +9,19 @@ import { formatDate, formatNumber } from "@/lib/intl-format";
 
 type CollectionBook = Book & {
   averageRating?: number;
+  status: "AVAILABLE" | "PENDING" | "RESERVED" | "BORROWED" | "UNAVAILABLE";
+  dueDate?: string | null;
 };
 
 type CollectionListProps = {
   collections: CollectionBook[];
-  onEdit: (book: Book) => void;
-  onDelete: (book: Book) => void;
+  onEdit: (book: CollectionBook) => void;
+  onDelete: (book: CollectionBook) => void;
   deletingId?: number | null;
 };
 
 const STATUS_META: Record<
-  Book["status"],
+  CollectionBook["status"],
   { label: string; badgeClass: string }
 > = {
   AVAILABLE: {
