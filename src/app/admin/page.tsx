@@ -9,12 +9,13 @@ export default async function AdminPage() {
   const supabase = getSupabaseServer();
   const sessionUser = await getSessionUser();
 
-  const [booksResult, usersResult, reviewsResult, suggestionsResult, bannersResult] = await Promise.all([
+  const [booksResult, usersResult, reviewsResult, suggestionsResult, bannersResult, eventsResult] = await Promise.all([
     supabase.from('Book').select('*').order('createdAt', { ascending: false }),
     supabase.from('User').select('id, name, email, role, createdAt, updatedAt').order('createdAt', { ascending: false }),
     supabase.from('Review').select('*, user:User!Review_userId_fkey(id, name, profileImage), book:Book!Review_bookId_fkey(title, coverImageUrl)').order('createdAt', { ascending: false }),
     supabase.from('AppSuggestion').select('id, suggestion, createdAt, User(name, email, profileImage)').order('createdAt', { ascending: false }),
     supabase.from('Banner').select('*').order('order', { ascending: true }).order('createdAt', { ascending: false }),
+    supabase.from('SilentReadingEvent').select('*').order('startDate', { ascending: false }),
   ]);
 
   if (reviewsResult.error) {
@@ -23,14 +24,18 @@ export default async function AdminPage() {
   if (suggestionsResult.error) {
     console.error("Error fetching suggestions:", JSON.stringify(suggestionsResult.error, null, 2));
   }
+  if (eventsResult.error) {
+    console.error("Error fetching events:", JSON.stringify(eventsResult.error, null, 2));
+  }
 
   const books = booksResult.data || [];
   const users = usersResult.data || [];
   const reviews = reviewsResult.data || [];
   const suggestions = suggestionsResult.data || [];
   const banners = bannersResult.data || [];
+  const events = eventsResult.data || [];
 
-  console.log(`AdminPage: Fetched ${books.length} books, ${users.length} users, ${reviews.length} reviews, ${suggestions.length} suggestions, ${banners.length} banners`);
+  console.log(`AdminPage: Fetched ${books.length} books, ${users.length} users, ${reviews.length} reviews, ${suggestions.length} suggestions, ${banners.length} banners, ${events.length} events`);
 
   const managedUsers = users.map((user: any) => ({
     ...user,
@@ -46,6 +51,7 @@ export default async function AdminPage() {
       initialReviews={reviews}
       initialSuggestions={suggestions}
       initialBanners={banners}
+      initialEvents={events}
     />
   );
 }

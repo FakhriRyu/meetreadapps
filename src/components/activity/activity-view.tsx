@@ -6,18 +6,19 @@ import { BookStatus, BorrowRequestStatus, type Book, type BorrowRequest } from "
 import { formatDate } from "@/lib/intl-format";
 
 type RequestWithRelations = BorrowRequest & {
+    dueDate: string | null;
     book: Pick<
         Book,
-        "id" | "title" | "status" | "dueDate" | "availableCopies" | "totalCopies" | "ownerId" | "coverImageUrl"
+        "id" | "title" | "availableCopies" | "totalCopies" | "ownerId" | "coverImageUrl"
     > & {
         owner?: {
-            name: string;
+            name: string | null;
             phoneNumber?: string | null;
         } | null;
     };
     requester: {
         id: number;
-        name: string;
+        name: string | null;
         email: string;
         phoneNumber: string | null;
     };
@@ -124,8 +125,8 @@ export function ActivityView({ incomingRequests, outgoingRequests, activeLoans }
         setActionMessage("");
         setActionError(null);
         if (type === "approve" || type === "extend") {
-            const suggestedDate = request.book.dueDate
-                ? formatDateInput(new Date(request.book.dueDate))
+            const suggestedDate = request.dueDate
+                ? formatDateInput(new Date(request.dueDate))
                 : formatDateInput(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
             setActionDueDate(suggestedDate);
         } else {
@@ -479,7 +480,7 @@ export function ActivityView({ incomingRequests, outgoingRequests, activeLoans }
                                                 <div className="flex justify-between">
                                                     <span className="text-slate-500">Tenggat Waktu</span>
                                                     <span className="font-medium text-slate-800">
-                                                        {request.book.dueDate ? formatDate(request.book.dueDate) : "-"}
+                                                        {request.dueDate ? formatDate(request.dueDate) : "-"}
                                                     </span>
                                                 </div>
                                             </div>
@@ -619,10 +620,10 @@ export function ActivityView({ incomingRequests, outgoingRequests, activeLoans }
                                         <span className="text-slate-900">{formatDate(detailRequest.ownerDecisionAt)}</span>
                                     </div>
                                 )} */}
-                                {detailRequest.book.dueDate && detailRequest.status === BorrowRequestStatus.APPROVED && (
+                                {detailRequest.dueDate && detailRequest.status === BorrowRequestStatus.APPROVED && (
                                     <div className="flex justify-between text-sm">
                                         <span className="text-slate-500">Tenggat Waktu</span>
-                                        <span className="text-slate-900">{formatDate(detailRequest.book.dueDate)}</span>
+                                        <span className="text-slate-900">{formatDate(detailRequest.dueDate)}</span>
                                     </div>
                                 )}
                             </div>

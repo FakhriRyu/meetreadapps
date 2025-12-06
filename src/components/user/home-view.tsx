@@ -44,7 +44,7 @@ const DEFAULT_CATEGORY = "Semua";
 const PROFILE_PLACEHOLDER_AVATAR = "https://api.dicebear.com/7.x/initials/png";
 
 const MENU_ITEMS = [
-  { label: "SilentReading", icon: BookOpen, color: "bg-orange-100 text-orange-600", href: "/activity" },
+  { label: "SilentReading", icon: BookOpen, color: "bg-orange-100 text-orange-600", href: "/silent-reading" },
   { label: "MeetBrush", icon: Palette, color: "bg-purple-100 text-purple-600", href: "/coming-soon" },
   { label: "MeetWrite", icon: PenTool, color: "bg-pink-100 text-pink-600", href: "/coming-soon" },
   { label: "Coming soon", icon: Sparkles, color: "bg-slate-100 text-slate-600", href: "/coming-soon" },

@@ -5,7 +5,9 @@ import { getSupabaseServer } from "@/lib/supabase";
 import { getSessionUser } from "@/lib/session-supabase";
 import { ActivityView } from "@/components/activity/activity-view";
 
-export const revalidate = 10;
+import { BorrowRequestStatus } from "@/types/enums";
+
+export const revalidate = 0;
 
 export const metadata = {
     title: "Aktivitas - MeetRead",
@@ -27,8 +29,6 @@ async function ActivityData() {
       book:Book!BorrowRequest_bookId_fkey(
         id,
         title,
-        status,
-        dueDate,
         availableCopies,
         totalCopies,
         ownerId,
@@ -47,7 +47,11 @@ async function ActivityData() {
     // Filter requests to only include books owned by current user
     const incomingRequests = (incomingRequestsData || []).filter(
         (req: any) => req.book?.ownerId === sessionUser.id
-    );
+    ).map((req: any) => ({
+        ...req,
+        dueDate: req.endDate, // Map endDate to dueDate
+        status: req.status as BorrowRequestStatus // Explicit cast
+    }));
 
     // Fetch outgoing requests (my requests)
     const { data: outgoingRequestsData, error: outgoingError } = await getSupabaseServer()
@@ -57,8 +61,6 @@ async function ActivityData() {
             book:Book!BorrowRequest_bookId_fkey(
                 id,
                 title,
-                status,
-                dueDate,
                 availableCopies,
                 totalCopies,
                 ownerId,
@@ -78,11 +80,14 @@ async function ActivityData() {
         .eq('requesterId', sessionUser.id)
         .order('createdAt', { ascending: false });
 
-    const outgoingRequests = outgoingRequestsData || [];
+    const outgoingRequests = (outgoingRequestsData || []).map((req: any) => ({
+        ...req,
+        dueDate: req.endDate, // Map endDate to dueDate
+        status: req.status as BorrowRequestStatus // Explicit cast
+    }));
 
-    // Filter active loans (APPROVED status)
     const activeLoans = outgoingRequests.filter(
-        (req) => req.status === 'APPROVED'
+        (req: any) => req.status === 'APPROVED'
     );
 
     if (incomingError) {

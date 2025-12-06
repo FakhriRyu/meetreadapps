@@ -4,13 +4,15 @@ import { useMemo, useState, type ReactElement } from "react";
 import type { Book } from "@/types/enums";
 
 import { BookAdminPanel } from "@/components/books/book-admin-panel";
+import { BannerManagementPanel } from "./banner-management-panel";
 
 import { ManagedUser, UserManagementPanel } from "./user-management-panel";
 import { ReviewManagementPanel } from "./review-management-panel";
 import { SuggestionManagementPanel } from "./suggestion-management-panel";
-import { BannerManagementPanel } from "./banner-management-panel";
+import { SilentReadingEventPanel } from "./silent-reading-event-panel";
+import type { Database } from "@/types/database.types";
 
-type SectionKey = "books" | "users" | "reviews" | "suggestions" | "banners";
+type SectionKey = "books" | "users" | "reviews" | "suggestions" | "banners" | "silent-reading";
 
 type AdminDashboardProps = {
   adminName: string;
@@ -19,6 +21,7 @@ type AdminDashboardProps = {
   initialReviews: any[];
   initialSuggestions: any[];
   initialBanners: any[];
+  initialEvents: Database["public"]["Tables"]["SilentReadingEvent"]["Row"][];
 };
 
 const sections: Array<{
@@ -97,6 +100,24 @@ const sections: Array<{
       ),
     },
     {
+      id: "silent-reading",
+      label: "Silent Reading",
+      description: "Kelola jadwal acara Silent Reading komunitas.",
+      icon: (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          className="h-4 w-4"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.6"
+        >
+          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+        </svg>
+      ),
+    },
+    {
       id: "suggestions",
       label: "Saran Aplikasi",
       description: "Daftar masukan dan saran pengembangan dari pengguna.",
@@ -115,7 +136,7 @@ const sections: Array<{
     },
   ];
 
-export function AdminDashboard({ adminName, initialBooks, initialUsers, initialReviews, initialSuggestions, initialBanners }: AdminDashboardProps) {
+export function AdminDashboard({ adminName, initialBooks, initialUsers, initialReviews, initialSuggestions, initialBanners, initialEvents }: AdminDashboardProps) {
   const [activeSection, setActiveSection] = useState<SectionKey>("books");
 
   const current = useMemo(
@@ -217,7 +238,9 @@ export function AdminDashboard({ adminName, initialBooks, initialUsers, initialR
                   ? "Manajemen Pengguna"
                   : current.id === "reviews"
                     ? "Moderasi Review"
-                    : "Saran Aplikasi"}
+                    : current.id === "silent-reading"
+                      ? "Jadwal Silent Reading"
+                      : "Saran Aplikasi"}
           </h1>
           <p className="max-w-2xl text-sm text-slate-500">{current.description}</p>
         </header>
@@ -231,6 +254,8 @@ export function AdminDashboard({ adminName, initialBooks, initialUsers, initialR
             <UserManagementPanel initialUsers={initialUsers} />
           ) : activeSection === "reviews" ? (
             <ReviewManagementPanel initialReviews={initialReviews} />
+          ) : activeSection === "silent-reading" ? (
+            <SilentReadingEventPanel initialEvents={initialEvents} />
           ) : (
             <SuggestionManagementPanel initialSuggestions={initialSuggestions} />
           )}
