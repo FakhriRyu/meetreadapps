@@ -11,7 +11,7 @@ type Review = {
     createdAt: string;
     user: {
         id: string;
-        name: string;
+        name: string | null;
         profileImage: string | null;
     };
     book?: {
@@ -36,7 +36,7 @@ export function ReviewManagementPanel({ initialReviews }: ReviewManagementPanelP
         const query = searchQuery.toLowerCase();
         return (
             review.comment.toLowerCase().includes(query) ||
-            review.user.name.toLowerCase().includes(query) ||
+            (review.user.name ?? "").toLowerCase().includes(query) ||
             (review.book?.title.toLowerCase().includes(query) ?? false)
         );
     });
@@ -113,19 +113,19 @@ export function ReviewManagementPanel({ initialReviews }: ReviewManagementPanelP
                                     {review.user.profileImage ? (
                                         <Image
                                             src={review.user.profileImage}
-                                            alt={review.user.name}
+                                            alt={review.user.name ?? "User"}
                                             fill
                                             className="object-cover"
                                         />
                                     ) : (
                                         <div className="flex h-full w-full items-center justify-center text-xs font-bold text-slate-400">
-                                            {review.user.name.charAt(0)}
+                                            {(review.user.name ?? "U").charAt(0)}
                                         </div>
                                     )}
                                 </div>
                                 <div>
                                     <p className="text-sm font-semibold text-slate-900 line-clamp-1">
-                                        {review.user.name}
+                                        {review.user.name ?? "Pengguna"}
                                     </p>
                                     <p className="text-xs text-slate-500">
                                         {new Date(review.createdAt).toLocaleDateString("id-ID", {

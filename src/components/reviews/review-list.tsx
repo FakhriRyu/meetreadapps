@@ -12,7 +12,7 @@ type Review = {
     createdAt: string;
     user: {
         id: number;
-        name: string;
+        name: string | null;
         profileImage: string | null;
     };
 };
@@ -42,18 +42,18 @@ export function ReviewList({ reviews, sessionUser, onEdit }: ReviewListProps) {
                                 {review.user.profileImage ? (
                                     <Image
                                         src={review.user.profileImage}
-                                        alt={review.user.name}
+                                        alt={review.user.name ?? "User"}
                                         fill
                                         className="object-cover"
                                     />
                                 ) : (
                                     <div className="flex h-full w-full items-center justify-center bg-indigo-100 text-sm font-bold text-indigo-600">
-                                        {review.user.name.charAt(0).toUpperCase()}
+                                        {(review.user.name ?? "U").charAt(0).toUpperCase()}
                                     </div>
                                 )}
                             </div>
                             <div>
-                                <p className="font-bold text-slate-900">{review.user.name}</p>
+                                <p className="font-bold text-slate-900">{review.user.name ?? "Pengguna"}</p>
                                 <div className="mt-1">
                                     <StarRating rating={review.rating} readOnly size="sm" />
                                 </div>
