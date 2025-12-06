@@ -264,6 +264,48 @@ export type Database = {
           },
         ]
       }
+      Review: {
+        Row: {
+          id: number
+          bookId: number
+          userId: number
+          rating: number
+          comment: string
+          createdAt: string
+        }
+        Insert: {
+          id?: number
+          bookId: number
+          userId: number
+          rating: number
+          comment: string
+          createdAt?: string
+        }
+        Update: {
+          id?: number
+          bookId?: number
+          userId?: number
+          rating?: number
+          comment?: string
+          createdAt?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "Review_bookId_fkey"
+            columns: ["bookId"]
+            isOneToOne: false
+            referencedRelation: "Book"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "Review_userId_fkey"
+            columns: ["userId"]
+            isOneToOne: false
+            referencedRelation: "User"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       SilentReadingEvent: {
         Row: {
           createdAt: string
