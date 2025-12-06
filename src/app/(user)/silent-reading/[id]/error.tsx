@@ -76,11 +76,18 @@ export default function Error({
                     </button>
                 </div>
 
-                {error.digest && (
-                    <div className="mt-8 rounded-lg bg-slate-50 p-3 text-xs text-slate-400 font-mono break-all">
-                        Error ID: {error.digest}
-                    </div>
-                )}
+                {/* Debugging Info requested by user */}
+                <div className="mt-6 w-full rounded-xl bg-slate-50 p-4 text-left">
+                    <p className="mb-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Detail Error:</p>
+                    <code className="block w-full overflow-x-auto whitespace-pre-wrap text-sm text-rose-600 font-mono">
+                        {error.message || "Unknown error occurred"}
+                    </code>
+                    {error.digest && (
+                        <p className="mt-2 text-xs text-slate-400 font-mono">
+                            Digest: {error.digest}
+                        </p>
+                    )}
+                </div>
             </div>
         </div>
     );
