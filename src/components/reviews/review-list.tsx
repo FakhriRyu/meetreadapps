@@ -79,7 +79,14 @@ export function ReviewList({ reviews, sessionUser, onEdit }: ReviewListProps) {
 
                     <div className="flex items-center justify-between pt-2">
                         <span className="text-xs text-slate-400">
-                            {formatDistanceToNow(new Date(review.createdAt), { addSuffix: true, locale: id })}
+
+                            {(() => {
+                                try {
+                                    return formatDistanceToNow(new Date(review.createdAt), { addSuffix: true, locale: id });
+                                } catch {
+                                    return 'Baru saja';
+                                }
+                            })()}
                         </span>
                         {/* Decorative arrow similar to the design */}
                         <div className="text-slate-300">

@@ -124,7 +124,14 @@ export default function NotifikasiPage() {
                                             {notif.request.book.title}
                                         </h3>
                                         <span className="text-[10px] text-slate-400 whitespace-nowrap">
-                                            {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true, locale: id })}
+
+                                            {(() => {
+                                                try {
+                                                    return formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true, locale: id });
+                                                } catch {
+                                                    return '-';
+                                                }
+                                            })()}
                                         </span>
                                     </div>
                                     <p className="text-xs font-medium text-slate-700">

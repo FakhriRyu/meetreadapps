@@ -113,7 +113,13 @@ export function SilentReadingEventPanel({ initialEvents }: SilentReadingEventPan
         setTitle(event.title);
         setDescription(event.description || "");
         // Format date for datetime-local input (YYYY-MM-DDTHH:mm)
-        const date = new Date(event.startDate);
+        let date;
+        try {
+            date = new Date(event.startDate);
+            if (isNaN(date.getTime())) throw new Error("Invalid date");
+        } catch {
+            date = new Date(); // Fallback to now
+        }
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const day = String(date.getDate()).padStart(2, '0');
@@ -307,7 +313,13 @@ export function SilentReadingEventPanel({ initialEvents }: SilentReadingEventPan
                             <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
                                 <Calendar className="h-3.5 w-3.5" />
                                 <span>
-                                    {format(new Date(event.startDate), "EEEE, d MMMM yyyy • HH:mm", { locale: idLocale })}
+                                    {(() => {
+                                        try {
+                                            return format(new Date(event.startDate), "EEEE, d MMMM yyyy • HH:mm", { locale: idLocale });
+                                        } catch {
+                                            return '-';
+                                        }
+                                    })()}
                                 </span>
                             </div>
                             {event.description && (

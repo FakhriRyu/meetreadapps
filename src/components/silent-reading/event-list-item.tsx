@@ -87,7 +87,13 @@ export function EventListItem({ event, isJoined: initialIsJoined, userId }: Even
                         <line x1="3" x2="21" y1="10" y2="10" />
                     </svg>
                     <span>
-                        {format(new Date(event.startDate), 'EEEE, d MMMM yyyy', { locale: id })}
+                        {(() => {
+                            try {
+                                return format(new Date(event.startDate), 'EEEE, d MMMM yyyy', { locale: id });
+                            } catch {
+                                return '-';
+                            }
+                        })()}
                     </span>
                 </div>
                 <p className="mt-4 text-sm leading-relaxed text-slate-600 line-clamp-2">
