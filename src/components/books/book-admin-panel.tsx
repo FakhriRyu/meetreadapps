@@ -30,7 +30,7 @@ const emptyFormState: BookFormState = {
   description: "",
 };
 
-const toFormState = (book: Book): BookFormState => ({
+const toFormState = (book: AdminBook): BookFormState => ({
   title: book.title ?? "",
   author: book.author ?? "",
   category: book.category ?? "",
@@ -54,19 +54,23 @@ const toPayload = (state: BookFormState): BookFormData => ({
   description: state.description,
 });
 
+type AdminBook = Book & {
+  status?: "AVAILABLE" | "PENDING" | "RESERVED" | "BORROWED" | "UNAVAILABLE";
+};
+
 type BookAdminPanelProps = {
-  initialBooks: Book[];
+  initialBooks: AdminBook[];
 };
 
 export function BookAdminPanel({ initialBooks }: BookAdminPanelProps) {
-  const [books, setBooks] = useState<Book[]>(initialBooks);
+  const [books, setBooks] = useState<AdminBook[]>(initialBooks);
   const [search, setSearch] = useState("");
   const [formState, setFormState] = useState<BookFormState>(emptyFormState);
-  const [editingBook, setEditingBook] = useState<Book | null>(null);
+  const [editingBook, setEditingBook] = useState<AdminBook | null>(null);
   const [isModalOpen, setModalOpen] = useState(false);
   const [status, setStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [confirmingDelete, setConfirmingDelete] = useState<Book | null>(null);
+  const [confirmingDelete, setConfirmingDelete] = useState<AdminBook | null>(null);
 
   const filteredBooks = useMemo(() => {
     if (!search.trim()) {
@@ -110,7 +114,7 @@ export function BookAdminPanel({ initialBooks }: BookAdminPanelProps) {
     setModalOpen(true);
   };
 
-  const openEditModal = (book: Book) => {
+  const openEditModal = (book: AdminBook) => {
     setFormState(toFormState(book));
     setEditingBook(book);
     setStatus(null);
@@ -126,7 +130,7 @@ export function BookAdminPanel({ initialBooks }: BookAdminPanelProps) {
     }
   };
 
-  const updateBooksState = (next: Book) => {
+  const updateBooksState = (next: AdminBook) => {
     setBooks((current) => {
       const exists = current.some((book) => book.id === next.id);
       if (exists) {
@@ -165,7 +169,7 @@ export function BookAdminPanel({ initialBooks }: BookAdminPanelProps) {
         throw new Error(result.error ?? "Terjadi kesalahan.");
       }
 
-      updateBooksState(result.data);
+      updateBooksState(result.data as AdminBook);
       setStatus({
         type: "success",
         message: editingBook ? "Data buku berhasil diperbarui." : "Buku baru berhasil ditambahkan.",
@@ -186,7 +190,7 @@ export function BookAdminPanel({ initialBooks }: BookAdminPanelProps) {
     }
   };
 
-  const handleDelete = async (book: Book) => {
+  const handleDelete = async (book: AdminBook) => {
     setStatus(null);
     setConfirmingDelete(book);
   };
@@ -271,8 +275,8 @@ export function BookAdminPanel({ initialBooks }: BookAdminPanelProps) {
         {status && (
           <div
             className={`mt-6 rounded-2xl border p-4 text-sm font-medium ${status.type === "success"
-                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                : "border-rose-200 bg-rose-50 text-rose-700"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+              : "border-rose-200 bg-rose-50 text-rose-700"
               }`}
           >
             {status.message}
@@ -338,8 +342,8 @@ export function BookAdminPanel({ initialBooks }: BookAdminPanelProps) {
                         )}
                         {book.status && book.status !== "AVAILABLE" && (
                           <span className={`inline-flex w-fit rounded-full px-3 py-1 text-xs font-medium ${book.status === "PENDING" ? "bg-amber-100 text-amber-700" :
-                              book.status === "BORROWED" ? "bg-indigo-100 text-indigo-700" :
-                                "bg-slate-100 text-slate-700"
+                            book.status === "BORROWED" ? "bg-indigo-100 text-indigo-700" :
+                              "bg-slate-100 text-slate-700"
                             }`}>
                             {book.status}
                           </span>
