@@ -69,9 +69,6 @@ export function EventListItem({ event, isJoined: initialIsJoined, userId }: Even
                     </div>
                 )}
                 <div className="absolute top-3 right-3">
-                    <span className="inline-block rounded-full bg-white/90 backdrop-blur-sm px-3 py-1 text-xs font-semibold text-indigo-600 shadow-sm">
-                        Topik Minggu Ini
-                    </span>
                 </div>
             </div>
 
