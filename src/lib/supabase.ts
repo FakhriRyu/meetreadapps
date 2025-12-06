@@ -29,8 +29,11 @@ export function getSupabaseServer() {
 // Client-side client with anon key (Row Level Security applied)
 // Use this for client components
 export function createSupabaseClient() {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    throw new Error('Missing Supabase environment variables')
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_URL')
+  }
+  if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_ANON_KEY')
   }
 
   return createClient<Database>(

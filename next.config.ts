@@ -22,6 +22,11 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   compress: true,
+  // Env vars configuration
+  env: {
+    NEXT_PUBLIC_SUPABASE_URL: "https://zmfoiuhjdsozeuriwzkb.supabase.co",
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZm9pdWhqZHNvemV1cml3emtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE5NzU4ODYsImV4cCI6MjA3NzU1MTg4Nn0.CKdURB8NHZ8Bzp4MS-xxF-nuVOrSbbgGkEgz_iK37nM",
+  },
   productionBrowserSourceMaps: false,
 };
 
