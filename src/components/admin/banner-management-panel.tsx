@@ -130,7 +130,7 @@ export function BannerManagementPanel({ initialBanners }: BannerManagementPanelP
                                     className="block w-full text-sm text-slate-500 file:mr-4 file:rounded-full file:border-0 file:bg-indigo-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-indigo-700 hover:file:bg-indigo-100"
                                     required
                                 />
-                                <p className="mt-1 text-xs text-slate-500">Format: JPG, PNG, WEBP. Ukuran disarankan: 1200x400px.</p>
+                                <p className="mt-1 text-xs text-slate-500">Format: JPG, PNG, WEBP. Ukuran disarankan: 1200x600px.</p>
                             </div>
                             {previewUrl && (
                                 <div className="relative h-20 w-40 overflow-hidden rounded-lg border border-slate-200 bg-slate-100">

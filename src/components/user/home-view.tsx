@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useMemo, useState, useEffect } from "react";
 import type { Book } from "@/types/enums";
 import { StarRating } from "@/components/ui/star-rating";
+import { BookOpen, Palette, PenTool, Sparkles } from "lucide-react";
 
 type SessionUser = {
   id: number;
@@ -41,6 +42,13 @@ type HomeViewProps = {
 
 const DEFAULT_CATEGORY = "Semua";
 const PROFILE_PLACEHOLDER_AVATAR = "https://api.dicebear.com/7.x/initials/png";
+
+const MENU_ITEMS = [
+  { label: "SilentReading", icon: BookOpen, color: "bg-orange-100 text-orange-600", href: "/activity" },
+  { label: "MeetBrush", icon: Palette, color: "bg-purple-100 text-purple-600", href: "/coming-soon" },
+  { label: "MeetWrite", icon: PenTool, color: "bg-pink-100 text-pink-600", href: "/coming-soon" },
+  { label: "Coming soon", icon: Sparkles, color: "bg-slate-100 text-slate-600", href: "/coming-soon" },
+];
 
 export function HomeView({ books, sessionUser, banners }: HomeViewProps) {
   const [search, setSearch] = useState("");
@@ -333,6 +341,23 @@ export function HomeView({ books, sessionUser, banners }: HomeViewProps) {
       </section>
 
       <main className="mx-auto flex w-full max-w-6xl flex-col px-6 space-y-6 mt-6">
+        {/* Menu Grid */}
+        {/* Menu Grid - Minimalist Circles */}
+        <section className="flex items-start justify-between px-2 sm:px-8">
+          {MENU_ITEMS.map((item) => (
+            <Link key={item.label} href={item.href} className="flex flex-col items-center gap-2 group cursor-pointer w-20">
+              <div
+                className={`flex h-14 w-14 items-center justify-center rounded-full shadow-sm transition-transform duration-300 group-hover:-translate-y-1 group-hover:shadow-md ${item.color} bg-white`}
+              >
+                <item.icon className="h-6 w-6" />
+              </div>
+              <span className="text-xs font-medium text-slate-700 text-center leading-tight">
+                {item.label}
+              </span>
+            </Link>
+          ))}
+        </section>
+
         <section className="space-y-6">
           <div className="-mx-2 flex gap-2 overflow-x-auto pb-1">
             {categories.map((category) => {
