@@ -1,13 +1,13 @@
 
 import { Suspense } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getSupabaseServer } from "@/lib/supabase";
 import { getSessionUser } from "@/lib/session-supabase";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
 import { AddReviewButton } from "@/components/silent-reading/add-review-button";
+import { SafeImage } from "@/components/ui/safe-image";
 
 export const revalidate = 0;
 
@@ -91,23 +91,22 @@ async function EventDetails({ id }: { id: string }) {
         <div className="flex flex-col gap-6">
             <header className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
                 <div className="relative h-64 w-full bg-slate-100">
-                    {event.coverImageUrl ? (
-                        <Image
-                            src={event.coverImageUrl}
-                            alt={event.title}
-                            fill
-                            className="object-cover"
-                            priority
-                        />
-                    ) : (
-                        <div className="flex h-full w-full items-center justify-center bg-indigo-50 text-indigo-300">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="h-16 w-16">
-                                <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
-                                <circle cx="9" cy="9" r="2" />
-                                <path d="m21 15-3.086-3.086a2 0 0 0-2.828 0L6 21" />
-                            </svg>
-                        </div>
-                    )}
+                    <SafeImage
+                        src={event.coverImageUrl || ''}
+                        alt={event.title}
+                        fill
+                        className="object-cover"
+                        priority
+                        fallbackContent={
+                            <div className="flex h-full w-full items-center justify-center bg-indigo-50 text-indigo-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="h-16 w-16">
+                                    <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+                                    <circle cx="9" cy="9" r="2" />
+                                    <path d="m21 15-3.086-3.086a2 0 0 0-2.828 0L6 21" />
+                                </svg>
+                            </div>
+                        }
+                    />
                 </div>
                 <div className="p-6">
                     <div className="mb-4 flex items-center gap-2">
@@ -157,13 +156,18 @@ async function EventDetails({ id }: { id: string }) {
                             {/* User info */}
                             <div className="mb-3 flex items-center gap-3">
                                 <div className="h-8 w-8 overflow-hidden rounded-full bg-slate-200">
-                                    {(review.user as any)?.profileImage ? (
-                                        <Image src={(review.user as any).profileImage} alt={(review.user as any).name || 'User'} width={32} height={32} className="h-full w-full object-cover" />
-                                    ) : (
-                                        <div className="flex h-full w-full items-center justify-center bg-indigo-100 text-xs font-bold text-indigo-600">
-                                            {(review.user as any)?.name?.substring(0, 2).toUpperCase() || 'U'}
-                                        </div>
-                                    )}
+                                    <SafeImage
+                                        src={(review.user as any)?.profileImage || ''}
+                                        alt={(review.user as any)?.name || 'User'}
+                                        width={32}
+                                        height={32}
+                                        className="h-full w-full object-cover"
+                                        fallbackContent={
+                                            <div className="flex h-full w-full items-center justify-center bg-indigo-100 text-xs font-bold text-indigo-600">
+                                                {(review.user as any)?.name?.substring(0, 2).toUpperCase() || 'U'}
+                                            </div>
+                                        }
+                                    />
                                 </div>
                                 <div>
                                     <p className="text-sm font-semibold text-slate-900">{(review.user as any)?.name || 'Pengguna'}</p>
@@ -176,7 +180,7 @@ async function EventDetails({ id }: { id: string }) {
                                 {review.entryType === 'BOOK_DB' && (review.book as any) && (
                                     <>
                                         <div className="h-16 w-12 flex-shrink-0 overflow-hidden rounded-md bg-slate-200 relative">
-                                            <Image
+                                            <SafeImage
                                                 src={(review.book as any).coverImageUrl || '/placeholder.png'}
                                                 alt={(review.book as any).title || 'Buku'}
                                                 fill
@@ -195,10 +199,9 @@ async function EventDetails({ id }: { id: string }) {
                                 {review.entryType === 'BOOK_MANUAL' && (
                                     <>
                                         <div className="h-16 w-12 flex-shrink-0 overflow-hidden rounded-md bg-slate-200 relative">
-                                            {(review.manualData as any)?.coverUrl && (
+                                            {(review.manualData as any)?.coverUrl ? (
                                                 <img src={(review.manualData as any).coverUrl} alt={(review.manualData as any).title || 'Buku'} className="h-full w-full object-cover" />
-                                            )}
-                                            {!(review.manualData as any)?.coverUrl && (
+                                            ) : (
                                                 <div className="flex h-full w-full items-center justify-center text-xl">📚</div>
                                             )}
                                         </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { SafeImage } from "@/components/ui/safe-image";
 import { formatDistanceToNow } from "date-fns";
 import { id } from "date-fns/locale";
 import { StarRating } from "@/components/ui/star-rating";
@@ -39,18 +39,17 @@ export function ReviewList({ reviews, sessionUser, onEdit }: ReviewListProps) {
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
                             <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-full border border-slate-100 bg-slate-100">
-                                {review.user.profileImage ? (
-                                    <Image
-                                        src={review.user.profileImage}
-                                        alt={review.user.name ?? "User"}
-                                        fill
-                                        className="object-cover"
-                                    />
-                                ) : (
-                                    <div className="flex h-full w-full items-center justify-center bg-indigo-100 text-sm font-bold text-indigo-600">
-                                        {(review.user.name ?? "U").charAt(0).toUpperCase()}
-                                    </div>
-                                )}
+                                <SafeImage
+                                    src={review.user.profileImage || ''}
+                                    alt={review.user.name ?? "User"}
+                                    fill
+                                    className="object-cover"
+                                    fallbackContent={
+                                        <div className="flex h-full w-full items-center justify-center bg-indigo-100 text-sm font-bold text-indigo-600">
+                                            {(review.user.name ?? "U").charAt(0).toUpperCase()}
+                                        </div>
+                                    }
+                                />
                             </div>
                             <div>
                                 <p className="font-bold text-slate-900">{review.user.name ?? "Pengguna"}</p>
