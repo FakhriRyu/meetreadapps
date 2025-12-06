@@ -33,7 +33,7 @@ type DetailBook = {
 
 type SessionUser = {
   id: number;
-  name: string;
+  name: string | null;
   email: string;
   role: "USER" | "ADMIN";
   joinedAt?: Date;

@@ -8,7 +8,7 @@ import { User, Shield, MessageSquare, LogOut, ChevronRight, Moon } from "lucide-
 
 type SessionUser = {
   id: number;
-  name: string;
+  name: string | null;
   email: string;
   role: "USER" | "ADMIN";
   phoneNumber?: string | null;

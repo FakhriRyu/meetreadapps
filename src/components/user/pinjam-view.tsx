@@ -9,7 +9,7 @@ import { openWhatsApp } from "@/lib/whatsapp";
 
 type SessionUser = {
   id: number;
-  name: string;
+  name: string | null;
   email: string;
   role: "USER" | "ADMIN";
 };
@@ -24,6 +24,7 @@ type PageInfo = {
 
 type PinjamBook = Book & {
   averageRating?: number;
+  status: "AVAILABLE" | "PENDING" | "RESERVED" | "BORROWED" | "UNAVAILABLE";
 };
 
 type PinjamViewProps = {
@@ -33,7 +34,7 @@ type PinjamViewProps = {
 };
 
 const STATUS_META: Record<
-  Book["status"],
+  PinjamBook["status"],
   { label: string; badgeClass: string; helpText?: string }
 > = {
   AVAILABLE: {
@@ -68,11 +69,11 @@ export function PinjamView({ books, sessionUser, pageInfo }: PinjamViewProps) {
 
   const [search, setSearch] = useState(pageInfo.query);
   const [requestingId, setRequestingId] = useState<number | null>(null);
-  const [confirmingBook, setConfirmingBook] = useState<Book | null>(null);
+  const [confirmingBook, setConfirmingBook] = useState<PinjamBook | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
   const isAuthenticated = Boolean(sessionUser);
 
-  const handleBorrowClick = (book: Book) => {
+  const handleBorrowClick = (book: PinjamBook) => {
     if (!isAuthenticated) {
       window.location.assign(`/login?from=pinjam&book=${book.id}`);
       return;
