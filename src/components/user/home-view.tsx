@@ -6,6 +6,7 @@ import { useMemo, useState, useEffect } from "react";
 import type { Book } from "@/types/enums";
 import { StarRating } from "@/components/ui/star-rating";
 import { BookOpen, Palette, PenTool, Sparkles } from "lucide-react";
+import { ComingSoonModal } from "@/components/ui/coming-soon-modal";
 
 type SessionUser = {
   id: number;
@@ -56,6 +57,7 @@ export function HomeView({ books, sessionUser, banners }: HomeViewProps) {
   const [activeCategory, setActiveCategory] = useState<string>(DEFAULT_CATEGORY);
   const [activeAuthor, setActiveAuthor] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [showComingSoon, setShowComingSoon] = useState(false);
 
   useEffect(() => {
     const fetchUnreadCount = async () => {
@@ -345,19 +347,37 @@ export function HomeView({ books, sessionUser, banners }: HomeViewProps) {
         {/* Menu Grid */}
         {/* Menu Grid - Minimalist Circles */}
         <section className="flex items-start justify-between px-2 sm:px-8">
-          {MENU_ITEMS.map((item) => (
-            <Link key={item.label} href={item.href} className="flex flex-col items-center gap-2 group cursor-pointer w-20">
-              <div
-                className={`flex h-14 w-14 items-center justify-center rounded-full shadow-sm transition-transform duration-300 group-hover:-translate-y-1 group-hover:shadow-md ${item.color} bg-white`}
+          {MENU_ITEMS.map((item) => {
+            const isComingSoon = item.href === "/coming-soon";
+            return (
+              <Link
+                key={item.label}
+                href={item.href}
+                onClick={(e) => {
+                  if (isComingSoon) {
+                    e.preventDefault();
+                    setShowComingSoon(true);
+                  }
+                }}
+                className="flex flex-col items-center gap-2 group cursor-pointer w-20"
               >
-                <item.icon className="h-6 w-6" />
-              </div>
-              <span className="text-xs font-medium text-slate-700 text-center leading-tight">
-                {item.label}
-              </span>
-            </Link>
-          ))}
+                <div
+                  className={`flex h-14 w-14 items-center justify-center rounded-full shadow-sm transition-transform duration-300 group-hover:-translate-y-1 group-hover:shadow-md ${item.color} bg-white`}
+                >
+                  <item.icon className="h-6 w-6" />
+                </div>
+                <span className="text-xs font-medium text-slate-700 text-center leading-tight">
+                  {item.label}
+                </span>
+              </Link>
+            );
+          })}
         </section>
+
+        <ComingSoonModal
+          isOpen={showComingSoon}
+          onClose={() => setShowComingSoon(false)}
+        />
 
         <section className="space-y-6">
           <div className="-mx-2 flex gap-2 overflow-x-auto pb-1">
