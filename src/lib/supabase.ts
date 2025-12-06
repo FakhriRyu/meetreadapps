@@ -24,7 +24,7 @@ export function getSupabaseServer() {
 
 // Server-side client with service role key (full access)
 // Use this for server components and API routes
-export const supabaseServer = getSupabaseServer()
+// export const supabaseServer = getSupabaseServer()
 
 // Client-side client with anon key (Row Level Security applied)
 // Use this for client components
@@ -32,7 +32,7 @@ export function createSupabaseClient() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     throw new Error('Missing Supabase environment variables')
   }
-  
+
   return createClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY

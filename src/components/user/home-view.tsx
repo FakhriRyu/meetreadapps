@@ -24,15 +24,25 @@ type HomeBook = Pick<
 };
 
 
+type Banner = {
+  id: number;
+  title: string;
+  imageUrl: string;
+  order: number;
+  isActive: boolean;
+  createdAt: string;
+};
+
 type HomeViewProps = {
   books: HomeBook[];
   sessionUser: SessionUser | null;
+  banners: Banner[];
 };
 
 const DEFAULT_CATEGORY = "Semua";
 const PROFILE_PLACEHOLDER_AVATAR = "https://api.dicebear.com/7.x/initials/png";
 
-export function HomeView({ books, sessionUser }: HomeViewProps) {
+export function HomeView({ books, sessionUser, banners }: HomeViewProps) {
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>(DEFAULT_CATEGORY);
   const [activeAuthor, setActiveAuthor] = useState<string | null>(null);
@@ -53,6 +63,16 @@ export function HomeView({ books, sessionUser }: HomeViewProps) {
 
     fetchUnreadCount();
   }, []);
+
+  const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
+
+  useEffect(() => {
+    if (banners.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [banners.length]);
 
   const categories = useMemo(() => {
     const unique = new Set<string>();
@@ -198,12 +218,11 @@ export function HomeView({ books, sessionUser }: HomeViewProps) {
   const firstName = sessionUser?.name?.split(" ")[0] ?? "Pembaca";
 
   return (
-    <div className="min-h-screen bg-[#f5f7ff] text-slate-900">
-      <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-6 pb-24 pt-10">
+    <div className="min-h-screen bg-[#f5f7ff] text-slate-900 pb-24">
+      <div className="mx-auto w-full max-w-6xl px-6 pt-10">
         <header className="flex items-start justify-between gap-6">
           <div className="space-y-1">
             <p className="text-sm text-slate-500">Hai, {firstName}! 👋</p>
-            <h1 className="text-2xl font-semibold text-slate-900">Temukan bacaan favoritmu.</h1>
           </div>
           <div className="flex items-center gap-3">
             <Link
@@ -237,19 +256,84 @@ export function HomeView({ books, sessionUser }: HomeViewProps) {
           </div>
         </header>
 
-        <section className="mt-8 space-y-6">
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-100">
-            <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-              <MagnifierIcon className="h-5 w-5 text-slate-400" />
-              <input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Cari judul, penulis, atau kategori..."
-                className="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 focus:outline-none"
-              />
-            </div>
-          </div>
+        {/* Search Bar - Moved here */}
+        <div className="mt-8 flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-md">
+          <MagnifierIcon className="h-5 w-5 text-slate-400" />
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Cari judul, penulis, atau kategori..."
+            className="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 focus:outline-none"
+          />
+        </div>
+      </div>
 
+      {/* Full Width Banner Section */}
+      <section className="mt-8 w-full">
+        {/* Banner Carousel - Removed rounded-3xl and px-6 padding context */}
+        <div className="relative w-full overflow-hidden bg-slate-100 shadow-md">
+          {banners.length > 0 ? (
+            <>
+              <div
+                className="flex transition-transform duration-500 ease-in-out"
+                style={{ transform: `translateX(-${currentBannerIndex * 100}%)` }}
+              >
+                {banners.map((banner) => (
+                  <div key={banner.id} className="relative w-full flex-shrink-0">
+                    <Image
+                      src={banner.imageUrl}
+                      alt={banner.title}
+                      width={0}
+                      height={0}
+                      sizes="100vw"
+                      style={{ width: '100%', height: 'auto' }}
+                      priority
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Dots Indicator */}
+              {banners.length > 1 && (
+                <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-2">
+                  {banners.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentBannerIndex(index)}
+                      className={`h-2 w-2 rounded-full transition-all ${index === currentBannerIndex ? "w-6 bg-white" : "bg-white/50 hover:bg-white/80"
+                        }`}
+                      aria-label={`Go to slide ${index + 1}`}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
+          ) : (
+            // Placeholder Banner
+            <div className="relative aspect-[2.5/1] w-full sm:aspect-[3/1] md:aspect-[4/1] bg-gradient-to-r from-indigo-500 to-purple-600">
+              <div className="absolute inset-0 flex flex-col justify-center px-8 text-white">
+                <span className="mb-2 inline-block w-fit rounded-lg bg-white/20 px-3 py-1 text-xs font-semibold backdrop-blur-sm">
+                  Promo Spesial
+                </span>
+                <h2 className="text-2xl font-bold sm:text-3xl md:text-4xl">
+                  Temukan Buku <br /> Favoritmu Disini
+                </h2>
+                <p className="mt-2 text-sm text-indigo-100 sm:text-base">
+                  Jelajahi ribuan koleksi buku menarik untukmu.
+                </p>
+              </div>
+              <div className="absolute bottom-0 right-0 h-full w-1/2 opacity-20">
+                <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" className="h-full w-full">
+                  <path fill="#FFFFFF" d="M44.7,-76.4C58.9,-69.2,71.8,-59.1,81.6,-46.6C91.4,-34.1,98.1,-19.2,95.8,-5.3C93.5,8.6,82.2,21.5,70.9,32.2C59.6,42.9,48.3,51.4,36.4,58.3C24.5,65.2,12,70.5,-0.3,71C-12.6,71.5,-25.2,67.2,-36.4,60.1C-47.6,53,-57.4,43.1,-65.4,31.4C-73.4,19.7,-79.6,6.2,-78.3,-6.8C-77,-19.8,-68.2,-32.3,-58.1,-42.6C-48,-52.9,-36.6,-61,-24.5,-69.6C-12.4,-78.2,0.4,-87.3,13.2,-87.1C26,-86.9,30.5,-100.2,44.7,-76.4Z" transform="translate(100 100)" />
+                </svg>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <main className="mx-auto flex w-full max-w-6xl flex-col px-6 space-y-6 mt-6">
+        <section className="space-y-6">
           <div className="-mx-2 flex gap-2 overflow-x-auto pb-1">
             {categories.map((category) => {
               const isActive = category === resolvedCategory;

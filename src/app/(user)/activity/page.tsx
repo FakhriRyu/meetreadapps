@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 
-import { supabaseServer } from "@/lib/supabase";
+import { getSupabaseServer } from "@/lib/supabase";
 import { getSessionUser } from "@/lib/session-supabase";
 import { ActivityView } from "@/components/activity/activity-view";
 
@@ -20,7 +20,7 @@ async function ActivityData() {
     }
 
     // Fetch incoming requests (requests for my books)
-    const { data: incomingRequestsData, error: incomingError } = await supabaseServer
+    const { data: incomingRequestsData, error: incomingError } = await getSupabaseServer()
         .from('BorrowRequest')
         .select(`
       *,
@@ -50,7 +50,7 @@ async function ActivityData() {
     );
 
     // Fetch outgoing requests (my requests)
-    const { data: outgoingRequestsData, error: outgoingError } = await supabaseServer
+    const { data: outgoingRequestsData, error: outgoingError } = await getSupabaseServer()
         .from('BorrowRequest')
         .select(`
             *,

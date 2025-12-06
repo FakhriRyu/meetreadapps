@@ -73,8 +73,35 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "User"
             referencedColumns: ["id"]
-          }
+          },
         ]
+      }
+      Banner: {
+        Row: {
+          createdAt: string
+          id: number
+          imageUrl: string
+          isActive: boolean | null
+          order: number | null
+          title: string
+        }
+        Insert: {
+          createdAt?: string
+          id?: number
+          imageUrl: string
+          isActive?: boolean | null
+          order?: number | null
+          title: string
+        }
+        Update: {
+          createdAt?: string
+          id?: number
+          imageUrl?: string
+          isActive?: boolean | null
+          order?: number | null
+          title?: string
+        }
+        Relationships: []
       }
       Book: {
         Row: {
@@ -88,8 +115,10 @@ export type Database = {
           dueDate: string | null
           id: number
           isbn: string | null
+          lendable: boolean
           ownerId: number | null
           publishedYear: number | null
+          source: string
           status: Database["public"]["Enums"]["BookStatus"]
           title: string
           totalCopies: number
@@ -106,8 +135,10 @@ export type Database = {
           dueDate?: string | null
           id?: number
           isbn?: string | null
+          lendable?: boolean
           ownerId?: number | null
           publishedYear?: number | null
+          source?: string
           status?: Database["public"]["Enums"]["BookStatus"]
           title: string
           totalCopies: number
@@ -124,8 +155,10 @@ export type Database = {
           dueDate?: string | null
           id?: number
           isbn?: string | null
+          lendable?: boolean
           ownerId?: number | null
           publishedYear?: number | null
+          source?: string
           status?: Database["public"]["Enums"]["BookStatus"]
           title?: string
           totalCopies?: number
@@ -145,14 +178,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "User"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       BorrowNotification: {
         Row: {
           createdAt: string
           id: number
-          isRead: boolean
           message: string | null
           requestId: number
           type: Database["public"]["Enums"]["NotificationType"]
@@ -160,7 +192,6 @@ export type Database = {
         Insert: {
           createdAt?: string
           id?: number
-          isRead?: boolean
           message?: string | null
           requestId: number
           type: Database["public"]["Enums"]["NotificationType"]
@@ -168,7 +199,6 @@ export type Database = {
         Update: {
           createdAt?: string
           id?: number
-          isRead?: boolean
           message?: string | null
           requestId?: number
           type?: Database["public"]["Enums"]["NotificationType"]
@@ -180,39 +210,45 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "BorrowRequest"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       BorrowRequest: {
         Row: {
           bookId: number
           createdAt: string
-          endDate: string
           id: number
+          message: string | null
+          ownerDecisionAt: string | null
+          ownerMessage: string | null
           requesterId: number
-          startDate: string
           status: Database["public"]["Enums"]["BorrowRequestStatus"]
           updatedAt: string
+          whatsappUrl: string | null
         }
         Insert: {
           bookId: number
           createdAt?: string
-          endDate: string
           id?: number
+          message?: string | null
+          ownerDecisionAt?: string | null
+          ownerMessage?: string | null
           requesterId: number
-          startDate: string
           status?: Database["public"]["Enums"]["BorrowRequestStatus"]
           updatedAt: string
+          whatsappUrl?: string | null
         }
         Update: {
           bookId?: number
           createdAt?: string
-          endDate?: string
           id?: number
+          message?: string | null
+          ownerDecisionAt?: string | null
+          ownerMessage?: string | null
           requesterId?: number
-          startDate?: string
           status?: Database["public"]["Enums"]["BorrowRequestStatus"]
           updatedAt?: string
+          whatsappUrl?: string | null
         }
         Relationships: [
           {
@@ -228,7 +264,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "User"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       Review: {
@@ -270,7 +306,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "User"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       User: {
@@ -279,7 +315,7 @@ export type Database = {
           email: string
           id: number
           name: string
-          password: string
+          passwordHash: string
           phoneNumber: string | null
           profileImage: string | null
           role: Database["public"]["Enums"]["UserRole"]
@@ -290,7 +326,7 @@ export type Database = {
           email: string
           id?: number
           name: string
-          password: string
+          passwordHash: string
           phoneNumber?: string | null
           profileImage?: string | null
           role?: Database["public"]["Enums"]["UserRole"]
@@ -301,7 +337,7 @@ export type Database = {
           email?: string
           id?: number
           name?: string
-          password?: string
+          passwordHash?: string
           phoneNumber?: string | null
           profileImage?: string | null
           role?: Database["public"]["Enums"]["UserRole"]
@@ -317,24 +353,9 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      BookStatus:
-      | "AVAILABLE"
-      | "PENDING"
-      | "RESERVED"
-      | "BORROWED"
-      | "UNAVAILABLE"
-      BorrowRequestStatus:
-      | "PENDING"
-      | "APPROVED"
-      | "REJECTED"
-      | "CANCELLED"
-      | "RETURNED"
-      NotificationType:
-      | "APPROVED"
-      | "REJECTED"
-      | "CANCELLED"
-      | "EXTENDED"
-      | "RETURNED"
+      BookStatus: "AVAILABLE" | "PENDING" | "RESERVED" | "BORROWED" | "UNAVAILABLE"
+      BorrowRequestStatus: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED" | "RETURNED"
+      NotificationType: "APPROVED" | "REJECTED" | "CANCELLED" | "EXTENDED" | "RETURNED"
       UserRole: "USER" | "ADMIN"
     }
     CompositeTypes: {
@@ -343,21 +364,21 @@ export type Database = {
   }
 }
 
-type PublicSchema = Database[Extract<keyof Database, "public">]
-
 export type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type PublicSchema = Database[Extract<keyof Database, "public">]
 
 export type Tables<
   PublicTableNameOrOptions extends
   | keyof (PublicSchema["Tables"] & PublicSchema["Views"])
   | { schema: keyof DatabaseWithoutInternals },
   TableName extends PublicTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
-  ? keyof (DatabaseWithoutInternals[PublicTableNameOrOptions["schema"]]["Tables"] &
-    DatabaseWithoutInternals[PublicTableNameOrOptions["schema"]]["Views"])
+  ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
+    Database[PublicTableNameOrOptions["schema"]]["Views"])
   : never = never,
 > = PublicTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
-  ? (DatabaseWithoutInternals[PublicTableNameOrOptions["schema"]]["Tables"] &
-    DatabaseWithoutInternals[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
+    Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
   ? R
@@ -377,10 +398,10 @@ export type TablesInsert<
   | keyof PublicSchema["Tables"]
   | { schema: keyof DatabaseWithoutInternals },
   TableName extends PublicTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
-  ? keyof DatabaseWithoutInternals[PublicTableNameOrOptions["schema"]]["Tables"]
+  ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
   : never = never,
 > = PublicTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
-  ? DatabaseWithoutInternals[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
     Insert: infer I
   }
   ? I
@@ -398,10 +419,10 @@ export type TablesUpdate<
   | keyof PublicSchema["Tables"]
   | { schema: keyof DatabaseWithoutInternals },
   TableName extends PublicTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
-  ? keyof DatabaseWithoutInternals[PublicTableNameOrOptions["schema"]]["Tables"]
+  ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
   : never = never,
 > = PublicTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
-  ? DatabaseWithoutInternals[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
     Update: infer U
   }
   ? U
@@ -419,10 +440,10 @@ export type Enums<
   | keyof PublicSchema["Enums"]
   | { schema: keyof DatabaseWithoutInternals },
   EnumName extends PublicEnumNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
-  ? keyof DatabaseWithoutInternals[PublicEnumNameOrOptions["schema"]]["Enums"]
+  ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
   : never = never,
 > = PublicEnumNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
-  ? DatabaseWithoutInternals[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
   ? PublicSchema["Enums"][PublicEnumNameOrOptions]
   : never
@@ -431,40 +452,13 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
   | keyof PublicSchema["CompositeTypes"]
   | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
-  ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+  ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
   : never = never,
 > = PublicCompositeTypeNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
-  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
   ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
   : never
-
-export const Constants = {
-  public: {
-    Enums: {
-      BookStatus: [
-        "AVAILABLE",
-        "PENDING",
-        "RESERVED",
-        "BORROWED",
-        "UNAVAILABLE",
-      ],
-      BorrowRequestStatus: [
-        "PENDING",
-        "APPROVED",
-        "REJECTED",
-        "CANCELLED",
-        "RETURNED",
-      ],
-      NotificationType: [
-        "APPROVED",
-        "REJECTED",
-        "CANCELLED",
-        "EXTENDED",
-        "RETURNED",
-      ],
-      UserRole: ["USER", "ADMIN"],
-    },
-  },
-} as const

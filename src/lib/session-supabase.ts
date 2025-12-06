@@ -2,7 +2,7 @@
 import { cookies } from "next/headers";
 import { cache } from "react";
 
-import { supabaseServer } from "@/lib/supabase";
+import { getSupabaseServer } from "@/lib/supabase";
 import { SESSION_COOKIE_NAME, parseSessionCookie } from "@/lib/auth";
 
 export const getSessionUser = cache(async () => {
@@ -15,14 +15,14 @@ export const getSessionUser = cache(async () => {
     return null;
   }
 
-  const { data: user, error } = await supabaseServer
+  const { data: user, error: userError } = await getSupabaseServer()
     .from('User')
     .select('id, name, email, phoneNumber, profileImage, role, createdAt')
     .eq('id', session.id)
     .single();
 
-  if (error || !user) {
-    console.log("getSessionUser: Error fetching user or user not found", error);
+  if (userError || !user) {
+    console.log("getSessionUser: Error fetching user or user not found", userError);
     return null;
   }
 

@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 
-import { supabaseServer } from "@/lib/supabase";
+import { getSupabaseServer } from "@/lib/supabase";
 import { getSessionUser } from "@/lib/session-supabase";
 import { KoleksikuView } from "@/components/koleksiku/koleksiku-view";
 
@@ -26,7 +26,7 @@ async function CollectionData({ page }: { page: number }) {
   const to = from + ITEMS_PER_PAGE - 1;
 
   // Fetch collections with pagination
-  const { data: collectionsData, error: collectionsError, count } = await supabaseServer
+  const { data: collectionsData, error: collectionsError, count } = await getSupabaseServer()
     .from('Book')
     .select('*, reviews:Review(rating)', { count: 'exact' })
     .eq('ownerId', sessionUser.id)

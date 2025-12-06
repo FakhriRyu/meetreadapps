@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { supabaseServer } from "@/lib/supabase";
+import { getSupabaseServer } from "@/lib/supabase";
 import { getSessionUser } from "@/lib/session-supabase";
 import { HomeView } from "@/components/user/home-view";
 
@@ -19,7 +19,7 @@ async function BooksData() {
     return null;
   }
 
-  const { data: booksData, error } = await supabaseServer
+  const { data: booksData, error } = await getSupabaseServer()
     .from('Book')
     .select('id, title, author, category, coverImageUrl, publishedYear, totalCopies, availableCopies, reviews:Review(rating)')
     .or('ownerId.is.null,lendable.eq.true')
@@ -27,7 +27,7 @@ async function BooksData() {
 
   if (error) {
     console.error('Error fetching books:', error);
-    return <HomeView books={[]} sessionUser={sessionUser} />;
+    return <HomeView books={[]} sessionUser={sessionUser} banners={[]} />;
   }
 
   const books = (booksData || []).map((book: any) => {
@@ -44,7 +44,20 @@ async function BooksData() {
     };
   });
 
-  return <HomeView books={books} sessionUser={sessionUser} />;
+  const { data: bannersData } = await getSupabaseServer()
+    .from('Banner')
+    .select('*')
+    .eq('isActive', true)
+    .order('order', { ascending: true })
+    .order('createdAt', { ascending: false });
+
+  const banners = (bannersData || []).map((b) => ({
+    ...b,
+    order: b.order ?? 0,
+    isActive: b.isActive ?? true,
+  }));
+
+  return <HomeView books={books} sessionUser={sessionUser} banners={banners} />;
 }
 
 export default function BerandaPage() {

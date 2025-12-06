@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { notFound, redirect } from "next/navigation";
 
-import { supabaseServer } from "@/lib/supabase";
+import { getSupabaseServer } from "@/lib/supabase";
 import { getSessionUser } from "@/lib/session-supabase";
 import { PinjamView } from "@/components/user/pinjam-view";
 
@@ -30,7 +30,7 @@ async function BooksData(props: PinjamPageProps) {
   const pageSize = 10;
 
   // Build query
-  let booksQuery = supabaseServer
+  let booksQuery = getSupabaseServer()
     .from('Book')
     .select('*, reviews:Review(rating)', { count: 'exact' })
     .neq('status', 'UNAVAILABLE');

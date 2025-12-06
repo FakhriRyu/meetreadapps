@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session-supabase";
-import { supabaseServer } from "@/lib/supabase";
+import { getSupabaseServer } from "@/lib/supabase";
 
 export async function POST(request: Request) {
     try {
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
             );
         }
 
-        const { error } = await supabaseServer.from("AppSuggestion").insert({
+        const { error } = await getSupabaseServer().from("AppSuggestion").insert({
             userId: sessionUser.id,
             suggestion: suggestion.trim(),
         });
