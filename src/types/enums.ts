@@ -35,4 +35,4 @@ export enum UserRole {
 export type Book = Database['public']['Tables']['Book']['Row']
 export type User = Database['public']['Tables']['User']['Row']
 export type BorrowRequest = Database['public']['Tables']['BorrowRequest']['Row']
-export type BorrowNotification = Database['public']['Tables']['BorrowNotification']['Row']
+export type BorrowNotification = Database['public']['Tables']['Notification']['Row']
