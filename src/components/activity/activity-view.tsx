@@ -512,6 +512,11 @@ export function ActivityView({ incomingRequests, outgoingRequests, activeLoans }
                             {actionState.type === "approve" ? "Setujui Peminjaman" : "Tolak Peminjaman"}
                         </h3>
 
+                        <div className="mb-4 rounded-xl bg-slate-50 p-3 text-sm text-slate-600">
+                            <span className="block text-xs text-slate-500">Peminjam</span>
+                            <span className="font-semibold text-slate-900">{actionState.request.requester.name}</span>
+                        </div>
+
                         <form onSubmit={handleActionSubmit} className="space-y-4">
                             {actionState.type === "approve" && (
                                 <label className="block text-sm text-slate-600">
@@ -595,7 +600,10 @@ export function ActivityView({ incomingRequests, outgoingRequests, activeLoans }
                                 <div className="flex-1 min-w-0">
                                     <p className="font-semibold text-slate-900 line-clamp-2">{detailRequest.book.title}</p>
                                     <p className="text-xs text-slate-500 mt-0.5">
-                                        {detailRequest.status === BorrowRequestStatus.APPROVED ? "Dipinjam dari" : "Milik"} {detailRequest.book.owner?.name ?? "Pemilik"}
+                                        {activeTab === "persetujuan"
+                                            ? `Peminjam: ${detailRequest.requester.name}`
+                                            : `${detailRequest.status === BorrowRequestStatus.APPROVED ? "Dipinjam dari" : "Milik"} ${detailRequest.book.owner?.name ?? "Pemilik"}`
+                                        }
                                     </p>
                                 </div>
                             </div>
