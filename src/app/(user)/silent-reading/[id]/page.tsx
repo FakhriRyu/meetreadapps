@@ -223,10 +223,10 @@ async function EventDetails({ id }: { id: string }) {
 
                                     {/* Status / Rating Badge */}
                                     <div className="flex items-center gap-2">
-                                        {review.status === 'FINISHED' && review.rating > 0 && (
+                                        {review.status === 'FINISHED' && (review.manualData as any)?.rating > 0 && (
                                             <div className="flex items-center gap-1 rounded-full bg-amber-50 px-2 py-1 text-xs font-bold text-amber-600 border border-amber-100">
                                                 <span>⭐</span>
-                                                <span>{review.rating}</span>
+                                                <span>{(review.manualData as any)?.rating}</span>
                                             </div>
                                         )}
                                         <span className={`rounded-full px-2 py-1 text-[10px] font-semibold border ${review.status === 'READING'

@@ -149,6 +149,8 @@ export function ReviewModal({ eventId, userId, isOpen, onClose, onSuccess, initi
             coverUrl: manualCoverUrl,
         } : entryType === 'TOPIC' ? {
             topicTitle: topicTitle,
+        } : entryType === 'BOOK_DB' ? {
+            rating: rating
         } : undefined;
 
         const payload = {
