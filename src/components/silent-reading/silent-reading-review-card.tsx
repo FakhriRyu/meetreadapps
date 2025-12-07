@@ -163,11 +163,12 @@ export function SilentReadingReviewCard({ review, index }: SilentReadingReviewCa
     return (
         <div
             ref={cardRef}
-            className={`group relative flex flex-col p-6 shadow-md transition-all hover:scale-105 hover:z-10 ${rotationClass}`}
+            className={`group relative flex flex-col p-6 transition-all hover:scale-105 hover:z-10 ${rotationClass}`}
             style={{
                 aspectRatio: '1/1',
                 backgroundColor: style.bg,
-                color: style.text
+                color: style.text,
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' // shadow-md replacement
             }}
         >
             {/* Share Button moved to bottom-right */}
@@ -178,7 +179,12 @@ export function SilentReadingReviewCard({ review, index }: SilentReadingReviewCa
                     handleShare();
                 }}
                 disabled={isGenerating}
-                className="absolute bottom-2 right-2 p-1.5 rounded-full bg-black/5 hover:bg-black/10 text-current opacity-60 hover:opacity-100 transition-opacity z-30"
+                className="absolute bottom-2 right-2 p-1.5 rounded-full hover:opacity-100 transition-opacity z-30"
+                style={{
+                    backgroundColor: 'rgba(0,0,0,0.05)',
+                    color: 'currentColor',
+                    opacity: 0.6
+                }}
                 title="Simpan sebagai gambar"
             >
                 {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
@@ -186,11 +192,17 @@ export function SilentReadingReviewCard({ review, index }: SilentReadingReviewCa
 
 
             {/* Tape Effect */}
-            <div className="absolute -top-3 left-1/2 h-8 w-24 -translate-x-1/2 rotate-1 bg-white/40 shadow-sm backdrop-blur-sm transform z-20"></div>
+            <div
+                className="absolute -top-3 left-1/2 h-8 w-24 -translate-x-1/2 rotate-1 backdrop-blur-sm transform z-20"
+                style={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+                    boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
+                }}
+            ></div>
 
             {/* Header with rating */}
             <div className="mb-4 flex items-start justify-between">
-                <div className="flex items-center gap-2 text-xs font-semibold opacity-70">
+                <div className="flex items-center gap-2 text-xs font-semibold" style={{ opacity: 0.7 }}>
                     {safeFormatDate(review.createdAt, 'd MMM')}
                     {review.status === 'FINISHED' && (review.manualData as any)?.rating > 0 && (
                         <span className="flex items-center">
@@ -198,22 +210,28 @@ export function SilentReadingReviewCard({ review, index }: SilentReadingReviewCa
                         </span>
                     )}
                 </div>
-                <div className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border border-current text-opacity-80`}>
+                <div
+                    className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border"
+                    style={{
+                        borderColor: 'currentColor',
+                        opacity: 0.8 // Applied to container to effectively be text-opacity-80
+                    }}
+                >
                     {review.status === 'READING' ? 'Reading' : review.status === 'FINISHED' ? 'Done' : 'Discuss'}
                 </div>
             </div>
 
             {/* Review Content */}
-            <div className="flex-1 overflow-hidden font-medium leading-relaxed opacity-90 relative mb-4">
+            <div className="flex-1 overflow-hidden font-medium leading-relaxed relative mb-4" style={{ opacity: 0.9 }}>
                 <p className="line-clamp-6 text-sm sm:text-base">
                     "{review.reviewText}"
                 </p>
             </div>
 
             {/* Footer: Book Info & User */}
-            <div className="mt-auto flex items-center gap-3 pt-3 border-t border-black/10">
+            <div className="mt-auto flex items-center gap-3 pt-3 border-t" style={{ borderColor: 'rgba(0,0,0,0.1)' }}>
                 {/* Tiny Cover / Icon */}
-                <div className="h-10 w-8 flex-shrink-0 overflow-hidden rounded bg-black/10 shadow-sm">
+                <div className="h-10 w-8 flex-shrink-0 overflow-hidden rounded shadow-sm" style={{ backgroundColor: 'rgba(0,0,0,0.1)' }}>
                     {isBook ? (
                         <SafeImage
                             src={finalCoverUrl || '/placeholder.png'}
@@ -221,10 +239,10 @@ export function SilentReadingReviewCard({ review, index }: SilentReadingReviewCa
                             width={32}
                             height={40}
                             className="h-full w-full object-cover"
-                            fallbackContent={<div className="h-full w-full bg-slate-200" />}
+                            fallbackContent={<div className="h-full w-full" style={{ backgroundColor: '#e2e8f0' }} />}
                         />
                     ) : (
-                        <div className="flex h-full w-full items-center justify-center text-current opacity-50">
+                        <div className="flex h-full w-full items-center justify-center text-current" style={{ opacity: 0.5 }}>
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
                         </div>
                     )}
@@ -233,17 +251,17 @@ export function SilentReadingReviewCard({ review, index }: SilentReadingReviewCa
                 <div className="min-w-0 flex-1">
                     <p className="truncate text-xs font-bold leading-tight">{title}</p>
                     <div className="flex items-center gap-1.5 mt-0.5">
-                        <div className="h-4 w-4 rounded-full overflow-hidden bg-white/50">
+                        <div className="h-4 w-4 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.5)' }}>
                             <SafeImage
                                 src={finalProfileUrl || '/placeholder.png'}
                                 alt={(review.user as any)?.name || 'User'}
                                 width={16}
                                 height={16}
                                 className="h-full w-full object-cover"
-                                fallbackContent={<div className="h-full w-full bg-slate-300" />}
+                                fallbackContent={<div className="h-full w-full" style={{ backgroundColor: '#cbd5e1' }} />}
                             />
                         </div>
-                        <p className="truncate text-[10px] font-medium opacity-70">
+                        <p className="truncate text-[10px] font-medium" style={{ opacity: 0.7 }}>
                             {(review.user as any)?.name}
                         </p>
                     </div>
