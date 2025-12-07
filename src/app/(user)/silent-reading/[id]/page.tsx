@@ -265,7 +265,7 @@ async function EventDetails({ id }: { id: string }) {
                         <p className="mt-1 text-sm text-slate-500">Jadilah yang pertama membagikan cerita!</p>
                     </div>
                 )}
-        </div>
+
             </section >
         </div >
     );
