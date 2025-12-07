@@ -67,6 +67,7 @@ const safeFormatDate = (dateString: string | undefined | null, formatStr: string
 
 export function SilentReadingReviewCard({ review, index }: SilentReadingReviewCardProps) {
     const cardRef = useRef<HTMLDivElement>(null);
+    const captureRef = useRef<HTMLDivElement>(null); // Dedicated Ref for capture
     const [isGenerating, setIsGenerating] = useState(false);
 
     // Use Hex codes to avoid 'oklch' errors in html2canvas (Tailwind 4 defaults to oklch)
@@ -129,13 +130,16 @@ export function SilentReadingReviewCard({ review, index }: SilentReadingReviewCa
 
     // Effect to trigger capture once the template is rendered
     useEffect(() => {
-        if (showCaptureTemplate && cardRef.current) {
+        if (showCaptureTemplate) {
             const capture = async () => {
                 try {
                     // Slight delay to ensure rendering and image painting
                     await new Promise(resolve => setTimeout(resolve, 500));
 
-                    const canvas = await html2canvas(cardRef.current, {
+                    const element = captureRef.current;
+                    if (!element) throw new Error("Capture element not found");
+
+                    const canvas = await html2canvas(element, {
                         scale: 1, // Template is already hi-res (800px)
                         useCORS: true,
                         allowTaint: true,
@@ -173,6 +177,7 @@ export function SilentReadingReviewCard({ review, index }: SilentReadingReviewCa
         <>
             {/* Visible Card (Responsive, Interactive) */}
             <div
+                ref={cardRef}
                 className={`group relative flex flex-col p-6 transition-all hover:scale-105 hover:z-10 ${rotationClass}`}
                 style={{
                     aspectRatio: '1/1',
@@ -281,7 +286,7 @@ export function SilentReadingReviewCard({ review, index }: SilentReadingReviewCa
             {/* Hidden Capture Template (Rendered Only When Sharing) */}
             {showCaptureTemplate && (
                 <div
-                    ref={cardRef}
+                    ref={captureRef}
                     style={{
                         position: 'fixed',
                         left: '-9999px', // Off-screen
