@@ -174,9 +174,9 @@ async function EventDetails({ id }: { id: string }) {
                     }
 
                     return (
-                        <div key={review.id} className="group relative flex flex-col gap-4 overflow-hidden rounded-3xl border border-slate-100 bg-white p-4 shadow-[0_2px_20px_rgba(0,0,0,0.02)] transition-all hover:shadow-[0_8px_30px_rgba(0,0,0,0.04)] sm:flex-row">
+                        <div key={review.id} className="group relative flex flex-row gap-3 overflow-hidden rounded-3xl border border-slate-100 bg-white p-3 shadow-[0_2px_20px_rgba(0,0,0,0.02)] transition-all hover:shadow-[0_8px_30px_rgba(0,0,0,0.04)] sm:gap-4 sm:p-4">
                             {/* Left Bento Block: Cover/Icon */}
-                            <div className="relative aspect-[2/3] w-full flex-shrink-0 overflow-hidden rounded-2xl bg-slate-100 sm:w-28">
+                            <div className="relative aspect-[2/3] w-20 flex-shrink-0 overflow-hidden rounded-xl bg-slate-100 sm:w-28 sm:rounded-2xl">
                                 {isBook ? (
                                     <SafeImage
                                         src={coverUrl || '/placeholder.png'}
