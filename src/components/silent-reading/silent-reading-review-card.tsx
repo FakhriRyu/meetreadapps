@@ -29,7 +29,11 @@ function useImageToBase64(url: string | null | undefined) {
 
         const fetchImage = async () => {
             try {
-                const response = await fetch(url);
+                // Use our own proxy to bypass CORS
+                const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(url)}`;
+                const response = await fetch(proxyUrl);
+                if (!response.ok) throw new Error('Proxy fetch failed');
+
                 const blob = await response.blob();
                 const reader = new FileReader();
                 reader.onloadend = () => {
@@ -38,7 +42,7 @@ function useImageToBase64(url: string | null | undefined) {
                 reader.readAsDataURL(blob);
             } catch (error) {
                 console.error("Error converting image to base64:", error);
-                // Fallback to original URL if fetch fails, though it might still fail CORS in canvas
+                // Fallback to original URL if proxy fails, though it implies we can't do much
                 if (isMounted) setDataUrl(url);
             }
         };
@@ -134,7 +138,7 @@ export function SilentReadingReviewCard({ review, index }: SilentReadingReviewCa
             const capture = async () => {
                 try {
                     // Slight delay to ensure rendering and image painting
-                    await new Promise(resolve => setTimeout(resolve, 500));
+                    await new Promise(resolve => setTimeout(resolve, 800)); // Increased to 800ms
 
                     const element = captureRef.current;
                     if (!element) throw new Error("Capture element not found");
