@@ -150,112 +150,126 @@ async function EventDetails({ id }: { id: string }) {
                     )}
                 </div>
 
-                {reviews?.map((review) => {
-                    // Extract content details based on entry type
-                    let title = '';
-                    let subtitle = '';
-                    let coverUrl = '';
-                    let isBook = false;
+                {/* Sticky Board Layout */}
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    {reviews?.map((review, index) => {
+                        // Sticky Note Constants
+                        const STICKY_COLORS = [
+                            'bg-yellow-100 text-yellow-900',
+                            'bg-rose-100 text-rose-900',
+                            'bg-blue-100 text-blue-900',
+                            'bg-green-100 text-green-900',
+                            'bg-purple-100 text-purple-900',
+                            'bg-orange-100 text-orange-900',
+                        ];
+                        const STICKY_ROTATIONS = [
+                            'rotate-1',
+                            '-rotate-1',
+                            'rotate-2',
+                            '-rotate-2',
+                            'rotate-3',
+                            '-rotate-3',
+                        ];
 
-                    if (review.entryType === 'BOOK_DB' && (review.book as any)) {
-                        title = (review.book as any).title;
-                        subtitle = (review.book as any).author;
-                        coverUrl = (review.book as any).coverImageUrl;
-                        isBook = true;
-                    } else if (review.entryType === 'BOOK_MANUAL' && (review.manualData as any)) {
-                        title = (review.manualData as any).title || 'Judul Buku';
-                        subtitle = (review.manualData as any).author || 'Penulis';
-                        coverUrl = (review.manualData as any).coverUrl;
-                        isBook = true;
-                    } else if (review.entryType === 'TOPIC') {
-                        title = (review.manualData as any)?.topicTitle || 'Topik Diskusi';
-                        subtitle = 'Diskusi Grup';
-                        isBook = false;
-                    }
+                        const colorClass = STICKY_COLORS[index % STICKY_COLORS.length];
+                        const rotationClass = STICKY_ROTATIONS[index % STICKY_ROTATIONS.length];
 
-                    return (
-                        <div key={review.id} className="group relative flex flex-row gap-3 overflow-hidden rounded-3xl border border-slate-100 bg-white p-3 shadow-[0_2px_20px_rgba(0,0,0,0.02)] transition-all hover:shadow-[0_8px_30px_rgba(0,0,0,0.04)] sm:gap-4 sm:p-4">
-                            {/* Left Bento Block: Cover/Icon */}
-                            <div className="relative aspect-[2/3] w-20 flex-shrink-0 overflow-hidden rounded-xl bg-slate-100 sm:w-28 sm:rounded-2xl">
-                                {isBook ? (
-                                    <SafeImage
-                                        src={coverUrl || '/placeholder.png'}
-                                        alt={title}
-                                        fill
-                                        className="object-cover transition-transform duration-500 group-hover:scale-105"
-                                        fallbackContent={
-                                            <div className="flex h-full w-full items-center justify-center bg-indigo-50 text-indigo-300">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
-                                            </div>
-                                        }
-                                    />
-                                ) : (
-                                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-orange-100 to-orange-50 text-orange-500">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
-                                    </div>
-                                )}
-                            </div>
+                        // Extract content details based on entry type
+                        let title = '';
+                        let subtitle = '';
+                        let coverUrl = '';
+                        let isBook = false;
 
-                            {/* Right Bento Block: Content */}
-                            <div className="flex min-w-0 flex-1 flex-col">
-                                {/* Header: User & Meta */}
-                                <div className="mb-3 flex items-start justify-between">
-                                    <div className="flex items-center gap-2.5">
-                                        <div className="h-8 w-8 overflow-hidden rounded-full bg-slate-200 ring-2 ring-white">
-                                            <SafeImage
-                                                src={(review.user as any)?.profileImage || ''}
-                                                alt={(review.user as any)?.name || 'User'}
-                                                width={32}
-                                                height={32}
-                                                className="h-full w-full object-cover"
-                                                fallbackContent={
-                                                    <div className="flex h-full w-full items-center justify-center bg-indigo-100 text-xs font-bold text-indigo-600">
-                                                        {(review.user as any)?.name?.substring(0, 2).toUpperCase() || 'U'}
-                                                    </div>
-                                                }
-                                            />
-                                        </div>
-                                        <div className="flex flex-col">
-                                            <span className="text-sm font-semibold text-slate-900 line-clamp-1">{(review.user as any)?.name || 'Pengguna'}</span>
-                                            <span className="text-[10px] text-slate-400 font-medium">{safeFormatDate(review.createdAt, 'd MMM, HH:mm')}</span>
-                                        </div>
-                                    </div>
+                        if (review.entryType === 'BOOK_DB' && (review.book as any)) {
+                            title = (review.book as any).title;
+                            subtitle = (review.book as any).author;
+                            coverUrl = (review.book as any).coverImageUrl;
+                            isBook = true;
+                        } else if (review.entryType === 'BOOK_MANUAL' && (review.manualData as any)) {
+                            title = (review.manualData as any).title || 'Judul Buku';
+                            subtitle = (review.manualData as any).author || 'Penulis';
+                            coverUrl = (review.manualData as any).coverUrl;
+                            isBook = true;
+                        } else if (review.entryType === 'TOPIC') {
+                            title = (review.manualData as any)?.topicTitle || 'Topik Diskusi';
+                            subtitle = 'Diskusi Grup';
+                            isBook = false;
+                        }
 
-                                    {/* Status / Rating Badge */}
-                                    <div className="flex items-center gap-2">
+                        return (
+                            <div
+                                key={review.id}
+                                className={`group relative flex flex-col p-6 shadow-md transition-transform hover:scale-105 hover:z-10 ${colorClass} ${rotationClass}`}
+                                style={{ aspectRatio: '1/1' }}
+                            >
+                                {/* Tape Effect */}
+                                <div className="absolute -top-3 left-1/2 h-8 w-24 -translate-x-1/2 rotate-1 bg-white/40 shadow-sm backdrop-blur-sm transform z-20"></div>
+
+                                {/* Header with rating */}
+                                <div className="mb-4 flex items-start justify-between">
+                                    <div className="flex items-center gap-2 text-xs font-semibold opacity-70">
+                                        {safeFormatDate(review.createdAt, 'd MMM')}
                                         {review.status === 'FINISHED' && (review.manualData as any)?.rating > 0 && (
-                                            <div className="flex items-center gap-1 rounded-full bg-amber-50 px-2 py-1 text-xs font-bold text-amber-600 border border-amber-100">
-                                                <span>⭐</span>
-                                                <span>{(review.manualData as any)?.rating}</span>
+                                            <span className="flex items-center">
+                                                ★ {(review.manualData as any)?.rating}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border border-current text-opacity-80`}>
+                                        {review.status === 'READING' ? 'Reading' : review.status === 'FINISHED' ? 'Done' : 'Discuss'}
+                                    </div>
+                                </div>
+
+                                {/* Review Content - Handwritten font feel if possible, otherwise serif/sans mix */}
+                                <div className="flex-1 overflow-hidden font-medium leading-relaxed opacity-90 relative mb-4">
+                                    <p className="line-clamp-6 text-sm sm:text-base">
+                                        "{review.reviewText}"
+                                    </p>
+                                </div>
+
+                                {/* Footer: Book Info & User */}
+                                <div className="mt-auto flex items-center gap-3 pt-3 border-t border-black/10">
+                                    {/* Tiny Cover / Icon */}
+                                    <div className="h-10 w-8 flex-shrink-0 overflow-hidden rounded bg-black/10 shadow-sm">
+                                        {isBook ? (
+                                            <SafeImage
+                                                src={coverUrl || '/placeholder.png'}
+                                                alt={title}
+                                                width={32}
+                                                height={40}
+                                                className="h-full w-full object-cover"
+                                                fallbackContent={<div className="h-full w-full bg-slate-200" />}
+                                            />
+                                        ) : (
+                                            <div className="flex h-full w-full items-center justify-center text-current opacity-50">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
                                             </div>
                                         )}
-                                        <span className={`rounded-full px-2 py-1 text-[10px] font-semibold border ${review.status === 'READING'
-                                            ? 'bg-indigo-50 text-indigo-600 border-indigo-100'
-                                            : review.status === 'FINISHED'
-                                                ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
-                                                : 'bg-orange-50 text-orange-600 border-orange-100' // Discussion
-                                            }`}>
-                                            {review.status === 'READING' ? 'Sedang Baca' : review.status === 'FINISHED' ? 'Selesai' : 'Diskusi'}
-                                        </span>
+                                    </div>
+
+                                    <div className="min-w-0 flex-1">
+                                        <p className="truncate text-xs font-bold leading-tight">{title}</p>
+                                        <div className="flex items-center gap-1.5 mt-0.5">
+                                            <div className="h-4 w-4 rounded-full overflow-hidden bg-white/50">
+                                                <SafeImage
+                                                    src={(review.user as any)?.profileImage || ''}
+                                                    alt={(review.user as any)?.name || 'User'}
+                                                    width={16}
+                                                    height={16}
+                                                    className="h-full w-full object-cover"
+                                                    fallbackContent={<div className="h-full w-full bg-slate-300" />}
+                                                />
+                                            </div>
+                                            <p className="truncate text-[10px] font-medium opacity-70">
+                                                {(review.user as any)?.name}
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
-
-                                {/* Title Info */}
-                                <div className="mb-3">
-                                    <h3 className="text-base font-bold text-slate-900 leading-snug line-clamp-2">{title}</h3>
-                                    <p className="text-xs font-medium text-slate-500">{subtitle}</p>
-                                </div>
-
-                                {/* Review Bubble */}
-                                <div className="relative mt-auto rounded-2xl bg-slate-50 p-3.5 text-sm leading-relaxed text-slate-600 group-hover:bg-slate-100/80 transition-colors">
-                                    {/* Little arrow/tail for the bubble */}
-                                    <div className="absolute -top-1.5 left-4 h-3 w-3 rotate-45 bg-slate-50 group-hover:bg-slate-100/80 transition-colors"></div>
-                                    {review.reviewText}
-                                </div>
                             </div>
-                        </div>
-                    );
-                })}
+                        );
+                    })}
+                </div>
                 {(!reviews || reviews.length === 0) && (
                     <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-slate-50/50 py-16 text-center">
                         <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-slate-100">
