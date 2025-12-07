@@ -102,7 +102,7 @@ export function SilentReadingReviewCard({ review, index }: SilentReadingReviewCa
 
         } catch (error) {
             console.error("Error generating image:", error);
-            alert("Gagal membuat gambar. Silakan coba lagi.");
+            alert(`Gagal membuat gambar: ${error instanceof Error ? error.message : 'Unknown error'}`);
         } finally {
             setIsGenerating(false);
         }
@@ -114,10 +114,7 @@ export function SilentReadingReviewCard({ review, index }: SilentReadingReviewCa
             className={`group relative flex flex-col p-6 shadow-md transition-all hover:scale-105 hover:z-10 ${colorClass} ${rotationClass}`}
             style={{ aspectRatio: '1/1' }}
         >
-            {/* Share Button (Hidden during capture if desired, or keep it?) 
-                Let's keep it generally but maybe hide it for the screenshot if we want clean output.
-                html2canvas has an 'ignoreElements' option, but simplest is to just have it there or use a data-html2canvas-ignore attribute.
-            */}
+            {/* Share Button moved to bottom-right */}
             <button
                 data-html2canvas-ignore
                 onClick={(e) => {
@@ -125,7 +122,7 @@ export function SilentReadingReviewCard({ review, index }: SilentReadingReviewCa
                     handleShare();
                 }}
                 disabled={isGenerating}
-                className="absolute top-2 right-2 p-1.5 rounded-full bg-black/5 hover:bg-black/10 text-current opacity-0 group-hover:opacity-100 transition-opacity z-30"
+                className="absolute bottom-2 right-2 p-1.5 rounded-full bg-black/5 hover:bg-black/10 text-current opacity-60 hover:opacity-100 transition-opacity z-30"
                 title="Simpan sebagai gambar"
             >
                 {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
@@ -168,6 +165,9 @@ export function SilentReadingReviewCard({ review, index }: SilentReadingReviewCa
                             width={32}
                             height={40}
                             className="h-full w-full object-cover"
+                            unoptimized
+                            // @ts-ignore
+                            crossOrigin="anonymous"
                             fallbackContent={<div className="h-full w-full bg-slate-200" />}
                         />
                     ) : (
@@ -187,6 +187,9 @@ export function SilentReadingReviewCard({ review, index }: SilentReadingReviewCa
                                 width={16}
                                 height={16}
                                 className="h-full w-full object-cover"
+                                unoptimized
+                                // @ts-ignore
+                                crossOrigin="anonymous"
                                 fallbackContent={<div className="h-full w-full bg-slate-300" />}
                             />
                         </div>
