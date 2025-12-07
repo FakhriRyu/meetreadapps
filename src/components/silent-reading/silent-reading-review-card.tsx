@@ -140,9 +140,8 @@ export function SilentReadingReviewCard({ review, index }: SilentReadingReviewCa
                     if (!element) throw new Error("Capture element not found");
 
                     const canvas = await html2canvas(element, {
-                        scale: 1, // Template is already hi-res (800px)
+                        scale: 2, // Retain high quality
                         useCORS: true,
-                        allowTaint: true,
                         backgroundColor: null,
                         logging: false,
                     });
@@ -291,123 +290,140 @@ export function SilentReadingReviewCard({ review, index }: SilentReadingReviewCa
                         position: 'fixed',
                         left: '-9999px', // Off-screen
                         top: 0,
-                        width: '800px',
-                        height: '800px',
-                        padding: '60px',
-                        backgroundColor: style.bg,
-                        color: style.text,
-                        fontFamily: 'sans-serif', // Ensure font consistency
+                        width: '1080px', // Increased canvas size for padding
+                        height: '1080px',
+                        padding: '140px', // Huge padding to allow tape and rotation without clipping
+                        backgroundColor: 'transparent', // Transparent background for PNG
                         display: 'flex',
-                        flexDirection: 'column',
-                        // No rotation for clean export
-                        boxShadow: 'none',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        zIndex: -50,
                     }}
                 >
-                    {/* Tape Effect */}
+                    {/* The Actual Sticky Note */}
                     <div
                         style={{
-                            position: 'absolute',
-                            top: '-15px',
-                            left: '50%',
-                            transform: 'translateX(-50%) rotate(1deg)',
-                            width: '200px',
-                            height: '50px',
-                            backgroundColor: 'rgba(255, 255, 255, 0.4)',
-                            backdropFilter: 'blur(4px)',
-                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                            width: '800px',
+                            height: '800px',
+                            backgroundColor: style.bg,
+                            color: style.text,
+                            fontFamily: 'sans-serif',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            padding: '60px',
+                            position: 'relative',
+                            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)', // Stronger shadow
+                            transform: 'rotate(-1deg)', // Slight consistent rotation
                         }}
-                    ></div>
+                    >
+                        {/* Tape Effect - Now explicitly positioned to extend OUTSIDE the sticky note */}
+                        <div
+                            style={{
+                                position: 'absolute',
+                                top: '-25px', // Moves up outside the yellow paper
+                                left: '50%',
+                                transform: 'translateX(-50%) rotate(2deg)',
+                                width: '240px',
+                                height: '60px',
+                                backgroundColor: 'rgba(255, 255, 255, 0.45)',
+                                backdropFilter: 'blur(4px)',
+                                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                            }}
+                        ></div>
 
-                    {/* Header */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '40px' }}>
-                        <div style={{ fontSize: '24px', fontWeight: '600', opacity: 0.7, display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            {safeFormatDate(review.createdAt, 'd MMM yyyy')}
-                            {review.status === 'FINISHED' && (review.manualData as any)?.rating > 0 && (
-                                <span>★ {(review.manualData as any)?.rating}</span>
-                            )}
-                        </div>
-                        <div style={{
-                            padding: '8px 20px',
-                            borderRadius: '999px',
-                            border: '2px solid currentColor',
-                            fontSize: '20px',
-                            fontWeight: 'bold',
-                            textTransform: 'uppercase',
-                            opacity: 0.8
-                        }}>
-                            {review.status === 'READING' ? 'Reading' : review.status === 'FINISHED' ? 'Done' : 'Discuss'}
-                        </div>
-                    </div>
-
-                    {/* Content */}
-                    <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
-                        <p style={{
-                            fontSize: '32px',
-                            lineHeight: '1.6',
-                            fontWeight: '500',
-                            opacity: 0.9,
-                            whiteSpace: 'pre-wrap'
-                        }}>
-                            "{review.reviewText}"
-                        </p>
-                    </div>
-
-                    {/* Footer */}
-                    <div style={{
-                        marginTop: 'auto',
-                        paddingTop: '40px',
-                        borderTop: '2px solid rgba(0,0,0,0.1)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '24px'
-                    }}>
-                        {/* Book Cover */}
-                        <div style={{
-                            width: '80px',
-                            height: '120px',
-                            flexShrink: 0,
-                            borderRadius: '8px',
-                            overflow: 'hidden',
-                            backgroundColor: 'rgba(0,0,0,0.1)',
-                            position: 'relative' // For Image fill
-                        }}>
-                            {/* Standard img tag for template to be 100% sure of rendering behavior in html2canvas */}
-                            {finalCoverUrl ? (
-                                <img src={finalCoverUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Cover" />
-                            ) : (
-                                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}>📖</div>
-                            )}
-                        </div>
-
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                            <p style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '8px', lineHeight: '1.2' }}>{title}</p>
-                            <p style={{ fontSize: '20px', opacity: 0.7, marginBottom: '16px' }}>{subtitle}</p>
-
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                <div style={{ width: '32px', height: '32px', borderRadius: '50%', overflow: 'hidden', backgroundColor: 'rgba(255,255,255,0.5)' }}>
-                                    {finalProfileUrl ? (
-                                        <img src={finalProfileUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="User" />
-                                    ) : (
-                                        <div style={{ width: '100%', height: '100%', backgroundColor: '#cbd5e1' }}></div>
-                                    )}
-                                </div>
-                                <p style={{ fontSize: '20px', fontWeight: '500', opacity: 0.7 }}>
-                                    {(review.user as any)?.name}
-                                </p>
+                        {/* Header */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '40px' }}>
+                            <div style={{ fontSize: '24px', fontWeight: '600', opacity: 0.7, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                {safeFormatDate(review.createdAt, 'd MMM yyyy')}
+                                {review.status === 'FINISHED' && (review.manualData as any)?.rating > 0 && (
+                                    <span>★ {(review.manualData as any)?.rating}</span>
+                                )}
+                            </div>
+                            <div style={{
+                                padding: '8px 24px',
+                                borderRadius: '999px',
+                                border: '3px solid currentColor',
+                                fontSize: '24px',
+                                fontWeight: 'bold',
+                                textTransform: 'uppercase',
+                                opacity: 0.8
+                            }}>
+                                {review.status === 'READING' ? 'Reading' : review.status === 'FINISHED' ? 'Done' : 'Discuss'}
                             </div>
                         </div>
-                    </div>
 
-                    {/* Branding/Watermark (Optional) */}
-                    <div style={{
-                        position: 'absolute',
-                        bottom: '20px',
-                        right: '30px',
-                        fontSize: '16px',
-                        opacity: 0.4,
-                        fontWeight: '600'
-                    }}>
-                        meetread.app
+                        {/* Content */}
+                        <div style={{ flex: 1, overflow: 'hidden', position: 'relative', marginBottom: '20px' }}>
+                            <p style={{
+                                fontSize: '32px',
+                                lineHeight: '1.5',
+                                fontWeight: '500',
+                                opacity: 0.9,
+                                whiteSpace: 'pre-wrap'
+                            }}>
+                                "{review.reviewText}"
+                            </p>
+                        </div>
+
+                        {/* Footer */}
+                        <div style={{
+                            marginTop: 'auto',
+                            paddingTop: '40px',
+                            borderTop: '2px solid rgba(0,0,0,0.1)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '24px'
+                        }}>
+                            {/* Book Cover */}
+                            <div style={{
+                                width: '100px',
+                                height: '140px',
+                                flexShrink: 0,
+                                borderRadius: '8px',
+                                overflow: 'hidden',
+                                backgroundColor: 'rgba(0,0,0,0.05)',
+                                position: 'relative',
+                                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                            }}>
+                                {finalCoverUrl ? (
+                                    /* eslint-disable-next-line @next/next/no-img-element */
+                                    <img src={finalCoverUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Cover" />
+                                ) : (
+                                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '40px', opacity: 0.5 }}>📖</div>
+                                )}
+                            </div>
+
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                                <p style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '8px', lineHeight: '1.2' }}>{title}</p>
+                                <p style={{ fontSize: '24px', opacity: 0.7, marginBottom: '16px' }}>{subtitle}</p>
+
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', overflow: 'hidden', backgroundColor: 'rgba(255,255,255,0.5)', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)' }}>
+                                        {finalProfileUrl ? (
+                                            /* eslint-disable-next-line @next/next/no-img-element */
+                                            <img src={finalProfileUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="User" />
+                                        ) : (
+                                            <div style={{ width: '100%', height: '100%', backgroundColor: '#cbd5e1' }}></div>
+                                        )}
+                                    </div>
+                                    <p style={{ fontSize: '24px', fontWeight: '600', opacity: 0.8 }}>
+                                        {(review.user as any)?.name}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Branding/Watermark */}
+                        <div style={{
+                            position: 'absolute',
+                            bottom: '24px',
+                            right: '32px',
+                            fontSize: '18px',
+                            opacity: 0.5,
+                            fontWeight: '600'
+                        }}>
+                            meetread.app
+                        </div>
                     </div>
                 </div>
             )}
