@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 
 import { RequestHistoryView } from "@/components/user/request-history-view";
-import { supabaseServer } from "@/lib/supabase";
+import { getSupabaseServer } from "@/lib/supabase";
 import { getSessionUser } from "@/lib/session-supabase";
 
 // Revalidate cache setiap 10 detik
@@ -21,7 +21,7 @@ async function RequestData() {
     redirect("/login?from=permintaan");
   }
 
-  const { data: requests, error } = await supabaseServer
+  const { data: requests, error } = await getSupabaseServer()
     .from('BorrowRequest')
     .select(`
       *,
