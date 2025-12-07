@@ -1,18 +1,58 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import html2canvas from "html2canvas";
-import { Download, Loader2, Share2 } from "lucide-react";
+import { Download, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
 import { SafeImage } from "@/components/ui/safe-image";
 
 interface SilentReadingReviewCardProps {
-    review: any; // Using any to match existing flexibility, ideally type this properly
+    review: any;
     index: number;
 }
 
-// Extract safe format date logic to reuse here
+// Helper to convert URL to Base64
+function useImageToBase64(url: string | null | undefined) {
+    const [dataUrl, setDataUrl] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (!url) {
+            setDataUrl(null);
+            return;
+        }
+
+        // If it's already a data URL or local path (starts with /), just use it (assuming local paths are safe-ish, or better yet, fetch them too if needed)
+        // For Supabase/external URLs, we fetch.
+        // Actually, fetch works for local too usually.
+        let isMounted = true;
+
+        const fetchImage = async () => {
+            try {
+                const response = await fetch(url);
+                const blob = await response.blob();
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    if (isMounted) setDataUrl(reader.result as string);
+                };
+                reader.readAsDataURL(blob);
+            } catch (error) {
+                console.error("Error converting image to base64:", error);
+                // Fallback to original URL if fetch fails, though it might still fail CORS in canvas
+                if (isMounted) setDataUrl(url);
+            }
+        };
+
+        fetchImage();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [url]);
+
+    return dataUrl;
+}
+
 const safeFormatDate = (dateString: string | undefined | null, formatStr: string) => {
     if (!dateString) return '-';
     try {
@@ -29,15 +69,16 @@ export function SilentReadingReviewCard({ review, index }: SilentReadingReviewCa
     const cardRef = useRef<HTMLDivElement>(null);
     const [isGenerating, setIsGenerating] = useState(false);
 
-    // Sticky Note Constants
-    const STICKY_COLORS = [
-        'bg-yellow-100 text-yellow-900',
-        'bg-rose-100 text-rose-900',
-        'bg-blue-100 text-blue-900',
-        'bg-green-100 text-green-900',
-        'bg-purple-100 text-purple-900',
-        'bg-orange-100 text-orange-900',
+    // Use Hex codes to avoid 'oklch' errors in html2canvas (Tailwind 4 defaults to oklch)
+    const STICKY_STYLES = [
+        { bg: '#fef9c3', text: '#713f12' }, // yellow-100 / yellow-900
+        { bg: '#ffe4e6', text: '#881337' }, // rose-100 / rose-900
+        { bg: '#dbeafe', text: '#1e3a8a' }, // blue-100 / blue-900
+        { bg: '#dcfce7', text: '#14532d' }, // green-100 / green-900
+        { bg: '#f3e8ff', text: '#581c87' }, // purple-100 / purple-900
+        { bg: '#ffedd5', text: '#7c2d12' }, // orange-100 / orange-900
     ];
+
     const STICKY_ROTATIONS = [
         'rotate-1',
         '-rotate-1',
@@ -47,24 +88,24 @@ export function SilentReadingReviewCard({ review, index }: SilentReadingReviewCa
         '-rotate-3',
     ];
 
-    const colorClass = STICKY_COLORS[index % STICKY_COLORS.length];
+    const style = STICKY_STYLES[index % STICKY_STYLES.length];
     const rotationClass = STICKY_ROTATIONS[index % STICKY_ROTATIONS.length];
 
-    // Extract content details based on entry type
+    // Extract content details
     let title = '';
     let subtitle = '';
-    let coverUrl = '';
+    let coverUrlOriginal = '';
     let isBook = false;
 
     if (review.entryType === 'BOOK_DB' && (review.book as any)) {
         title = (review.book as any).title;
         subtitle = (review.book as any).author;
-        coverUrl = (review.book as any).coverImageUrl;
+        coverUrlOriginal = (review.book as any).coverImageUrl;
         isBook = true;
     } else if (review.entryType === 'BOOK_MANUAL' && (review.manualData as any)) {
         title = (review.manualData as any).title || 'Judul Buku';
         subtitle = (review.manualData as any).author || 'Penulis';
-        coverUrl = (review.manualData as any).coverUrl;
+        coverUrlOriginal = (review.manualData as any).coverUrl;
         isBook = true;
     } else if (review.entryType === 'TOPIC') {
         title = (review.manualData as any)?.topicTitle || 'Topik Diskusi';
@@ -72,33 +113,44 @@ export function SilentReadingReviewCard({ review, index }: SilentReadingReviewCa
         isBook = false;
     }
 
+    const userProfileUrlOriginal = (review.user as any)?.profileImage;
+
+    // Convert images to Base64
+    const coverUrl = useImageToBase64(coverUrlOriginal);
+    const userProfileUrl = useImageToBase64(userProfileUrlOriginal);
+
+    // We use the base64 url if available, otherwise original (though original might fail CORS in canvas)
+    // If base64 is still loading, it might be null, but safe-image handles null src by showing nothing or fallback?
+    // SafeImage expects src string.
+    const finalCoverUrl = coverUrl || coverUrlOriginal || '';
+    const finalProfileUrl = userProfileUrl || userProfileUrlOriginal || '';
+
     const handleShare = async () => {
         if (!cardRef.current || isGenerating) return;
 
         try {
             setIsGenerating(true);
 
-            // Create canvas from the card
+            // Wait a moment to ensure base64 images are rendered if they just loaded?
+            // Usually React updates fast enough.
+
             const canvas = await html2canvas(cardRef.current, {
-                scale: 2, // Higher resolution
-                useCORS: true, // Allow cross-origin images
-                backgroundColor: null, // Transparent background if possible, though card has color
+                scale: 2,
+                useCORS: true, // Still good to have
+                allowTaint: true, // We can try this if useCORS fails, but we can't download tainted canvas.
+                backgroundColor: null,
                 logging: false,
+                ignoreElements: (element) => element.hasAttribute('data-html2canvas-ignore')
             });
 
-            // Convert to data URL
             const image = canvas.toDataURL("image/png");
 
-            // Create download link
             const link = document.createElement("a");
             link.href = image;
             link.download = `review-${review.id}-${title.slice(0, 10)}.png`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-
-            // Optional: Web Share API if supported and needed in future
-            // if (navigator.share) { ... }
 
         } catch (error) {
             console.error("Error generating image:", error);
@@ -111,8 +163,12 @@ export function SilentReadingReviewCard({ review, index }: SilentReadingReviewCa
     return (
         <div
             ref={cardRef}
-            className={`group relative flex flex-col p-6 shadow-md transition-all hover:scale-105 hover:z-10 ${colorClass} ${rotationClass}`}
-            style={{ aspectRatio: '1/1' }}
+            className={`group relative flex flex-col p-6 shadow-md transition-all hover:scale-105 hover:z-10 ${rotationClass}`}
+            style={{
+                aspectRatio: '1/1',
+                backgroundColor: style.bg,
+                color: style.text
+            }}
         >
             {/* Share Button moved to bottom-right */}
             <button
@@ -160,14 +216,11 @@ export function SilentReadingReviewCard({ review, index }: SilentReadingReviewCa
                 <div className="h-10 w-8 flex-shrink-0 overflow-hidden rounded bg-black/10 shadow-sm">
                     {isBook ? (
                         <SafeImage
-                            src={coverUrl || '/placeholder.png'}
+                            src={finalCoverUrl || '/placeholder.png'}
                             alt={title}
                             width={32}
                             height={40}
                             className="h-full w-full object-cover"
-                            unoptimized
-                            // @ts-ignore
-                            crossOrigin="anonymous"
                             fallbackContent={<div className="h-full w-full bg-slate-200" />}
                         />
                     ) : (
@@ -182,14 +235,11 @@ export function SilentReadingReviewCard({ review, index }: SilentReadingReviewCa
                     <div className="flex items-center gap-1.5 mt-0.5">
                         <div className="h-4 w-4 rounded-full overflow-hidden bg-white/50">
                             <SafeImage
-                                src={(review.user as any)?.profileImage || ''}
+                                src={finalProfileUrl || '/placeholder.png'}
                                 alt={(review.user as any)?.name || 'User'}
                                 width={16}
                                 height={16}
                                 className="h-full w-full object-cover"
-                                unoptimized
-                                // @ts-ignore
-                                crossOrigin="anonymous"
                                 fallbackContent={<div className="h-full w-full bg-slate-300" />}
                             />
                         </div>
