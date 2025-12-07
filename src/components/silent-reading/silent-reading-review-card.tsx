@@ -294,6 +294,7 @@ export function SilentReadingReviewCard({ review, index }: SilentReadingReviewCa
                         height: '1080px',
                         padding: '140px', // Huge padding to allow tape and rotation without clipping
                         backgroundColor: 'transparent', // Transparent background for PNG
+                        color: '#000000', // Explicitly set color to prevent inheriting 'oklch' from body
                         display: 'flex',
                         justifyContent: 'center',
                         alignItems: 'center',
