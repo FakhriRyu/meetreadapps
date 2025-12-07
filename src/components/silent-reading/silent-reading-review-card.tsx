@@ -125,148 +125,287 @@ export function SilentReadingReviewCard({ review, index }: SilentReadingReviewCa
     const finalCoverUrl = coverUrl || coverUrlOriginal || '';
     const finalProfileUrl = userProfileUrl || userProfileUrlOriginal || '';
 
-    const handleShare = async () => {
-        if (!cardRef.current || isGenerating) return;
+    const [showCaptureTemplate, setShowCaptureTemplate] = useState(false);
 
-        try {
-            setIsGenerating(true);
+    // Effect to trigger capture once the template is rendered
+    useEffect(() => {
+        if (showCaptureTemplate && cardRef.current) {
+            const capture = async () => {
+                try {
+                    // Slight delay to ensure rendering and image painting
+                    await new Promise(resolve => setTimeout(resolve, 500));
 
-            // Wait a moment to ensure base64 images are rendered if they just loaded?
-            // Usually React updates fast enough.
+                    const canvas = await html2canvas(cardRef.current, {
+                        scale: 1, // Template is already hi-res (800px)
+                        useCORS: true,
+                        allowTaint: true,
+                        backgroundColor: null,
+                        logging: false,
+                    });
 
-            const canvas = await html2canvas(cardRef.current, {
-                scale: 2,
-                useCORS: true, // Still good to have
-                allowTaint: true, // We can try this if useCORS fails, but we can't download tainted canvas.
-                backgroundColor: null,
-                logging: false,
-                ignoreElements: (element) => element.hasAttribute('data-html2canvas-ignore')
-            });
+                    const image = canvas.toDataURL("image/png");
+                    const link = document.createElement("a");
+                    link.href = image;
+                    link.download = `review-${review.id}-${title.slice(0, 10)}.png`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
 
-            const image = canvas.toDataURL("image/png");
-
-            const link = document.createElement("a");
-            link.href = image;
-            link.download = `review-${review.id}-${title.slice(0, 10)}.png`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-
-        } catch (error) {
-            console.error("Error generating image:", error);
-            alert(`Gagal membuat gambar: ${error instanceof Error ? error.message : 'Unknown error'}`);
-        } finally {
-            setIsGenerating(false);
+                } catch (error) {
+                    console.error("Error generating image:", error);
+                    alert(`Gagal membuat gambar: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                } finally {
+                    setShowCaptureTemplate(false);
+                    setIsGenerating(false);
+                }
+            };
+            capture();
         }
+    }, [showCaptureTemplate]);
+
+    const handleShare = async () => {
+        if (isGenerating) return;
+        setIsGenerating(true);
+        setShowCaptureTemplate(true);
     };
 
     return (
-        <div
-            ref={cardRef}
-            className={`group relative flex flex-col p-6 transition-all hover:scale-105 hover:z-10 ${rotationClass}`}
-            style={{
-                aspectRatio: '1/1',
-                backgroundColor: style.bg,
-                color: style.text,
-                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' // shadow-md replacement
-            }}
-        >
-            {/* Share Button moved to bottom-right */}
-            <button
-                data-html2canvas-ignore
-                onClick={(e) => {
-                    e.stopPropagation();
-                    handleShare();
-                }}
-                disabled={isGenerating}
-                className="absolute bottom-2 right-2 p-1.5 rounded-full hover:opacity-100 transition-opacity z-30"
-                style={{
-                    backgroundColor: 'rgba(0,0,0,0.05)',
-                    color: 'currentColor',
-                    opacity: 0.6
-                }}
-                title="Simpan sebagai gambar"
-            >
-                {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-            </button>
-
-
-            {/* Tape Effect */}
+        <>
+            {/* Visible Card (Responsive, Interactive) */}
             <div
-                className="absolute -top-3 left-1/2 h-8 w-24 -translate-x-1/2 rotate-1 backdrop-blur-sm transform z-20"
+                className={`group relative flex flex-col p-6 transition-all hover:scale-105 hover:z-10 ${rotationClass}`}
                 style={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.4)',
-                    boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
+                    aspectRatio: '1/1',
+                    backgroundColor: style.bg,
+                    color: style.text,
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
                 }}
-            ></div>
-
-            {/* Header with rating */}
-            <div className="mb-4 flex items-start justify-between">
-                <div className="flex items-center gap-2 text-xs font-semibold" style={{ opacity: 0.7 }}>
-                    {safeFormatDate(review.createdAt, 'd MMM')}
-                    {review.status === 'FINISHED' && (review.manualData as any)?.rating > 0 && (
-                        <span className="flex items-center">
-                            ★ {(review.manualData as any)?.rating}
-                        </span>
-                    )}
-                </div>
-                <div
-                    className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border"
-                    style={{
-                        borderColor: 'currentColor',
-                        opacity: 0.8 // Applied to container to effectively be text-opacity-80
+            >
+                {/* ... existing visible card content ... */}
+                {/* Share Button moved to bottom-right */}
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        handleShare();
                     }}
+                    disabled={isGenerating}
+                    className="absolute bottom-2 right-2 p-1.5 rounded-full hover:opacity-100 transition-opacity z-30 opacity-60"
+                    style={{
+                        backgroundColor: 'rgba(0,0,0,0.05)',
+                        color: 'currentColor',
+                    }}
+                    title="Simpan sebagai gambar"
                 >
-                    {review.status === 'READING' ? 'Reading' : review.status === 'FINISHED' ? 'Done' : 'Discuss'}
+                    {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                </button>
+
+
+                {/* Tape Effect */}
+                <div
+                    className="absolute -top-3 left-1/2 h-8 w-24 -translate-x-1/2 rotate-1 backdrop-blur-sm transform z-20"
+                    style={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.4)',
+                        boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
+                    }}
+                ></div>
+
+                {/* Header with rating */}
+                <div className="mb-4 flex items-start justify-between">
+                    <div className="flex items-center gap-2 text-xs font-semibold" style={{ opacity: 0.7 }}>
+                        {safeFormatDate(review.createdAt, 'd MMM')}
+                        {review.status === 'FINISHED' && (review.manualData as any)?.rating > 0 && (
+                            <span className="flex items-center">
+                                ★ {(review.manualData as any)?.rating}
+                            </span>
+                        )}
+                    </div>
+                    <div
+                        className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border"
+                        style={{
+                            borderColor: 'currentColor',
+                            opacity: 0.8
+                        }}
+                    >
+                        {review.status === 'READING' ? 'Reading' : review.status === 'FINISHED' ? 'Done' : 'Discuss'}
+                    </div>
                 </div>
-            </div>
 
-            {/* Review Content */}
-            <div className="flex-1 overflow-hidden font-medium leading-relaxed relative mb-4" style={{ opacity: 0.9 }}>
-                <p className="line-clamp-6 text-sm sm:text-base">
-                    "{review.reviewText}"
-                </p>
-            </div>
-
-            {/* Footer: Book Info & User */}
-            <div className="mt-auto flex items-center gap-3 pt-3 border-t" style={{ borderColor: 'rgba(0,0,0,0.1)' }}>
-                {/* Tiny Cover / Icon */}
-                <div className="h-10 w-8 flex-shrink-0 overflow-hidden rounded shadow-sm" style={{ backgroundColor: 'rgba(0,0,0,0.1)' }}>
-                    {isBook ? (
-                        <SafeImage
-                            src={finalCoverUrl || '/placeholder.png'}
-                            alt={title}
-                            width={32}
-                            height={40}
-                            className="h-full w-full object-cover"
-                            fallbackContent={<div className="h-full w-full" style={{ backgroundColor: '#e2e8f0' }} />}
-                        />
-                    ) : (
-                        <div className="flex h-full w-full items-center justify-center text-current" style={{ opacity: 0.5 }}>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
-                        </div>
-                    )}
+                {/* Review Content */}
+                <div className="flex-1 overflow-hidden font-medium leading-relaxed relative mb-4" style={{ opacity: 0.9 }}>
+                    <p className="line-clamp-6 text-sm sm:text-base">
+                        "{review.reviewText}"
+                    </p>
                 </div>
 
-                <div className="min-w-0 flex-1">
-                    <p className="truncate text-xs font-bold leading-tight">{title}</p>
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                        <div className="h-4 w-4 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.5)' }}>
+                {/* Footer: Book Info & User */}
+                <div className="mt-auto flex items-center gap-3 pt-3 border-t" style={{ borderColor: 'rgba(0,0,0,0.1)' }}>
+                    {/* Tiny Cover / Icon */}
+                    <div className="h-10 w-8 flex-shrink-0 overflow-hidden rounded shadow-sm" style={{ backgroundColor: 'rgba(0,0,0,0.1)' }}>
+                        {isBook ? (
                             <SafeImage
-                                src={finalProfileUrl || '/placeholder.png'}
-                                alt={(review.user as any)?.name || 'User'}
-                                width={16}
-                                height={16}
+                                src={finalCoverUrl || '/placeholder.png'}
+                                alt={title}
+                                width={32}
+                                height={40}
                                 className="h-full w-full object-cover"
-                                fallbackContent={<div className="h-full w-full" style={{ backgroundColor: '#cbd5e1' }} />}
+                                fallbackContent={<div className="h-full w-full" style={{ backgroundColor: '#e2e8f0' }} />}
                             />
+                        ) : (
+                            <div className="flex h-full w-full items-center justify-center text-current" style={{ opacity: 0.5 }}>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                        <p className="truncate text-xs font-bold leading-tight">{title}</p>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                            <div className="h-4 w-4 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.5)' }}>
+                                <SafeImage
+                                    src={finalProfileUrl || '/placeholder.png'}
+                                    alt={(review.user as any)?.name || 'User'}
+                                    width={16}
+                                    height={16}
+                                    className="h-full w-full object-cover"
+                                    fallbackContent={<div className="h-full w-full" style={{ backgroundColor: '#cbd5e1' }} />}
+                                />
+                            </div>
+                            <p className="truncate text-[10px] font-medium" style={{ opacity: 0.7 }}>
+                                {(review.user as any)?.name}
+                            </p>
                         </div>
-                        <p className="truncate text-[10px] font-medium" style={{ opacity: 0.7 }}>
-                            {(review.user as any)?.name}
-                        </p>
                     </div>
                 </div>
             </div>
-        </div>
+
+            {/* Hidden Capture Template (Rendered Only When Sharing) */}
+            {showCaptureTemplate && (
+                <div
+                    ref={cardRef}
+                    style={{
+                        position: 'fixed',
+                        left: '-9999px', // Off-screen
+                        top: 0,
+                        width: '800px',
+                        height: '800px',
+                        padding: '60px',
+                        backgroundColor: style.bg,
+                        color: style.text,
+                        fontFamily: 'sans-serif', // Ensure font consistency
+                        display: 'flex',
+                        flexDirection: 'column',
+                        // No rotation for clean export
+                        boxShadow: 'none',
+                    }}
+                >
+                    {/* Tape Effect */}
+                    <div
+                        style={{
+                            position: 'absolute',
+                            top: '-15px',
+                            left: '50%',
+                            transform: 'translateX(-50%) rotate(1deg)',
+                            width: '200px',
+                            height: '50px',
+                            backgroundColor: 'rgba(255, 255, 255, 0.4)',
+                            backdropFilter: 'blur(4px)',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                        }}
+                    ></div>
+
+                    {/* Header */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '40px' }}>
+                        <div style={{ fontSize: '24px', fontWeight: '600', opacity: 0.7, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            {safeFormatDate(review.createdAt, 'd MMM yyyy')}
+                            {review.status === 'FINISHED' && (review.manualData as any)?.rating > 0 && (
+                                <span>★ {(review.manualData as any)?.rating}</span>
+                            )}
+                        </div>
+                        <div style={{
+                            padding: '8px 20px',
+                            borderRadius: '999px',
+                            border: '2px solid currentColor',
+                            fontSize: '20px',
+                            fontWeight: 'bold',
+                            textTransform: 'uppercase',
+                            opacity: 0.8
+                        }}>
+                            {review.status === 'READING' ? 'Reading' : review.status === 'FINISHED' ? 'Done' : 'Discuss'}
+                        </div>
+                    </div>
+
+                    {/* Content */}
+                    <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
+                        <p style={{
+                            fontSize: '32px',
+                            lineHeight: '1.6',
+                            fontWeight: '500',
+                            opacity: 0.9,
+                            whiteSpace: 'pre-wrap'
+                        }}>
+                            "{review.reviewText}"
+                        </p>
+                    </div>
+
+                    {/* Footer */}
+                    <div style={{
+                        marginTop: 'auto',
+                        paddingTop: '40px',
+                        borderTop: '2px solid rgba(0,0,0,0.1)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '24px'
+                    }}>
+                        {/* Book Cover */}
+                        <div style={{
+                            width: '80px',
+                            height: '120px',
+                            flexShrink: 0,
+                            borderRadius: '8px',
+                            overflow: 'hidden',
+                            backgroundColor: 'rgba(0,0,0,0.1)',
+                            position: 'relative' // For Image fill
+                        }}>
+                            {/* Standard img tag for template to be 100% sure of rendering behavior in html2canvas */}
+                            {finalCoverUrl ? (
+                                <img src={finalCoverUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Cover" />
+                            ) : (
+                                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}>📖</div>
+                            )}
+                        </div>
+
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '8px', lineHeight: '1.2' }}>{title}</p>
+                            <p style={{ fontSize: '20px', opacity: 0.7, marginBottom: '16px' }}>{subtitle}</p>
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <div style={{ width: '32px', height: '32px', borderRadius: '50%', overflow: 'hidden', backgroundColor: 'rgba(255,255,255,0.5)' }}>
+                                    {finalProfileUrl ? (
+                                        <img src={finalProfileUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="User" />
+                                    ) : (
+                                        <div style={{ width: '100%', height: '100%', backgroundColor: '#cbd5e1' }}></div>
+                                    )}
+                                </div>
+                                <p style={{ fontSize: '20px', fontWeight: '500', opacity: 0.7 }}>
+                                    {(review.user as any)?.name}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Branding/Watermark (Optional) */}
+                    <div style={{
+                        position: 'absolute',
+                        bottom: '20px',
+                        right: '30px',
+                        fontSize: '16px',
+                        opacity: 0.4,
+                        fontWeight: '600'
+                    }}>
+                        meetread.app
+                    </div>
+                </div>
+            )}
+        </>
     );
 }
