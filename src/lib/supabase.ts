@@ -10,7 +10,9 @@ const cookieStorage = {
     for (let i = 0; i < ca.length; i++) {
       let c = ca[i].trim();
       if (c.indexOf(name) === 0) {
-        return decodeURIComponent(c.substring(name.length, c.length));
+        // Match the stripping logic in route.ts
+        let val = decodeURIComponent(c.substring(name.length, c.length));
+        return val.replace(/^"|"$/g, '');
       }
     }
     return null;
@@ -22,9 +24,12 @@ const cookieStorage = {
     date.setTime(date.getTime() + (60 * 60 * 1000));
     const expires = "; expires=" + date.toUTCString();
 
+    // Ensure value is not double-quoted before encoding
+    const cleanValue = value.replace(/^"|"$/g, '');
+
     // Use Lax and Secure for Vercel. 
-    // Secure is important for Vercel HTTPS.
-    document.cookie = `${key}=${encodeURIComponent(value)}${expires}; path=/; SameSite=Lax; Secure`;
+    // Always use path=/ to ensure server can read it at /auth/callback
+    document.cookie = `${key}=${encodeURIComponent(cleanValue)}${expires}; path=/; SameSite=Lax; Secure`;
   },
   removeItem: (key: string) => {
     if (typeof document === 'undefined') return;
@@ -71,6 +76,7 @@ export function createSupabaseClient() {
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
+        storageKey: 'mr-auth', // Re-enforce a clean key
         storage: cookieStorage
       }
     }
