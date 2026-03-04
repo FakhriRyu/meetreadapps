@@ -38,6 +38,7 @@ export async function GET(request: Request) {
                     flowType: 'pkce',
                     persistSession: false,
                     detectSessionInUrl: false,
+                    storageKey: 'mr-auth',
                     storage: {
                         getItem: (key) => {
                             // 1. Try exact key match
