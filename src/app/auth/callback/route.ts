@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { NextResponse } from "next/server";
-import { getSupabaseServer } from "@/lib/supabase";
+import { cookies } from "next/headers";
+import { createClient } from "@supabase/supabase-js";
 import { SESSION_COOKIE_NAME, createSessionCookie } from "@/lib/auth";
 
 export async function GET(request: Request) {
@@ -9,7 +10,32 @@ export async function GET(request: Request) {
     const next = searchParams.get("next") ?? "/";
 
     if (code) {
-        const supabase = getSupabaseServer();
+        const cookieStore = await cookies();
+
+        // Create a special client for the callback that can read the PKCE verifier from cookies
+        const supabase = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            {
+                auth: {
+                    flowType: 'pkce',
+                    persistSession: false,
+                    storage: {
+                        getItem: (key) => {
+                            const cookie = cookieStore.get(key);
+                            return cookie ? cookie.value : null;
+                        },
+                        setItem: (key, value) => {
+                            // Not strictly needed for exchange but good for consistency
+                        },
+                        removeItem: (key) => {
+                            // Not strictly needed for exchange
+                        },
+                    },
+                },
+            }
+        );
+
         const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
         if (!error && data?.session) {
@@ -17,8 +43,14 @@ export async function GET(request: Request) {
             const email = user.email!;
             const name = user.user_metadata.full_name || user.user_metadata.name || email.split("@")[0];
 
-            // Check if user exists in public.User table
-            const { data: dbUser, error: dbError } = await supabase
+            // Use service role for DB operations to ensure we can find/create the user
+            const supabaseAdmin = createClient(
+                process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                process.env.SUPABASE_SERVICE_ROLE_KEY!,
+                { auth: { persistSession: false } }
+            );
+
+            const { data: dbUser, error: dbError } = await supabaseAdmin
                 .from("User")
                 .select("id, name, email, role")
                 .eq("email", email.toLowerCase())
@@ -28,13 +60,12 @@ export async function GET(request: Request) {
 
             if (!dbUser) {
                 // Create new user if not exists
-                const { data: newUser, error: createError } = await supabase
+                const { data: newUser, error: createError } = await supabaseAdmin
                     .from("User")
                     .insert({
                         name,
                         email: email.toLowerCase(),
                         role: "USER",
-                        // passwordHash is now nullable
                     })
                     .select("id, name, email, role")
                     .single();
@@ -48,7 +79,7 @@ export async function GET(request: Request) {
                 finalUser = dbUser;
             }
 
-            // Create session cookie
+            // Create custom session cookie
             const session = createSessionCookie({
                 id: finalUser.id,
                 name: finalUser.name,
@@ -69,6 +100,8 @@ export async function GET(request: Request) {
             });
 
             return response;
+        } else {
+            console.error("Exchange error:", error);
         }
     }
 
