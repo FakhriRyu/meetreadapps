@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createClient } from "@supabase/supabase-js";
@@ -12,137 +11,143 @@ export async function GET(request: Request) {
 
     if (error_description) {
         console.error("Supabase Auth Error:", error_description);
-        return NextResponse.redirect(`${origin}/login?error=supabase_error&msg=${encodeURIComponent(error_description)}`);
+        return NextResponse.redirect(
+            `${origin}/login?error=supabase_error&msg=${encodeURIComponent(error_description)}`
+        );
     }
 
     if (code) {
         const cookieStore = await cookies();
         const allCookies = cookieStore.getAll();
 
-        // Helper to clean cookie values (strip quotes often added by supabase-js/browsers)
-        const cleanValue = (val: string | undefined | null) => {
-            if (!val) return null;
-            // Decode and strip leading/trailing quotes
-            let cleaned = decodeURIComponent(val).replace(/^"|"$/g, '');
-            // Sometimes it's double encoded or has escaped quotes
-            cleaned = cleaned.replace(/^%22|%22$/g, '').replace(/^"|"$/g, '');
-            return cleaned;
-        };
+        // Find the PKCE verifier from cookies (try all possible names)
+        let codeVerifier: string | null = null;
+        for (const cookie of allCookies) {
+            if (cookie.name.includes("code-verifier")) {
+                // Strip URL encoding and surrounding quotes
+                let val = decodeURIComponent(cookie.value);
+                val = val.replace(/^"|"$/g, "");
+                codeVerifier = val;
+                console.log(`Found verifier in cookie: ${cookie.name}`);
+                break;
+            }
+        }
 
-        // Create Supabase client with a storage proxy that handles quote stripping
-        const supabase = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        if (!codeVerifier) {
+            const cookieNames = allCookies.map((c) => c.name).join(", ");
+            console.error("No code verifier cookie found. Available cookies:", cookieNames);
+            return NextResponse.redirect(
+                `${origin}/login?error=no_verifier&cookies=${encodeURIComponent(cookieNames)}`
+            );
+        }
+
+        // Exchange the auth code for a session using direct HTTP call
+        // This bypasses the Supabase JS library's internal storage check
+        const tokenResponse = await fetch(
+            `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/token?grant_type=pkce`,
             {
-                auth: {
-                    flowType: 'pkce',
-                    persistSession: false,
-                    detectSessionInUrl: false,
-                    storageKey: 'mr-auth',
-                    storage: {
-                        getItem: (key) => {
-                            // 1. Try exact key match
-                            const exactValue = cookieStore.get(key)?.value;
-                            if (exactValue) {
-                                const cleaned = cleanValue(exactValue);
-                                console.log(`Found exact key ${key}, cleaned: ${cleaned ? 'YES' : 'NO'}`);
-                                return cleaned;
-                            }
-
-                            // 2. Fallback: Search all cookies for ANY code verifier cookie
-                            // This is helpful if storageKey or project ref naming varies
-                            const verifierCookie = allCookies.find(c =>
-                                c.name.includes('code-verifier') ||
-                                c.name.endsWith('auth-token-code-verifier')
-                            );
-
-                            if (verifierCookie) {
-                                const cleaned = cleanValue(verifierCookie.value);
-                                console.log(`Manually found verifier ${verifierCookie.name}, cleaned: ${cleaned ? 'YES' : 'NO'}`);
-                                return cleaned;
-                            }
-
-                            console.error(`Missing verifier for code exchange. Keys looked for: ${key}`);
-                            return null;
-                        },
-                        setItem: () => { },
-                        removeItem: () => { },
-                    },
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
                 },
+                body: JSON.stringify({
+                    auth_code: code,
+                    code_verifier: codeVerifier,
+                }),
             }
         );
 
-        const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-
-        if (error) {
-            console.error("Exchange error:", error.message);
-            const cookieList = allCookies.map(c => `${c.name}=${c.value.substring(0, 10)}...`).join(", ");
-            return NextResponse.redirect(`${origin}/login?error=exchange_failed&msg=${encodeURIComponent(error.message)}&debug_cookies=${encodeURIComponent(cookieList)}`);
+        if (!tokenResponse.ok) {
+            const errorBody = await tokenResponse.text();
+            console.error("Token exchange failed:", tokenResponse.status, errorBody);
+            return NextResponse.redirect(
+                `${origin}/login?error=exchange_failed&msg=${encodeURIComponent(errorBody)}`
+            );
         }
 
-        if (data?.session) {
-            const { user } = data.session;
-            const email = user.email!;
-            const name = user.user_metadata.full_name || user.user_metadata.name || email.split("@")[0];
+        const tokenData = await tokenResponse.json();
+        const accessToken = tokenData.access_token;
+        const email = tokenData.user?.email;
+        const name =
+            tokenData.user?.user_metadata?.full_name ||
+            tokenData.user?.user_metadata?.name ||
+            (email ? email.split("@")[0] : "User");
 
-            // Use service role for database operations
-            const supabaseAdmin = createClient(
-                process.env.NEXT_PUBLIC_SUPABASE_URL!,
-                process.env.SUPABASE_SERVICE_ROLE_KEY!,
-                { auth: { persistSession: false } }
-            );
+        if (!email) {
+            console.error("No email in token response:", JSON.stringify(tokenData.user));
+            return NextResponse.redirect(`${origin}/login?error=no_email`);
+        }
 
-            // Find or create user
-            const { data: dbUser, error: dbError } = await supabaseAdmin
+        // Use service role for database operations
+        const supabaseAdmin = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!,
+            { auth: { persistSession: false } }
+        );
+
+        // Find or create user in our DB
+        const { data: dbUser } = await supabaseAdmin
+            .from("User")
+            .select("id, name, email, role")
+            .eq("email", email.toLowerCase())
+            .single();
+
+        let finalUser;
+
+        if (!dbUser) {
+            const { data: newUser, error: createError } = await supabaseAdmin
                 .from("User")
+                .insert({
+                    name,
+                    email: email.toLowerCase(),
+                    role: "USER",
+                })
                 .select("id, name, email, role")
-                .eq("email", email.toLowerCase())
                 .single();
 
-            let finalUser;
-
-            if (!dbUser) {
-                const { data: newUser, error: createError } = await supabaseAdmin
-                    .from("User")
-                    .insert({
-                        name,
-                        email: email.toLowerCase(),
-                        role: "USER",
-                    })
-                    .select("id, name, email, role")
-                    .single();
-
-                if (createError) {
-                    console.error("DB User Creation Error:", createError.message);
-                    return NextResponse.redirect(`${origin}/login?error=db_error`);
-                }
-                finalUser = newUser;
-            } else {
-                finalUser = dbUser;
+            if (createError) {
+                console.error("DB User Creation Error:", createError.message);
+                return NextResponse.redirect(`${origin}/login?error=db_error`);
             }
-
-            // Create custom session cookie
-            const session = createSessionCookie({
-                id: finalUser.id,
-                name: finalUser.name,
-                email: finalUser.email,
-                role: finalUser.role,
-            });
-
-            const response = NextResponse.redirect(`${origin}${next}`);
-
-            response.cookies.set({
-                name: SESSION_COOKIE_NAME,
-                value: session.token,
-                httpOnly: true,
-                secure: process.env.NODE_ENV === "production",
-                sameSite: "lax",
-                path: "/",
-                expires: session.expires,
-            });
-
-            return response;
+            finalUser = newUser;
+        } else {
+            finalUser = dbUser;
         }
+
+        // Create custom session cookie
+        const session = createSessionCookie({
+            id: finalUser.id,
+            name: finalUser.name,
+            email: finalUser.email,
+            role: finalUser.role,
+        });
+
+        const response = NextResponse.redirect(`${origin}${next}`);
+
+        response.cookies.set({
+            name: SESSION_COOKIE_NAME,
+            value: session.token,
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            path: "/",
+            expires: session.expires,
+        });
+
+        // Clean up verifier cookies
+        for (const cookie of allCookies) {
+            if (cookie.name.includes("code-verifier")) {
+                response.cookies.set({
+                    name: cookie.name,
+                    value: "",
+                    path: "/",
+                    expires: new Date(0),
+                });
+            }
+        }
+
+        return response;
     }
 
     return NextResponse.redirect(`${origin}/login?error=no_code`);
