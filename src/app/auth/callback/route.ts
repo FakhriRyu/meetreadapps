@@ -96,19 +96,22 @@ export async function GET(request: Request) {
         let finalUser;
 
         if (!dbUser) {
+            const timestamp = new Date().toISOString();
             const { data: newUser, error: createError } = await supabaseAdmin
                 .from("User")
                 .insert({
                     name,
                     email: email.toLowerCase(),
                     role: "USER",
+                    createdAt: timestamp,
+                    updatedAt: timestamp,
                 })
                 .select("id, name, email, role")
                 .single();
 
             if (createError) {
-                console.error("DB User Creation Error:", createError.message);
-                return NextResponse.redirect(`${origin}/login?error=db_error`);
+                console.error("DB User Creation Error:", createError.message, createError.details, createError.hint);
+                return NextResponse.redirect(`${origin}/login?error=db_error&msg=${encodeURIComponent(createError.message)}`);
             }
             finalUser = newUser;
         } else {
