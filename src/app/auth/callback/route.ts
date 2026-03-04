@@ -17,6 +17,7 @@ export async function GET(request: Request) {
 
     if (code) {
         const cookieStore = await cookies();
+        const allCookies = cookieStore.getAll();
 
         // Create Supabase client for code exchange
         const supabase = createClient(
@@ -27,14 +28,25 @@ export async function GET(request: Request) {
                     flowType: 'pkce',
                     persistSession: false,
                     detectSessionInUrl: false,
+                    storageKey: 'mr-auth',
                     storage: {
-                        getItem: (key) => cookieStore.get(key)?.value,
-                        setItem: (key, value, options) => {
-                            // Not usually needed for exchange but set for completeness
+                        getItem: (key) => {
+                            // Try exact match first
+                            const exactMatch = cookieStore.get(key)?.value;
+                            if (exactMatch) return exactMatch;
+
+                            // FUZZY MATCH: If key looks like a code verifier key, try to find ANY verifier cookie
+                            if (key.includes('code-verifier') || key.includes('auth-token')) {
+                                const fuzzyMatch = allCookies.find(c => c.name.includes('code-verifier'))?.value;
+                                if (fuzzyMatch) {
+                                    console.log(`Fuzzy matched verifier for key ${key}`);
+                                    return fuzzyMatch;
+                                }
+                            }
+                            return null;
                         },
-                        removeItem: (key, options) => {
-                            // Not usually needed
-                        },
+                        setItem: (key, value) => { },
+                        removeItem: (key) => { },
                     },
                 },
             }
@@ -44,7 +56,9 @@ export async function GET(request: Request) {
 
         if (error) {
             console.error("Exchange error:", error.message);
-            return NextResponse.redirect(`${origin}/login?error=exchange_failed&msg=${encodeURIComponent(error.message)}`);
+            const cookieNames = allCookies.map(c => c.name).join(", ");
+            const debugInfo = `${error.message} | Cookies: [${cookieNames}]`;
+            return NextResponse.redirect(`${origin}/login?error=exchange_failed&msg=${encodeURIComponent(debugInfo)}`);
         }
 
         if (data?.session) {
@@ -113,7 +127,6 @@ export async function GET(request: Request) {
         }
     }
 
-    // If we reach here without a code, something is very wrong (likely tokens in hash)
     const allParams = new URLSearchParams(searchParams);
     return NextResponse.redirect(`${origin}/login?error=no_code_in_callback&${allParams.toString()}`);
 }

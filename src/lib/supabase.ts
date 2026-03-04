@@ -59,6 +59,7 @@ export function createSupabaseClient() {
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
+        storageKey: 'mr-auth',
         storage: cookieStorage // Force cookies so server can read verifier
       }
     }
