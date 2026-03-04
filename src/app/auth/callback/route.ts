@@ -28,7 +28,7 @@ export async function GET(request: Request) {
                     flowType: 'pkce',
                     persistSession: false,
                     detectSessionInUrl: false,
-                    storageKey: 'meetread-auth',
+                    // No storageKey here to use defaults
                     storage: {
                         getItem: (key) => {
                             // 1. Try exact key match (including storageKey prefix)

@@ -71,7 +71,6 @@ export function createSupabaseClient() {
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
-        storageKey: 'meetread-auth',
         storage: cookieStorage
       }
     }
