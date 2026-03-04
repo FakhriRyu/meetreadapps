@@ -6,8 +6,7 @@
     "dev": "next dev --webpack",
     "build": "next build --webpack",
     "start": "next start",
-    "lint": "eslint",
-    "db:seed": "tsx prisma/seed.ts"
+    "lint": "eslint"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.81.1",
