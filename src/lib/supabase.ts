@@ -1,25 +1,38 @@
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database.types'
 
-// Helper for cookie storage on the client side
+// Robust cookie storage for both Client and Server (via headers)
 const cookieStorage = {
   getItem: (key: string) => {
     if (typeof document === 'undefined') return null;
-    const cookie = document.cookie.split('; ').find(row => row.startsWith(`${key}=`));
-    return cookie ? decodeURIComponent(cookie.split('=')[1]) : null;
+    const name = `${key}=`;
+    const ca = document.cookie.split(';');
+    for (let i = 0; i < ca.length; i++) {
+      let c = ca[i].trim();
+      if (c.indexOf(name) === 0) {
+        return decodeURIComponent(c.substring(name.length, c.length));
+      }
+    }
+    return null;
   },
   setItem: (key: string, value: string) => {
     if (typeof document === 'undefined') return;
-    // Set cookie that lasts for 1 hour (enough for PKCE flow)
-    document.cookie = `${key}=${encodeURIComponent(value)}; path=/; max-age=3600; SameSite=Lax; Secure`;
+    // Cookies persist for 1 hour, sufficient for OAuth flow
+    const date = new Date();
+    date.setTime(date.getTime() + (60 * 60 * 1000));
+    const expires = "; expires=" + date.toUTCString();
+
+    // Use Lax and Secure for Vercel. 
+    // Secure is important for Vercel HTTPS.
+    document.cookie = `${key}=${encodeURIComponent(value)}${expires}; path=/; SameSite=Lax; Secure`;
   },
   removeItem: (key: string) => {
     if (typeof document === 'undefined') return;
-    document.cookie = `${key}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+    document.cookie = `${key}=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
   }
 };
 
-// Get Supabase client for server-side operations
+// Server-side client for DB operations (NOT for Auth Callback exchange)
 export function getSupabaseServer() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
     throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_URL')
@@ -40,8 +53,7 @@ export function getSupabaseServer() {
   )
 }
 
-// Client-side client with anon key (Row Level Security applied)
-// Use this for client components
+// Client-side client for Authentication
 export function createSupabaseClient() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
     throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_URL')
@@ -59,8 +71,8 @@ export function createSupabaseClient() {
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
-        storageKey: 'mr-auth',
-        storage: cookieStorage // Force cookies so server can read verifier
+        storageKey: 'meetread-auth',
+        storage: cookieStorage
       }
     }
   )
