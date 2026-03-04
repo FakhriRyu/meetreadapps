@@ -43,7 +43,9 @@ export function createSupabaseClient() {
       auth: {
         flowType: 'pkce',
         persistSession: true,
-        detectSessionInUrl: true
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        storageKey: 'meetread-auth',
       }
     }
   )

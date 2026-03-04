@@ -7,12 +7,18 @@ import { SESSION_COOKIE_NAME, createSessionCookie } from "@/lib/auth";
 export async function GET(request: Request) {
     const { searchParams, origin } = new URL(request.url);
     const code = searchParams.get("code");
+    const error_description = searchParams.get("error_description");
     const next = searchParams.get("next") ?? "/";
+
+    if (error_description) {
+        console.error("Supabase Auth Error:", error_description);
+        return NextResponse.redirect(`${origin}/login?error=supabase_error&msg=${encodeURIComponent(error_description)}`);
+    }
 
     if (code) {
         const cookieStore = await cookies();
 
-        // Create a special client for the callback that can read the PKCE verifier from cookies
+        // Create Supabase client for code exchange
         const supabase = createClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
             process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -20,16 +26,14 @@ export async function GET(request: Request) {
                 auth: {
                     flowType: 'pkce',
                     persistSession: false,
+                    detectSessionInUrl: false,
                     storage: {
-                        getItem: (key) => {
-                            const cookie = cookieStore.get(key);
-                            return cookie ? cookie.value : null;
+                        getItem: (key) => cookieStore.get(key)?.value,
+                        setItem: (key, value, options) => {
+                            // Not usually needed for exchange but set for completeness
                         },
-                        setItem: (key, value) => {
-                            // Not strictly needed for exchange but good for consistency
-                        },
-                        removeItem: (key) => {
-                            // Not strictly needed for exchange
+                        removeItem: (key, options) => {
+                            // Not usually needed
                         },
                     },
                 },
@@ -38,18 +42,24 @@ export async function GET(request: Request) {
 
         const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
-        if (!error && data?.session) {
+        if (error) {
+            console.error("Exchange error:", error.message);
+            return NextResponse.redirect(`${origin}/login?error=exchange_failed&msg=${encodeURIComponent(error.message)}`);
+        }
+
+        if (data?.session) {
             const { user } = data.session;
             const email = user.email!;
             const name = user.user_metadata.full_name || user.user_metadata.name || email.split("@")[0];
 
-            // Use service role for DB operations to ensure we can find/create the user
+            // Use service role for DB operations
             const supabaseAdmin = createClient(
                 process.env.NEXT_PUBLIC_SUPABASE_URL!,
                 process.env.SUPABASE_SERVICE_ROLE_KEY!,
                 { auth: { persistSession: false } }
             );
 
+            // Check user existence
             const { data: dbUser, error: dbError } = await supabaseAdmin
                 .from("User")
                 .select("id, name, email, role")
@@ -59,7 +69,7 @@ export async function GET(request: Request) {
             let finalUser;
 
             if (!dbUser) {
-                // Create new user if not exists
+                // Auto-register
                 const { data: newUser, error: createError } = await supabaseAdmin
                     .from("User")
                     .insert({
@@ -71,15 +81,15 @@ export async function GET(request: Request) {
                     .single();
 
                 if (createError) {
-                    console.error("Error creating user:", createError);
-                    return NextResponse.redirect(`${origin}/login?error=user_creation_failed`);
+                    console.error("DB Create Error:", createError.message);
+                    return NextResponse.redirect(`${origin}/login?error=db_error&msg=${encodeURIComponent(createError.message)}`);
                 }
                 finalUser = newUser;
             } else {
                 finalUser = dbUser;
             }
 
-            // Create custom session cookie
+            // Create session cookie
             const session = createSessionCookie({
                 id: finalUser.id,
                 name: finalUser.name,
@@ -100,11 +110,10 @@ export async function GET(request: Request) {
             });
 
             return response;
-        } else {
-            console.error("Exchange error:", error);
         }
     }
 
-    // return the user to an error page with instructions
-    return NextResponse.redirect(`${origin}/login?error=auth_failed`);
+    // If we reach here without a code, something is very wrong (likely tokens in hash)
+    const allParams = new URLSearchParams(searchParams);
+    return NextResponse.redirect(`${origin}/login?error=no_code_in_callback&${allParams.toString()}`);
 }
